@@ -1,0 +1,2 @@
+recursive-include robotpy_build/pybind11/include *.h
+recursive-include robotpy_build/templates *.j2
