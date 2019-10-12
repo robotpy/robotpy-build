@@ -1,8 +1,8 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-import sys
 import setuptools
 
+from ..platforms import get_platform
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
@@ -33,22 +33,26 @@ def cpp_flag(compiler):
 
     raise RuntimeError("Unsupported compiler -- at least C++11 support is needed!")
 
+def get_opts(typ):
+    c_opts = {"msvc": ["/EHsc"], "unix": []}
+    l_opts = {"msvc": [], "unix": []}
+
+    platform = get_platform()
+    if platform.os == "osx":
+        darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
+        c_opts["unix"] += darwin_opts
+        l_opts["unix"] += darwin_opts
+    
+    return c_opts.get(typ, []), l_opts.get(typ, [])
+    
 
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
 
-    c_opts = {"msvc": ["/EHsc"], "unix": []}
-    l_opts = {"msvc": [], "unix": []}
-
-    if sys.platform == "darwin":
-        darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
-        c_opts["unix"] += darwin_opts
-        l_opts["unix"] += darwin_opts
-
     def build_extensions(self):
         ct = self.compiler.compiler_type
-        opts = self.c_opts.get(ct, [])
-        link_opts = self.l_opts.get(ct, [])
+        opts, link_opts = get_opts(ct)
+
         if ct == "unix":
             opts.append("-s")  # strip
             opts.append("-g0")  # remove debug symbols
