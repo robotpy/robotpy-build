@@ -16,7 +16,7 @@ def _download(url):
         Downloads a file to a temporary directory
     """
 
-    print("Downloading", posixpath.basename(url))
+    print("Downloading", url)
 
     def _reporthook(count, blocksize, totalsize):
         percent = int(count * blocksize * 100 / totalsize)
