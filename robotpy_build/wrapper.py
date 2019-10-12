@@ -33,12 +33,17 @@ class Wrapper:
             self.cfg.artname = self.cfg.libname
 
         self.extension = None
-        if self.cfg.sources:
+        if self.cfg.sources or self.cfg.generate:
             # extensions just hold data about what to actually build, we can
             # actually modify extensions all the way up until the build
             # really happens
             extname = f"{self.import_name}.{self.name}"
             self.extension = Extension(extname, self.cfg.sources, language="c++")
+
+        if self.cfg.generate and not self.cfg.generation_data:
+            raise ValueError(
+                "generation_data must be specified when generate is specified"
+            )
 
         # Setup an entry point (written during build_clib)
         entry_point = f"{self.cfg.libname} = {name}.pkgcfg"
