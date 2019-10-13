@@ -48,3 +48,46 @@ class WrapperConfig(Model):
 
     # Path to a data.yml to use during code generation
     generation_data = StringType()
+
+
+class DistutilsMetadata(Model):
+
+    name = StringType(required=True)
+    description = StringType()
+
+    author = StringType(required=True)
+    author_email = StringType()
+    url = StringType()
+    license = StringType(required=True)
+    install_requires = ListType(StringType, required=True)
+
+    # robotpy-build sets these automatically
+    # long_description
+    # zip_safe
+    # include_package_data
+    # requires_python
+    # packages
+    # version
+    # cmdclass
+    # ext_modules
+
+
+class RobotpyBuildConfig(Model):
+    """
+        Main robotpy-build configuration specified in pyproject.toml
+
+        [tool.robotpy-build]
+    """
+
+    # package to store version information in
+    base_package = StringType(required=True)
+
+    #
+    # Everything below here are separate sections
+    #
+
+    # [tool.robotpy-build.metadata]
+    metadata = ModelType(DistutilsMetadata)
+
+    # [tool.robotpy-build.wrappers."XXX"]
+    wrappers = DictType(ModelType(WrapperConfig))

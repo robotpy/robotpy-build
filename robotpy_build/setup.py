@@ -9,7 +9,7 @@ from .command.build_dl import BuildDl
 from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
 
-from .configs import WrapperConfig
+from .configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
 from .platforms import get_platform
 from .wrapper import Wrapper
@@ -28,12 +28,20 @@ class Setup:
         with open(join(self.root, "pyproject.toml")) as fp:
             self.pyproject = toml.load(fp)
 
-        self.project = self.pyproject.get("tool", {}).get("robotpy-build", {})
+        self.project_dict = self.pyproject.get("tool", {}).get("robotpy-build", {})
+        try:
+            self.project = RobotpyBuildConfig(self.project_dict)
+            self.project.validate()
+        except Exception as e:
+            raise ValueError(
+                f"robotpy-build configuration in pyproject.toml is incorrect"
+            ) from e
+
         self.platform = get_platform()
 
     @property
     def base_package(self):
-        return self.project["base-package"]
+        return self.project.base_package
 
     @property
     def git_dir(self):
@@ -45,7 +53,7 @@ class Setup:
 
     def prepare(self):
 
-        self.setup_kwargs = self.project.get("metadata", {})
+        self.setup_kwargs = self.project_dict.get("metadata", {})
         self.setup_kwargs["zip_safe"] = False
         self.setup_kwargs["include_package_data"] = True
         self.setup_kwargs["requires_python"] = ">=3.6"
@@ -119,13 +127,7 @@ class Setup:
 
         ext_modules = []
 
-        for name, cfg in self.project.get("wrappers", {}).items():
-            try:
-                cfg = WrapperConfig(cfg)
-                cfg.validate()
-            except Exception as e:
-                raise ValueError(f"{name} wrapper configuration is incorrect") from e
-
+        for name, cfg in self.project.wrappers.items():
             w = Wrapper(name, cfg, self)
             self.wrappers.append(w)
             self.pkgcfg.add_pkg(w)
