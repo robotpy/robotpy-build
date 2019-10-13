@@ -55,4 +55,3 @@ class PkgCfgProvider:
             return self.pkgs[name]
         except KeyError:
             raise KeyError("robotpy-build package '%s' not installed" % name)
-

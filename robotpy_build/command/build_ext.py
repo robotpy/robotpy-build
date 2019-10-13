@@ -42,6 +42,7 @@ def cpp_flag(compiler):
 
     raise RuntimeError("Unsupported compiler -- at least C++11 support is needed!")
 
+
 def get_opts(typ):
     c_opts = {"msvc": ["/EHsc"], "unix": []}
     l_opts = {"msvc": [], "unix": []}
@@ -51,9 +52,9 @@ def get_opts(typ):
         darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
         c_opts["unix"] += darwin_opts
         l_opts["unix"] += darwin_opts
-    
+
     return c_opts.get(typ, []), l_opts.get(typ, [])
-    
+
 
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
@@ -99,4 +100,3 @@ class BuildExt(build_ext):
 #         language="c++",
 #     )
 # ]
-

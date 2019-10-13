@@ -6,7 +6,9 @@ from schematics.types import ModelType, BooleanType, StringType, ListType, DictT
 
 class WrapperConfig(Model):
     """
-        Wrapper configurations
+        Wrapper configurations specified in pyproject.toml
+
+        [tool.robotpy-build.wrappers."package-name"]
     """
 
     # List of extra headers to export

@@ -220,4 +220,3 @@ def class_hook(cls, data):
     methods_data = data.get("methods", {})
     for fn in cls["methods"]["public"]:
         public_method_hook(fn, methods_data)
-

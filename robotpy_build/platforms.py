@@ -35,4 +35,3 @@ def get_platform() -> WPILibMavenPlatform:
         return _platforms[pyplatform]
     except KeyError:
         raise KeyError(f"platform {pyplatform} is not supported by robotpy-build!")
-
