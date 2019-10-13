@@ -72,6 +72,12 @@ def public_method_hook(fn, data):
     # Use this if one of the parameter types don't quite match
     param_override = data.get("param_override", {})
 
+    # fix cppheaderparser quirk
+    if len(fn["parameters"]) == 1:
+        p = fn["parameters"][0]
+        if p["type"] == "void" and not p["pointer"]:
+            fn["parameters"] = []
+
     for i, p in enumerate(fn["parameters"]):
         if p["name"] == "":
             p["name"] = "param%s" % i
