@@ -31,6 +31,13 @@ def public_method_hook(fn, data):
 
     # Python exposed function name converted to camelcase
     x_name = fn["name"]
+    sp = data.get("strip_prefixes")
+    if sp:
+        for pfx in sp:
+            if x_name.startswith(pfx):
+                x_name = x_name[len(pfx) :]
+                break
+
     x_name = x_name[0].lower() + x_name[1:]
 
     x_in_params = []
