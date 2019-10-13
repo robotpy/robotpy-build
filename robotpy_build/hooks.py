@@ -47,7 +47,10 @@ def public_method_hook(fn, data):
     data = data.get(fn["name"], _missing)
     if data is _missing:
         # ensure every function is in our yaml
-        print("WARNING:", fn["parent"]["name"], "method", fn["name"], "missing")
+        if "parent" in fn:
+            print("WARNING:", fn["parent"]["name"], "method", fn["name"], "missing")
+        else:
+            print("WARNING: function", fn["name"], "missing")
         data = {}
         # assert False, fn['name']
     elif data is None:
@@ -82,19 +85,12 @@ def public_method_hook(fn, data):
         if p["name"] == "":
             p["name"] = "param%s" % i
         p["x_type"] = p.get("enum", p["raw_type"])
-
-        # if "enum" in p:
-        #     p["x_type"] = p["enum"]
-        # else:
-        #     if "namespace" in p:
-        #         p["x_type"] =  p["namespace"] + p["raw_type"]
-        #     else:
-        #         p["x_type"] = p["raw_type"]
-        # p["x_callname"] = p["name"]
+        p["x_callname"] = p["name"]
 
         if "forward_declared" in p:
             fn["forward_declare"] = True
-            fn["parent"]["has_fwd_declare"] = True
+            if "parent" in fn:
+                fn["parent"]["has_fwd_declare"] = True
 
         if p["name"] in param_override:
             p.update(param_override[p["name"]])
@@ -107,13 +103,14 @@ def public_method_hook(fn, data):
 
         ptype = "in"
 
-        if p["pointer"] and p["type"] != "const char *":
+        if p["pointer"] and not p["constant"]:
+            p["x_callname"] = "&%(x_callname)s" % p
             ptype = "out"
         elif p["array"]:
             asz = p.get("array_size", 0)
             if asz:
                 p["x_type"] = "std::array<%s, %s>" % (p["x_type"], asz)
-                # p["x_callname"] = "%(x_callname)s.data()" % p
+                p["x_callname"] = "%(x_callname)s.data()" % p
             else:
                 # it's a vector
                 pass
@@ -127,9 +124,11 @@ def public_method_hook(fn, data):
         if p["constant"]:
             p["x_type"] = "const " + p["x_type"]
 
-        p["x_type"] += "&" * p["reference"]
-        p["x_type"] += "*" * p["pointer"]
-        p["x_decl"] = "%s %s" % (p["x_type"], p["name"])
+        p["x_type_full"] = p["x_type"]
+        p["x_type_full"] += "&" * p["reference"]
+        p["x_type_full"] += "*" * p["pointer"]
+
+        p["x_decl"] = "%s %s" % (p["x_type_full"], p["name"])
 
     x_callstart = ""
     x_callend = ""
@@ -138,31 +137,21 @@ def public_method_hook(fn, data):
     # Return all out parameters
     x_rets.extend(x_out_params)
 
-    # if the function has out parameters and if the return value
-    # is an error code, suppress the error code. This matches the Java
-    # APIs, and the user can retrieve the error code from getLastError if
-    # they really care
-    if not len(x_rets) and fn["rtnType"] != "void":
+    if fn["rtnType"] != "void":
         x_callstart = "auto __ret ="
         x_rets.insert(0, dict(name="__ret", x_type=fn["rtnType"]))
 
     if len(x_rets) == 1 and x_rets[0]["x_type"] != "void":
         x_wrap_return = "return %s;" % x_rets[0]["name"]
-        x_wrap_return_type = x_rets[0]["x_type"]
     elif len(x_rets) > 1:
         x_wrap_return = "return std::make_tuple(%s);" % ",".join(
             [p["name"] for p in x_rets]
         )
-        x_wrap_return_type = "std::tuple<%s>" % (
-            ", ".join([p["x_type"] for p in x_rets])
-        )
-    else:
-        x_wrap_return_type = "void"
 
     # Temporary values to store out parameters in
     x_temprefs = ""
     if x_out_params:
-        x_temprefs = ";".join(["%(x_type)s %(name)s" % p for p in x_out_params]) + ";"
+        x_temprefs = "; ".join(["%(x_type)s %(name)s" % p for p in x_out_params]) + ";"
 
     if "return" in data.get("code", ""):
         raise ValueError("%s: Do not use return, assign to retval instead" % fn["name"])
@@ -204,7 +193,14 @@ def public_method_hook(fn, data):
     fn.update(locals())
 
 
+def function_hook(fn, data):
+    data = data.get("data", {})
+    data = data.get("functions", {})
+    public_method_hook(fn, data)
+
+
 def class_hook(cls, data):
+
     # work around CppHeaderParser hoisting structs nested in classes to top
     if cls["parent"] is not None:
         cls["data"] = {"ignore": True}

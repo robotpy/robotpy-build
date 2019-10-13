@@ -2,15 +2,29 @@
 {% if fn.static %}def_static{% else %}def{% endif %}
 {% endmacro -%}
 
+{%- macro fnptr(cls, fn) -%}
+{% if fn.lambda is defined %}
+{{ fn.lambda }}
+{% elif not fn.x_out_params %}
+&{% if cls %}{{ fn.namespace }}{{ cls.name }}::{% endif %}{{ fn.name }}
+{% else %}
+[]({{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
+          {{ fn.x_temprefs }}
+          {{ fn.x_callstart }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {{ fn.x_wrap_return }}
+        }
+{%- endif %}
+{%- endmacro -%}
+
 {%- macro genmethod(cls, fn) %}
   {% if fn.constructor %}
-    .def(py::init<{{ fn.parameters | join(', ', attribute='x_type') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
+    .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
   {% else %}
     .{{ fndef(fn) }}("{{ fn.x_name }}",{{ ' ' }}
       {%- if 'overload' in fn.data or 'overloads' in fn.data -%}
-        py::overload_cast<{{ fn.x_in_params | join(', ', attribute='x_type')}}>(
+        py::overload_cast<{{ fn.x_in_params | join(', ', attribute='x_type_full')}}>(
       {%- endif -%}
-	     &{{ fn.namespace }}{{ cls.name }}::{{ fn.name }}
+	     {{ fnptr(cls, fn) }}
       {%- if 'overload' in fn.data or 'overloads' in fn.data -%}
         {% if fn.const %}, py::const_{% endif -%}
         )
@@ -84,6 +98,14 @@ void init_{{ mod_fn }}(py::module &m) {
   ;
   {{ unnamed_enum(cls.name.lower(), cls.enums.public) }}
 {% endfor %}
+
+
+{% if header.functions %}
+{% for fn in header.functions if 'ignore' not in fn.data and 'skip_pybind' not in fn.data %}
+  {% if loop.first %}m{% endif %}
+  {{ genmethod(None, fn) }}
+{%- endfor %};
+{% endif %}
 {% endfor %}
 
   {% include "gen_enum_pybind11.cpp.j2" %}
