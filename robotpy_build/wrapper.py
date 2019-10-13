@@ -59,8 +59,8 @@ class Wrapper:
         ver = self.cfg.version
         return f"{base}/{art}/{ver}/{art}-{ver}-{thing}.zip"
 
-    def _extract_zip_to(self, thing, dst):
-        download_and_extract_zip(self._dl_url(thing), to=dst)
+    def _extract_zip_to(self, thing, dst, cache):
+        download_and_extract_zip(self._dl_url(thing), to=dst, cache=cache)
 
     # pkgcfg interface
     def get_include_dirs(self):
@@ -92,7 +92,7 @@ class Wrapper:
             libs.extend(self.pkgcfg.get_pkg(dep).get_library_names())
         return list(reversed(libs))
 
-    def on_build_dl(self):
+    def on_build_dl(self, cache):
 
         libdir = join(self.root, "lib")
         incdir = join(self.root, "include")
@@ -112,7 +112,7 @@ class Wrapper:
         except OSError:
             pass
 
-        self._extract_zip_to("headers", incdir)
+        self._extract_zip_to("headers", incdir, cache)
 
         libname = f"{self.platform.libprefix}{self.cfg.libname}{self.platform.libext}"
 
@@ -123,7 +123,7 @@ class Wrapper:
             )
         }
 
-        self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to)
+        self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
 
         self._write_init_py(initpy, libname)
         self._write_pkgcfg_py(pkgcfgpy)

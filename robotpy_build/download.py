@@ -28,7 +28,7 @@ def _download(url):
     return filename
 
 
-def download_and_extract_zip(url, to=None):
+def download_and_extract_zip(url, to=None, cache=None):
     """
         Utility method intended to be useful for downloading/extracting
         third party source zipfiles
@@ -43,7 +43,6 @@ def download_and_extract_zip(url, to=None):
         atexit.register(tod.cleanup)
 
     zip_fname = None
-    cache = os.environ.get("RPY_DEVDIR")
     if cache:
         os.makedirs(cache, exist_ok=True)
         cache_fname = join(cache, posixpath.basename(url))
