@@ -1,8 +1,8 @@
 {%- macro genenum(enum) %}
 {%- if 'name' in enum -%}
-py::enum_<{{ enum.x_namespace }}{{ enum.name }}>(m, "{{ enum.name }}")
+py::enum_<{{ enum.x_namespace }}{{ enum.name }}>(m, "{{ enum.x_name }}")
   {% for val in enum['values'] %}
-    .value("{{ val.name }}", {{ enum.x_namespace }}{{ enum.name }}::{{ val.name }})
+    .value("{{ val.x_name }}", {{ enum.x_namespace }}{{ enum.name }}::{{ val.name }})
   {% endfor -%}
   ;
 {%- endif -%}

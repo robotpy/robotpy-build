@@ -16,11 +16,37 @@ class HookError(Exception):
     pass
 
 
+def _strip_prefixes(global_data, name):
+    sp = global_data.strip_prefixes
+    if sp:
+        for pfx in sp:
+            if name.startswith(pfx):
+                name = name[len(pfx) :]
+                break
+
+    return name
+
+
+def _enum_hook(en, global_data):
+    en["x_namespace"] = en["namespace"]
+    ename = en.get("name")
+    if ename:
+        en["x_name"] = _strip_prefixes(global_data, ename)
+
+    for v in en["values"]:
+        name = v["name"]
+        if ename and name.startswith(ename):
+            name = name[len(ename) :]
+            if name[0] == "_":
+                name = name[1:]
+        v["x_name"] = name
+
+
 def header_hook(header, data):
     """Called for each header"""
-
-    for e in header.enums:
-        e["x_namespace"] = e["namespace"]
+    global_data = data.get("data", {})
+    for en in header.enums:
+        _enum_hook(en, global_data)
 
 
 def _function_hook(fn, global_data, fn_data, typ):
@@ -40,14 +66,7 @@ def _function_hook(fn, global_data, fn_data, typ):
         return
 
     # Python exposed function name converted to camelcase
-    x_name = fn["name"]
-    sp = global_data.strip_prefixes
-    if sp:
-        for pfx in sp:
-            if x_name.startswith(pfx):
-                x_name = x_name[len(pfx) :]
-                break
-
+    x_name = _strip_prefixes(global_data, fn["name"])
     x_name = x_name[0].lower() + x_name[1:]
 
     x_in_params = []
