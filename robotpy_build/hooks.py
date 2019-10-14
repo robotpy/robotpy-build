@@ -217,7 +217,7 @@ def _function_hook(fn, global_data, fn_data, typ):
 
 def function_hook(fn, data):
     global_data = data.get("data", {})
-    functions_data = data.get("functions", {})
+    functions_data = global_data.functions
     _function_hook(fn, global_data, functions_data, FunctionData)
 
 

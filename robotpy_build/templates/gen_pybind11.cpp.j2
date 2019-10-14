@@ -21,11 +21,11 @@
     .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
   {% else %}
     .{{ fndef(fn) }}("{{ fn.x_name }}",{{ ' ' }}
-      {%- if fn.data.overloads -%}
+      {%- if fn.data.overloads is defined and fn.data.overloads -%}
         py::overload_cast<{{ fn.x_in_params | join(', ', attribute='x_type_full')}}>(
       {%- endif -%}
 	     {{ fnptr(cls, fn) }}
-      {%- if fn.data.overloads -%}
+      {%- if fn.data.overloads is defined and fn.data.overloads -%}
         {% if fn.const %}, py::const_{% endif -%}
         )
       {%- endif -%}
