@@ -4,8 +4,16 @@
 
 import sphinxify
 
+# terrible hack
+__name__ = "robotpy_build.hooks"
+from .hooks_datacfg import ClassData, FunctionData, MethodData
+
 
 _missing = object()
+
+
+class HookError(Exception):
+    pass
 
 
 def header_hook(header, data):
@@ -15,7 +23,9 @@ def header_hook(header, data):
         e["x_namespace"] = e["namespace"]
 
 
-def public_method_hook(fn, data):
+def _function_hook(fn, global_data, fn_data, typ):
+    """shared with methods/functions"""
+
     # Ignore operators, move constructors, copy constructors
     if (
         fn["name"].startswith("operator")
@@ -26,12 +36,12 @@ def public_method_hook(fn, data):
             and fn["parameters"][0]["name"] == "&"
         )
     ):
-        fn["data"] = {"ignore": True}
+        fn["data"] = typ({"ignore": True})
         return
 
     # Python exposed function name converted to camelcase
     x_name = fn["name"]
-    sp = data.get("strip_prefixes")
+    sp = global_data.strip_prefixes
     if sp:
         for pfx in sp:
             if x_name.startswith(pfx):
@@ -44,28 +54,29 @@ def public_method_hook(fn, data):
     x_out_params = []
     x_rets = []
 
-    data = data.get(fn["name"], _missing)
+    data = fn_data.get(fn["name"], _missing)
     if data is _missing:
-        # ensure every function is in our yaml
+        # ensure every function is in our yaml so someone can review it
         if "parent" in fn:
             print("WARNING:", fn["parent"]["name"], "method", fn["name"], "missing")
         else:
             print("WARNING: function", fn["name"], "missing")
-        data = {}
+        data = typ()
         # assert False, fn['name']
     elif data is None:
-        data = {}
+        data = typ()
 
-    if "overloads" in data:
+    if getattr(data, "overloads", {}):
         _sig = ", ".join(
             p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
             for p in fn["parameters"]
         )
-        if _sig in data["overloads"]:
-            data = data.copy()
-            overload = data["overloads"][_sig]
+        if _sig in data.overloads:
+            overload = data.overloads[_sig]
             if overload:
-                data.update(overload)
+                data = data.to_native()
+                data.update(overload.to_native())
+                data = typ(data)
         else:
             print(
                 "WARNING: Missing overload %s::%s(%s)"
@@ -73,7 +84,7 @@ def public_method_hook(fn, data):
             )
 
     # Use this if one of the parameter types don't quite match
-    param_override = data.get("param_override", {})
+    param_override = data.param_override
 
     # fix cppheaderparser quirk
     if len(fn["parameters"]) == 1:
@@ -92,8 +103,9 @@ def public_method_hook(fn, data):
             if "parent" in fn:
                 fn["parent"]["has_fwd_declare"] = True
 
-        if p["name"] in param_override:
-            p.update(param_override[p["name"]])
+        po = param_override.get(p["name"])
+        if po:
+            p.update(po.to_native())
 
         p["x_pyarg"] = 'py::arg("%(name)s")' % p
 
@@ -153,29 +165,23 @@ def public_method_hook(fn, data):
     if x_out_params:
         x_temprefs = "; ".join(["%(x_type)s %(name)s" % p for p in x_out_params]) + ";"
 
-    if "return" in data.get("code", ""):
-        raise ValueError("%s: Do not use return, assign to retval instead" % fn["name"])
-
     # Rename internal functions
-    if data.get("internal", False):
+    if data.internal:
         x_name = "_" + x_name
-    elif data.get("rename", False):
-        x_name = data["rename"]
+    elif data.rename:
+        x_name = data.rename
     elif fn["constructor"]:
         x_name = "__init__"
 
     doc = ""
     doc_quoted = ""
 
-    if "doc" in data:
-        doc = data["doc"]
+    if data.doc is not None:
+        doc = data.doc
     elif "doxygen" in fn:
         # work around a CppHeaderParser bug
         doc = fn["doxygen"].rpartition("*//*")[2]
         doc = sphinxify.process_raw(doc)
-
-    if "Global default" in doc:
-        doc = ""
 
     if doc:
         # TODO
@@ -183,20 +189,36 @@ def public_method_hook(fn, data):
         doc_quoted = doc.splitlines(keepends=True)
         doc_quoted = ['"%s"' % (dq.replace("\n", "\\n"),) for dq in doc_quoted]
 
-    if "hook" in data:
-        eval(data["hook"])(fn, data)
+    # if "hook" in data:
+    #     eval(data["hook"])(fn, data)
 
-    name = fn["name"]
-    hascode = "code" in data or "get" in data or "set" in data
-
-    # lazy :)
-    fn.update(locals())
+    # bind new attributes to the function definition
+    # -> previously used locals(), but this is more explicit
+    #    and easier to not mess up
+    fn.update(
+        dict(
+            data=data,
+            # transforms
+            x_name=x_name,
+            x_in_params=x_in_params,
+            x_out_params=x_out_params,
+            x_rets=x_rets,
+            # lambda generation
+            x_callstart=x_callstart,
+            x_temprefs=x_temprefs,
+            x_callend=x_callend,
+            x_wrap_return=x_wrap_return,
+            # docstrings
+            x_doc=doc,
+            x_doc_quoted=doc_quoted,
+        )
+    )
 
 
 def function_hook(fn, data):
-    data = data.get("data", {})
-    data = data.get("functions", {})
-    public_method_hook(fn, data)
+    global_data = data.get("data", {})
+    functions_data = data.get("functions", {})
+    _function_hook(fn, global_data, functions_data, FunctionData)
 
 
 def class_hook(cls, data):
@@ -206,17 +228,20 @@ def class_hook(cls, data):
         cls["data"] = {"ignore": True}
         return
 
-    data = data.get("data", {})
-    data = data.get(cls["name"])
-    if data is None:
+    global_data = data.get("data", {})
+    class_data = global_data.classes.get(cls["name"])
+    if class_data is None:
         print("WARNING: class", cls["name"], "missing")
-        data = {}
+        class_data = ClassData()
 
     # fix enum paths
     for e in cls["enums"]["public"]:
         e["x_namespace"] = e["namespace"] + "::" + cls["name"] + "::"
 
-    cls["data"] = data
-    methods_data = data.get("methods", {})
+    cls["data"] = class_data
+    methods_data = class_data.methods
     for fn in cls["methods"]["public"]:
-        public_method_hook(fn, methods_data)
+        try:
+            _function_hook(fn, global_data, methods_data, MethodData)
+        except Exception as e:
+            raise HookError(f"{cls['name']}::{fn['name']}") from e

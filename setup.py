@@ -67,6 +67,7 @@ setup(
         "sphinxify",
         "schematics",
         "toml",
+        "pyyaml",
     ],
     requires_python=">=3.5",
     classifiers=[

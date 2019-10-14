@@ -2,12 +2,14 @@ import inspect
 import os
 from os.path import abspath, dirname, join, normpath, relpath, sep
 import shutil
+import yaml
 
 from header2whatever.config import Config
 from header2whatever.parse import process_config
 
 from setuptools import Extension
 
+from .hooks_datacfg import HooksDataYaml
 from .download import download_and_extract_zip
 
 
@@ -218,9 +220,15 @@ class Wrapper:
         shutil.rmtree(outdir, ignore_errors=True)
         os.makedirs(outdir)
 
-        data = ""
+        data = {}
         if self.cfg.generation_data:
-            data = join(self.setup_root, normpath(self.cfg.generation_data))
+            datafile = join(self.setup_root, normpath(self.cfg.generation_data))
+
+            with open(datafile) as fp:
+                data = yaml.safe_load(fp)
+
+        data = HooksDataYaml(data)
+        data.validate()
 
         sources = self.cfg.sources[:]
 
@@ -235,7 +243,6 @@ class Wrapper:
                     "headers": [join(incdir, normpath(header))],
                     "templates": [{"src": cpp_tmpl, "dst": dst}],
                     "hooks": hooks,
-                    "data": data,
                     "preprocess": True,
                     "pp_include_paths": pp_includes,
                     "vars": {"mod_fn": name},
@@ -245,7 +252,7 @@ class Wrapper:
                 cfg.validate()
                 cfg.root = incdir
 
-                process_config(cfg)
+                process_config(cfg, data)
 
         # generate an inline file that can be included + called
         self._write_module_inl(outdir)
