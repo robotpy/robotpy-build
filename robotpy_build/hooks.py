@@ -27,16 +27,22 @@ def _strip_prefixes(global_data, name):
     return name
 
 
-def _enum_hook(en, global_data):
-    en["x_namespace"] = en["namespace"]
+def _enum_hook(en, global_data, enum_data):
     ename = en.get("name")
+    value_prefix = None
     if ename:
+        data = enum_data.get(ename)
+        if data and data.value_prefix:
+            value_prefix = data.value_prefix
+        else:
+            value_prefix = ename
+
         en["x_name"] = _strip_prefixes(global_data, ename)
 
     for v in en["values"]:
         name = v["name"]
-        if ename and name.startswith(ename):
-            name = name[len(ename) :]
+        if value_prefix and name.startswith(value_prefix):
+            name = name[len(value_prefix) :]
             if name[0] == "_":
                 name = name[1:]
         v["x_name"] = name
@@ -46,7 +52,8 @@ def header_hook(header, data):
     """Called for each header"""
     global_data = data.get("data", {})
     for en in header.enums:
-        _enum_hook(en, global_data)
+        en["x_namespace"] = en["namespace"]
+        _enum_hook(en, global_data, global_data.enums)
 
 
 def _function_hook(fn, global_data, fn_data, typ):
@@ -256,6 +263,7 @@ def class_hook(cls, data):
     # fix enum paths
     for e in cls["enums"]["public"]:
         e["x_namespace"] = e["namespace"] + "::" + cls["name"] + "::"
+        _enum_hook(e, global_data, global_data.enums)
 
     cls["data"] = class_data
     methods_data = class_data.methods

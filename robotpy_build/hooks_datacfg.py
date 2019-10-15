@@ -55,6 +55,10 @@ class ClassData(Model):
     cpp_inherits = StringType()
 
 
+class EnumData(Model):
+    value_prefix = StringType()
+
+
 class HooksDataYaml(Model):
     """
         Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"] 
@@ -65,3 +69,4 @@ class HooksDataYaml(Model):
     extra_includes = ListType(StringType, default=lambda: [])
     functions = DictType(ModelType(FunctionData), default=lambda: {})
     classes = DictType(ModelType(ClassData), default=lambda: {})
+    enums = DictType(ModelType(EnumData), default=lambda: {})
