@@ -11,6 +11,17 @@ from .hooks_datacfg import ClassData, FunctionData, MethodData
 
 _missing = object()
 
+# TODO: this isn't the best solution
+def _gen_int_types():
+    for i in ('int', 'uint'):
+        for j in ('', '_fast', "_least"):
+            for k in ('8', '16', '32', '64'):
+                yield f"{i}{j}{k}_t"
+    yield "intmax_t"
+    yield "uintmax_t"
+
+_int32_types = set(_gen_int_types())
+
 
 class HookError(Exception):
     pass
@@ -119,6 +130,11 @@ def _function_hook(fn, global_data, fn_data, typ):
             fn["parameters"] = []
 
     for i, p in enumerate(fn["parameters"]):
+
+        if p["raw_type"] in _int32_types:
+            p["fundamental"] = True
+            p["unresolved"] = False
+
         if p["name"] == "":
             p["name"] = "param%s" % i
         p["x_type"] = p.get("enum", p["raw_type"])
@@ -141,7 +157,7 @@ def _function_hook(fn, global_data, fn_data, typ):
 
         ptype = "in"
 
-        if p["pointer"] and not p["constant"]:
+        if p["pointer"] and not p["constant"] and p["fundamental"]:
             p["x_callname"] = "&%(x_callname)s" % p
             ptype = "out"
         elif p["array"]:
