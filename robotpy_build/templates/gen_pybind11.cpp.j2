@@ -5,12 +5,17 @@
 {%- macro fnptr(cls, fn) -%}
 {% if fn.data.cpp_code %}
 {{ fn.data.cpp_code }}
-{% elif not fn.x_out_params %}
+{% elif not fn.x_genlambda %}
 &{% if cls %}{{ fn.namespace }}{{ cls.name }}::{% endif %}{{ fn.name }}
 {% else %}
 []({{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
-          {{ fn.x_temprefs }}
+          {% for stmt in fn.x_lambda_pre %}
+          {{ stmt }};
+          {% endfor %}
           {{ fn.x_callstart }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {% for stmt in fn.x_lambda_post %}
+          {{ stmt }};
+          {% endfor %}
           {{ fn.x_wrap_return }}
         }
 {%- endif %}

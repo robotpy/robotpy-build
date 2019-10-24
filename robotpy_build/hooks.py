@@ -90,6 +90,11 @@ def _function_hook(fn, global_data, fn_data, typ):
     x_in_params = []
     x_out_params = []
     x_rets = []
+    x_temps = []
+
+    x_genlambda = False
+    x_lambda_pre = []
+    x_lambda_post = []
 
     data = fn_data.get(fn["name"], _missing)
     if data is _missing:
@@ -129,6 +134,22 @@ def _function_hook(fn, global_data, fn_data, typ):
         if p["type"] == "void" and not p["pointer"]:
             fn["parameters"] = []
 
+    # buffers: accepts a python object that supports the buffer protocol
+    #          as input. If the buffer is an 'out' buffer, then it
+    #          will request a writeable buffer. Data is written by the
+    #          wrapped function to that buffer directly, and the length
+    #          written (if the length is a pointer) will be returned
+    buffer_params = {}
+    buflen_params = {}
+    if data.buffers:
+        for bufinfo in data.buffers:
+            if bufinfo.src == bufinfo.len:
+                raise ValueError(
+                    f"buffer src({bufinfo.src}) and len({bufinfo.len}) cannot be the same"
+                )
+            buffer_params[bufinfo.src] = bufinfo
+            buflen_params[bufinfo.len] = bufinfo
+
     for i, p in enumerate(fn["parameters"]):
 
         if p["raw_type"] in _int32_types:
@@ -139,6 +160,7 @@ def _function_hook(fn, global_data, fn_data, typ):
             p["name"] = "param%s" % i
         p["x_type"] = p.get("enum", p["raw_type"])
         p["x_callname"] = p["name"]
+        p["x_retname"] = p["name"]
 
         if "forward_declared" in p:
             fn["forward_declare"] = True
@@ -157,7 +179,54 @@ def _function_hook(fn, global_data, fn_data, typ):
 
         ptype = "in"
 
-        if p["pointer"] and not p["constant"] and p["fundamental"]:
+        bufinfo = buffer_params.pop(p["name"], None)
+        buflen = buflen_params.pop(p["name"], None)
+
+        if bufinfo:
+            x_genlambda = True
+            bname = f"__{bufinfo.src}"
+            p["constant"] = 1
+            p["reference"] = 1
+            p["pointer"] = 0
+
+            p["x_callname"] = f"({p['x_type']}*){bname}.ptr"
+            p["x_type"] = "py::buffer"
+
+            # this doesn't seem to be true for bytearrays, which is silly
+            # x_lambda_pre.append(
+            #     f'if (PyBuffer_IsContiguous((Py_buffer*){p["name"]}.ptr(), \'C\') == 0) throw py::value_error("{p["name"]}: buffer must be contiguous")'
+            # )
+
+            # TODO: check for dimensions, strides, other dangerous things
+
+            if bufinfo.type == "in":
+                ptype = "in"
+                x_lambda_pre += [f"auto {bname} = {p['name']}.request(false)"]
+            elif bufinfo.type in ("inout", "out"):
+                ptype = "in"
+                x_lambda_pre += [f"auto {bname} = {p['name']}.request(true)"]
+            else:
+                raise ValueError("Invalid bufinfo type %s" % (bufinfo.type))
+
+            x_lambda_pre += [f"{bufinfo.len} = {bname}.size * {bname}.itemsize"]
+
+            if bufinfo.minsz:
+                x_lambda_pre.append(
+                    f'if ({bufinfo.len} < {bufinfo.minsz}) throw py::value_error("{p["name"]}: minimum buffer size is {bufinfo.minsz}")'
+                )
+
+        elif buflen:
+            if p["pointer"]:
+                p["x_callname"] = f"&{buflen.len}"
+                ptype = "out"
+            else:
+                # if it's not a pointer, then the called function
+                # can't communicate through it, so ignore the parameter
+                p["x_callname"] = buflen.len
+                x_temps.append(p)
+                ptype = "ignored"
+
+        elif p["pointer"] and not p["constant"] and p["fundamental"]:
             p["x_callname"] = "&%(x_callname)s" % p
             ptype = "out"
         elif p["array"]:
@@ -172,7 +241,8 @@ def _function_hook(fn, global_data, fn_data, typ):
 
         if ptype == "out":
             x_out_params.append(p)
-        else:
+            x_temps.append(p)
+        elif ptype == "in":
             x_in_params.append(p)
 
         if p["constant"]:
@@ -184,28 +254,36 @@ def _function_hook(fn, global_data, fn_data, typ):
 
         p["x_decl"] = "%s %s" % (p["x_type_full"], p["name"])
 
+    if buffer_params:
+        raise ValueError(
+            "incorrect buffer param names '%s'" % ("', '".join(buffer_params.keys()))
+        )
+
     x_callstart = ""
     x_callend = ""
     x_wrap_return = ""
 
-    # Return all out parameters
-    x_rets.extend(x_out_params)
+    if x_out_params:
+        x_genlambda = True
+
+        # Return all out parameters
+        x_rets.extend(x_out_params)
 
     if fn["rtnType"] != "void":
         x_callstart = "auto __ret ="
-        x_rets.insert(0, dict(name="__ret", x_type=fn["rtnType"]))
+        x_rets.insert(0, dict(x_retname="__ret", x_type=fn["rtnType"]))
 
     if len(x_rets) == 1 and x_rets[0]["x_type"] != "void":
-        x_wrap_return = "return %s;" % x_rets[0]["name"]
+        x_wrap_return = "return %s;" % x_rets[0]["x_retname"]
     elif len(x_rets) > 1:
         x_wrap_return = "return std::make_tuple(%s);" % ",".join(
-            [p["name"] for p in x_rets]
+            [p["x_retname"] for p in x_rets]
         )
 
     # Temporary values to store out parameters in
-    x_temprefs = ""
-    if x_out_params:
-        x_temprefs = "; ".join(["%(x_type)s %(name)s" % p for p in x_out_params]) + ";"
+    if x_temps:
+        for out in reversed(x_temps):
+            x_lambda_pre.insert(0, "%(x_type)s %(name)s = 0" % out)
 
     # Rename internal functions
     if data.internal:
@@ -246,8 +324,10 @@ def _function_hook(fn, global_data, fn_data, typ):
             x_out_params=x_out_params,
             x_rets=x_rets,
             # lambda generation
+            x_genlambda=x_genlambda,
             x_callstart=x_callstart,
-            x_temprefs=x_temprefs,
+            x_lambda_pre=x_lambda_pre,
+            x_lambda_post=x_lambda_post,
             x_callend=x_callend,
             x_wrap_return=x_wrap_return,
             # docstrings
