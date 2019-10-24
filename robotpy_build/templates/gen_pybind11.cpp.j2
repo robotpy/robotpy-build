@@ -41,6 +41,24 @@
   {% endif %}
 {% endmacro -%}
 
+{%- macro genprop(cls, prop) %}
+    {% if prop.array_size is defined %}
+    .def_property_readonly("{{ prop.name }}", []({{ prop.namespace}}{{ cls.name }}& inst) {
+        return py::memoryview(py::buffer_info(
+          &inst.{{ prop.name }}, sizeof({{ prop.type }}),
+          py::format_descriptor<{{ prop.type }}>::format(),
+          1, {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.type }})}
+        ));
+    })
+    {% elif prop.array %}
+    .def_property("{{ prop.name }}",
+      [](const {{ prop.namespace}}{{ cls.name }}& inst) { return inst.{{ prop.name}}; },
+      []({{ prop.namespace}}{{ cls.name }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
+    {% else %}
+    .def_readwrite("{{ prop.name }}", &{{ prop.namespace }}{{ cls.name }}::{{ prop.name}})
+    {% endif %}
+{% endmacro -%}
+
 {%- macro unnamed_enum(x, enums) %}
 {% for enum in enums %}
 {% if 'name' not in enum %}
@@ -82,6 +100,9 @@ void init_{{ mod_fn }}(py::module &m) {
   {{ cls.name.lower() }}
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}
   {{ genmethod(cls, fn) }}
+  {%- endfor %}
+  {% for prop in cls.properties.public %}
+  {{ genprop(cls, prop) }}
   {%- endfor %}
   ;
   {{ unnamed_enum(cls.name.lower(), cls.enums.public) }}
