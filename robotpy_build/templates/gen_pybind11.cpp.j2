@@ -64,7 +64,14 @@
       [](const {{ prop.namespace}}{{ cls.name }}& inst) { return inst.{{ prop.name}}; },
       []({{ prop.namespace}}{{ cls.name }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
     {% else %}
-    .def_readwrite("{{ prop.name }}", &{{ prop.namespace }}{{ cls.name }}::{{ prop.name}})
+    .def_
+      {%- if prop.constant or prop.constexpr -%}
+        readonly
+      {%- else -%}
+        readwrite
+      {%- endif -%}
+      {%- if prop.static %}_static{% endif -%}
+      ("{{ prop.name }}", &{{ prop.namespace }}{{ cls.name }}::{{ prop.name}})
     {% endif %}
 {% endmacro -%}
 
