@@ -38,6 +38,21 @@ def _strip_prefixes(global_data, name):
     return name
 
 
+def _resolve_default(fn, name):
+    if isinstance(name, (int, float)):
+        return str(name)
+    if name in ("NULL", "nullptr"):
+        return name
+
+    # if there's a parent, look there
+    parent = fn["parent"]
+    if parent:
+        for prop in parent["properties"]["public"]:
+            if prop["name"] == name:
+                name = f"{parent['namespace']}::{parent['name']}::{name}"
+    return name
+
+
 def _enum_hook(en, global_data, enum_data):
     ename = en.get("name")
     value_prefix = None
@@ -174,7 +189,7 @@ def _function_hook(fn, global_data, fn_data, typ):
         p["x_pyarg"] = 'py::arg("%(name)s")' % p
 
         if "default" in p:
-            p["default"] = str(p["default"])
+            p["default"] = _resolve_default(fn, p["default"])
             p["x_pyarg"] += "=" + p["default"]
 
         ptype = "in"
