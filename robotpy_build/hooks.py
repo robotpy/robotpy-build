@@ -361,6 +361,13 @@ def class_hook(cls, data):
         e["x_namespace"] = e["namespace"] + "::" + cls["name"] + "::"
         _enum_hook(e, global_data, global_data.enums)
 
+    # update inheritance
+    for base in cls["inherits"]:
+        if "::" not in base["class"]:
+            base["ns_class"] = f'{cls["namespace"]}::{base["class"]}'
+        else:
+            base["ns_class"] = base["class"]
+
     cls["data"] = class_data
     methods_data = class_data.methods
     for fn in cls["methods"]["public"]:

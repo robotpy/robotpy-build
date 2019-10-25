@@ -82,7 +82,6 @@ class MethodData(FunctionData):
 class ClassData(Model):
     ignore = BooleanType(default=False)
     methods = DictType(ModelType(MethodData), default=lambda: {})
-    cpp_inherits = StringType()
 
 
 class EnumData(Model):

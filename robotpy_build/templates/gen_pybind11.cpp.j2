@@ -1,3 +1,7 @@
+{%- macro genbase(cls) -%}
+{% if cls.inherits %}, {{ cls.inherits | join(', ', attribute='ns_class')}}{% endif %}
+{%- endmacro -%}
+
 {%- macro fndef(fn) %}
 {% if fn.static %}def_static{% else %}def{% endif %}
 {% endmacro -%}
@@ -101,7 +105,7 @@ typedef py::call_guard<py::gil_scoped_release> release_gil;
 void init_{{ mod_fn }}(py::module &m) {
 {% for header in headers %}
 {% for cls in header.classes if not cls.data.ignore %}
-  py::class_<{{ cls.namespace }}::{{ cls.name }}{% if cls.data.cpp_inherits %}, {{ cls.data.cpp_inherits }}{% endif %}> {{ cls.name.lower() }}(m, "{{ cls.name }}");
+  py::class_<{{ cls.namespace }}::{{ cls.name }}{{ genbase(cls) }}> {{ cls.name.lower() }}(m, "{{ cls.name }}");
   {{ cls.name.lower() }}
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}
   {{ genmethod(cls, fn) }}
