@@ -87,12 +87,13 @@ def _function_hook(fn, global_data, fn_data, typ):
 
     # Ignore operators, move constructors, copy constructors
     if (
-        fn["name"].startswith("operator")
+        fn.get("operator")
         or fn.get("destructor")
         or (
             fn.get("constructor")
             and fn["parameters"]
-            and fn["parameters"][0]["name"] == "&"
+            and fn["parameters"][0]["class"]
+            and fn["parameters"][0]["class"]["name"] == fn["name"]
         )
     ):
         fn["data"] = typ({"ignore": True})
