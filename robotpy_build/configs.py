@@ -22,10 +22,14 @@ class WrapperConfig(Model):
     # Download settings
     #
 
-    # Library name
-    libname = StringType(required=True)
+    # Project name
+    name = StringType(required=True)
 
-    # Name of artifact to download, if different than libname
+    # Names of contained shared libraries (in loading order). If empty,
+    # set to name
+    libs = ListType(StringType)
+
+    # Name of artifact to download, if different than name
     artname = StringType(default="")
 
     # URL to download
@@ -33,6 +37,9 @@ class WrapperConfig(Model):
 
     # Version of artifact to download
     version = StringType(required=True)
+
+    # Library extensions map
+    libexts = DictType(StringType, default={})
 
     #
     # Wrapper generation settings
