@@ -71,12 +71,12 @@ class FunctionData(BaseModel):
 
 
 class MethodData(FunctionData):
-    overloads: Optional[Dict[str, FunctionData]] = None
+    overloads: Optional[Dict[str, Optional[FunctionData]]] = None
 
 
 class ClassData(BaseModel):
     ignore: bool = False
-    methods: Dict[str, MethodData] = {}
+    methods: Dict[str, Optional[MethodData]] = {}
 
 
 class EnumData(BaseModel):
