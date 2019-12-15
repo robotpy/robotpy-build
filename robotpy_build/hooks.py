@@ -96,7 +96,7 @@ def _function_hook(fn, global_data, fn_data, typ):
             and fn["parameters"][0]["class"]["name"] == fn["name"]
         )
     ):
-        fn["data"] = typ({"ignore": True})
+        fn["data"] = typ(ignore=True)
         return
 
     # Python exposed function name converted to camelcase
