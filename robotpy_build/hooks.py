@@ -6,7 +6,7 @@ import sphinxify
 
 # terrible hack
 __name__ = "robotpy_build.hooks"
-from .hooks_datacfg import ClassData, FunctionData, MethodData
+from .hooks_datacfg import BufferType, ClassData, FunctionData, MethodData
 
 
 _missing = object()
@@ -134,7 +134,7 @@ def _function_hook(fn, global_data, fn_data, typ):
             if overload:
                 data = data.dict(exclude_unset=True)
                 data.update(overload.dict(exclude_unset=True))
-                data = typ(data)
+                data = typ(**data)
         else:
             print(
                 "WARNING: Missing overload %s::%s(%s)"
@@ -215,14 +215,13 @@ def _function_hook(fn, global_data, fn_data, typ):
 
             # TODO: check for dimensions, strides, other dangerous things
 
-            if bufinfo.type == "in":
+            # bufinfo was validated and converted before it got here
+            if bufinfo.type is BufferType.IN:
                 ptype = "in"
                 x_lambda_pre += [f"auto {bname} = {p['name']}.request(false)"]
-            elif bufinfo.type in ("inout", "out"):
+            else:
                 ptype = "in"
                 x_lambda_pre += [f"auto {bname} = {p['name']}.request(true)"]
-            else:
-                raise ValueError("Invalid bufinfo type %s" % (bufinfo.type))
 
             x_lambda_pre += [f"{bufinfo.len} = {bname}.size * {bname}.itemsize"]
 
