@@ -238,8 +238,7 @@ class Wrapper:
             with open(datafile) as fp:
                 data = yaml.safe_load(fp)
 
-        data = HooksDataYaml(data)
-        data.validate()
+        data = HooksDataYaml(**data)
 
         sources = self.cfg.sources[:]
 

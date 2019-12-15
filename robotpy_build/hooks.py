@@ -132,8 +132,8 @@ def _function_hook(fn, global_data, fn_data, typ):
         if _sig in data.overloads:
             overload = data.overloads[_sig]
             if overload:
-                data = data.to_native()
-                data.update(overload.to_native())
+                data = data.dict(exclude_unset=True)
+                data.update(overload.dict(exclude_unset=True))
                 data = typ(data)
         else:
             print(
@@ -185,7 +185,7 @@ def _function_hook(fn, global_data, fn_data, typ):
 
         po = param_override.get(p["name"])
         if po:
-            p.update(po.to_native())
+            p.update(po.dict(exclude_unset=True))
 
         p["x_pyarg"] = 'py::arg("%(name)s")' % p
 

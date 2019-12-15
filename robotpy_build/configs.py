@@ -1,10 +1,11 @@
 # For validating pyproject.toml
 
-from schematics.models import Model
-from schematics.types import ModelType, BooleanType, StringType, ListType, DictType
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel
 
 
-class WrapperConfig(Model):
+class WrapperConfig(BaseModel):
     """
         Wrapper configurations specified in pyproject.toml
 
@@ -12,61 +13,61 @@ class WrapperConfig(Model):
     """
 
     # List of extra headers to export
-    extra_headers = ListType(StringType, default=[])
+    extra_headers: List[str] = []
 
     # List of robotpy-build library dependencies
     # .. would be nice to auto-infer this from the python install dependencies
-    depends = ListType(StringType, default=[])
+    depends: List[str] = []
 
     #
     # Download settings
     #
 
     # Project name
-    name = StringType(required=True)
+    name: str
 
     # Names of contained shared libraries (in loading order). If empty,
     # set to name
-    libs = ListType(StringType)
+    libs: Optional[List[str]] = None
 
     # Name of artifact to download, if different than name
-    artname = StringType(default="")
+    artname: str = ""
 
     # URL to download
-    baseurl = StringType(required=True)
+    baseurl: str
 
     # Version of artifact to download
-    version = StringType(required=True)
+    version: str
 
     # Library extensions map
-    libexts = DictType(StringType, default={})
+    libexts: Dict[str, str] = {}
 
     #
     # Wrapper generation settings
     #
 
     # Source files to compile
-    sources = ListType(StringType, default=[])
+    sources: List[str] = []
 
     # List of dictionaries: each dictionary key is the function
     # name for the initialization function, the value is the
     # header that is being wrapped
-    generate = ListType(DictType(StringType))
+    generate: Optional[List[Dict[str, str]]] = None
 
     # Path to a data.yml to use during code generation
-    generation_data = StringType()
+    generation_data: Optional[str] = None
 
 
-class DistutilsMetadata(Model):
+class DistutilsMetadata(BaseModel):
 
-    name = StringType(required=True)
-    description = StringType()
+    name: str
+    description: Optional[str] = None
 
-    author = StringType(required=True)
-    author_email = StringType()
-    url = StringType()
-    license = StringType(required=True)
-    install_requires = ListType(StringType, required=True)
+    author: str
+    author_email: str
+    url: str
+    license: str
+    install_requires: List[str]
 
     # robotpy-build sets these automatically
     # long_description
@@ -79,7 +80,7 @@ class DistutilsMetadata(Model):
     # ext_modules
 
 
-class RobotpyBuildConfig(Model):
+class RobotpyBuildConfig(BaseModel):
     """
         Main robotpy-build configuration specified in pyproject.toml
 
@@ -87,14 +88,14 @@ class RobotpyBuildConfig(Model):
     """
 
     # package to store version information in
-    base_package = StringType(required=True)
+    base_package: str
 
     #
     # Everything below here are separate sections
     #
 
     # [tool.robotpy-build.metadata]
-    metadata = ModelType(DistutilsMetadata)
+    metadata: DistutilsMetadata
 
     # [tool.robotpy-build.wrappers."XXX"]
-    wrappers = DictType(ModelType(WrapperConfig))
+    wrappers: Dict[str, WrapperConfig]
