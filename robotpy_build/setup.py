@@ -30,8 +30,7 @@ class Setup:
 
         self.project_dict = self.pyproject.get("tool", {}).get("robotpy-build", {})
         try:
-            self.project = RobotpyBuildConfig(self.project_dict)
-            self.project.validate()
+            self.project = RobotpyBuildConfig(**self.project_dict)
         except Exception as e:
             raise ValueError(
                 f"robotpy-build configuration in pyproject.toml is incorrect"

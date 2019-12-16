@@ -3,99 +3,94 @@
 # to modify the generated files
 #
 
-from schematics.models import Model
-from schematics.types import (
-    ModelType,
-    BooleanType,
-    IntType,
-    StringType,
-    ListType,
-    DictType,
-)
+import enum
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel
 
 
-class ParamData(Model):
+class ParamData(BaseModel):
     """Various ways to modify parameters"""
 
-    class Options:
-        serialize_when_none = False
-
     # C++ type emitted
-    x_type = StringType()
+    x_type: Optional[str] = None
 
     # Default value for parameter
-    default = StringType()
+    default: Optional[str] = None
 
 
-class BufferData(Model):
+class BufferType(str, enum.Enum):
+    IN = "in"
+    OUT = "out"
+    INOUT = "inout"
+
+
+class BufferData(BaseModel):
     """Describes buffers"""
 
     # Indicates what type of buffer is required: out/inout buffers require
     # a writeable buffer such as a bytearray, but in only needs a readonly
     # buffer (such as bytes)
-    type = StringType(required=True, choices=["in", "out", "inout"])
+    type: BufferType
 
     # Name of source parameter -- user must pass in something that implements
     # the buffer protocol (eg bytes, bytearray)
-    src = StringType(required=True)
+    src: str
 
     # Name of length parameter. An out-only parameter, it will be set to the size
     # of the src buffer, and will be returned so the caller can determine how
     # many bytes were written
-    len = StringType(required=True)
+    len: str
 
     # If specified, the minimum size of the passed in buffer
-    minsz = IntType()
+    minsz: Optional[int] = None
 
 
-class FunctionData(Model):
-    class Options:
-        serialize_when_none = False
-
+class FunctionData(BaseModel):
     # If True, don't wrap this
-    ignore = BooleanType()
+    ignore: bool = False
 
     # Use this code instead of the generated code
-    cpp_code = StringType()
+    cpp_code: Optional[str] = None
 
     # Docstring for the function
-    doc = StringType()
+    doc: Optional[str] = None
 
     # If True, prepends an underscore to the python name
-    internal = BooleanType()
+    internal: bool = False
 
     # Set this to rename the function
-    rename = StringType()
+    rename: Optional[str] = None
 
     # Mechanism to override individual parameters
-    param_override = DictType(ModelType(ParamData), default=lambda: {})
+    param_override: Dict[str, ParamData] = {}
 
-    no_release_gil = BooleanType()
+    no_release_gil: bool = False
 
-    buffers = ListType(ModelType(BufferData))
+    buffers: List[BufferData] = []
 
 
 class MethodData(FunctionData):
-    overloads = DictType(ModelType(FunctionData), default=lambda: {})
+    overloads: Optional[Dict[str, Optional[FunctionData]]] = None
 
 
-class ClassData(Model):
-    ignore = BooleanType(default=False)
-    methods = DictType(ModelType(MethodData), default=lambda: {})
+class ClassData(BaseModel):
+    ignore: bool = False
+    methods: Dict[str, Optional[MethodData]] = {}
 
 
-class EnumData(Model):
-    value_prefix = StringType()
+class EnumData(BaseModel):
+    value_prefix: Optional[str] = None
 
 
-class HooksDataYaml(Model):
+class HooksDataYaml(BaseModel):
     """
-        Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"] 
+        Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
         generation_data
     """
 
-    strip_prefixes = ListType(StringType, default=lambda: [])
-    extra_includes = ListType(StringType, default=lambda: [])
-    functions = DictType(ModelType(FunctionData), default=lambda: {})
-    classes = DictType(ModelType(ClassData), default=lambda: {})
-    enums = DictType(ModelType(EnumData), default=lambda: {})
+    strip_prefixes: List[str] = []
+    extra_includes: List[str] = []
+    functions: Dict[str, FunctionData] = {}
+    classes: Dict[str, ClassData] = {}
+    enums: Dict[str, EnumData] = {}
