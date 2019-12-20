@@ -63,6 +63,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "setuptools",
+        "setuptools_scm",
         "header2whatever",
         "sphinxify",
         "pydantic",
