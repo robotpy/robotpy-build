@@ -5,6 +5,24 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 
+class ExtensionConfig(BaseModel):
+    """
+        Compiled extension specified in pyproject.toml
+
+        [tool.robotpy-build.ext."package-name"]
+    """
+
+    # Module name: must match the name given to the PYBIND11_MODULE() macro
+    name: str
+
+    # List of robotpy-build library dependencies
+    # .. would be nice to auto-infer this from the python install dependencies
+    depends: List[str] = []
+
+    # Source files to compile
+    sources: List[str]
+
+
 class WrapperConfig(BaseModel):
     """
         Wrapper configurations specified in pyproject.toml
@@ -97,5 +115,8 @@ class RobotpyBuildConfig(BaseModel):
     # [tool.robotpy-build.metadata]
     metadata: DistutilsMetadata
 
+    # [tool.robotpy-build.ext."XXX"]
+    ext: Dict[str, ExtensionConfig] = {}
+
     # [tool.robotpy-build.wrappers."XXX"]
-    wrappers: Dict[str, WrapperConfig]
+    wrappers: Dict[str, WrapperConfig] = {}

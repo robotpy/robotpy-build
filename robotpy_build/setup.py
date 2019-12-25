@@ -1,6 +1,7 @@
 import os
 from os.path import abspath, exists, join
 from setuptools import find_packages, setup as _setup
+from setuptools import Extension
 from setuptools_scm import get_version
 import toml
 
@@ -92,8 +93,39 @@ class Setup:
             if w.extension:
                 ext_modules.append(w.extension)
 
+        for name, cfg in self.project.ext.items():
+            ext = self._create_compiled_extension(name, cfg)
+            ext_modules.append(ext)
+
         if ext_modules:
             self.setup_kwargs["ext_modules"] = ext_modules
+
+    def _create_compiled_extension(self, name, cfg):
+        extname = f"{name}.{cfg.name}"
+
+        # TODO: maybe wrapper.py can use this?
+
+        include_dirs = []
+        for dep in cfg.depends:
+            include_dirs.extend(self.pkgcfg.get_pkg(dep).get_include_dirs())
+
+        include_dirs.extend(self.pkgcfg.get_pkg("robotpy-build").get_include_dirs())
+        library_dirs = []
+        for dep in cfg.depends:
+            library_dirs.extend(self.pkgcfg.get_pkg(dep).get_library_dirs())
+
+        libraries = []
+        for dep in cfg.depends:
+            libraries.extend(self.pkgcfg.get_pkg(dep).get_library_names())
+
+        return Extension(
+            extname,
+            sources=cfg.sources,
+            include_dirs=include_dirs,
+            library_dirs=library_dirs,
+            libraries=libraries,
+            language="c++",
+        )
 
     def run(self):
         # assemble all the pieces and make it work
