@@ -57,8 +57,9 @@ class Setup:
         self.setup_kwargs["packages"] = find_packages()
 
         self.setup_kwargs["long_description"] = self._generate_long_description()
+
         self.setup_kwargs["version"] = get_version(
-            write_to=join(self.base_package, "version.py"),
+            write_to=join(self.base_package, "version.py"), fallback_version="master"
         )
 
         self.pkgcfg = PkgCfgProvider()
