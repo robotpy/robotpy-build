@@ -117,22 +117,23 @@ class Wrapper:
         self._extract_zip_to("headers", incdir, cache)
 
         libnames = self.cfg.libs
-        if not libnames:
+        if libnames is None:
             libnames = [self.cfg.name]
 
-        libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
+        if libnames:
+            libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
 
-        libnames = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
+            libnames = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
 
-        os.makedirs(libdir)
-        to = {
-            join(self.platform.os, self.platform.arch, "shared", libname): join(
-                libdir, libname
-            )
-            for libname in libnames
-        }
+            os.makedirs(libdir)
+            to = {
+                join(self.platform.os, self.platform.arch, "shared", libname): join(
+                    libdir, libname
+                )
+                for libname in libnames
+            }
 
-        self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
+            self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
 
         self._write_init_py(initpy, libnames)
         self._write_pkgcfg_py(pkgcfgpy)
@@ -156,8 +157,9 @@ class Wrapper:
 
         init += "\n"
 
-        for libname in libnames:
-            init += f'_lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
+        if libnames:
+            for libname in libnames:
+                init += f'_lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
 
         imports = []
         for dep in self.cfg.depends:

@@ -44,8 +44,8 @@ class WrapperConfig(BaseModel):
     # Project name
     name: str
 
-    # Names of contained shared libraries (in loading order). If empty,
-    # set to name
+    # Names of contained shared libraries (in loading order). If None,
+    # set to name. If empty list, libs will not be downloaded.
     libs: Optional[List[str]] = None
 
     # Name of artifact to download, if different than name
