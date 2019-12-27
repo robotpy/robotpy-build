@@ -1,5 +1,5 @@
 {%- macro genbase(cls) -%}
-{% if cls.inherits %}, {{ cls.inherits | join(', ', attribute='ns_class')}}{% endif %}
+{% if cls.inherits %}, {{ cls.inherits | join(', ', attribute='x_qualname')}}{% endif %}
 {%- endmacro -%}
 
 {%- macro fndef(fn) %}
@@ -98,6 +98,11 @@ using {{ using.raw_type }};
 {% endfor %}
 {% endfor %}
 
+{% for header in headers %}
+{% for cls in header.classes if not cls.data.ignore %}
+#include <rpygen/{{ cls.x_qualname_ }}.hpp>
+{% endfor %}
+{% endfor %}
 
 {% for inc in data.extra_includes %}
 #include "{{ inc }}"
@@ -106,12 +111,19 @@ using {{ using.raw_type }};
 void init_{{ mod_fn }}(py::module &m) {
 {% for header in headers %}
 {% for cls in header.classes if not cls.data.ignore %}
-  py::class_<{{ cls.namespace }}::{{ cls.name }}{{ genbase(cls) }}> {{ cls.name.lower() }}(m, "{{ cls.name }}");
+  py::class_<{{ cls.x_qualname }}, rpygen::Py{{ cls.x_qualname_ }}<{{ cls.x_qualname }}>{{ genbase(cls) }}> {{ cls.name.lower() }}(m, "{{ cls.name }}");
   {{ cls.name.lower() }}
+  {# default constructor if not defined #}
+  {% if not cls.x_has_constructor %}
+    .def(py::init<>())
+  {% endif %}
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}
   {{ genmethod(cls, fn) }}
   {%- endfor %}
   {% for prop in cls.properties.public %}
+  {{ genprop(cls, prop) }}
+  {%- endfor %}
+  {% for prop in cls.properties.protected %}
   {{ genprop(cls, prop) }}
   {%- endfor %}
   ;

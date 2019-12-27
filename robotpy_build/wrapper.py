@@ -235,6 +235,7 @@ class Wrapper:
         hppoutdir = join(incdir, "rpygen")
         hooks = join(thisdir, "hooks.py")
         cpp_tmpl = join(thisdir, "templates", "gen_pybind11.cpp.j2")
+        hpp_tmpl = join(thisdir, "templates", "gen_cls_trampoline.hpp.j2")
 
         pp_includes = self._all_includes(False)
 
@@ -264,10 +265,16 @@ class Wrapper:
                 cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
                 sources.append(cpp_dst)
 
+                hpp_dst = join(
+                    hppoutdir,
+                    "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
+                )
+
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     "headers": [join(incdir, normpath(header))],
                     "templates": [{"src": cpp_tmpl, "dst": cpp_dst}],
+                    "class_templates": [{"src": hpp_tmpl, "dst": hpp_dst}],
                     "hooks": hooks,
                     "preprocess": True,
                     "pp_retain_all_content": False,
@@ -296,7 +303,7 @@ class Wrapper:
         calls = []
 
         for gen in self.cfg.generate:
-            for name, header in gen.items():
+            for name in gen.keys():
                 decls.append(f"void init_{name}(py::module &m);")
                 calls.append(f"    init_{name}(m);")
 

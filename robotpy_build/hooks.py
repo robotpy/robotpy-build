@@ -7,18 +7,19 @@ import sphinxify
 # terrible hack
 __name__ = "robotpy_build.hooks"
 from .hooks_datacfg import BufferType, ClassData, FunctionData, MethodData
-
+from .mangle import trampoline_signature
 
 _missing = object()
 
 # TODO: this isn't the best solution
 def _gen_int_types():
-    for i in ('int', 'uint'):
-        for j in ('', '_fast', "_least"):
-            for k in ('8', '16', '32', '64'):
+    for i in ("int", "uint"):
+        for j in ("", "_fast", "_least"):
+            for k in ("8", "16", "32", "64"):
                 yield f"{i}{j}{k}_t"
     yield "intmax_t"
     yield "uintmax_t"
+
 
 _int32_types = set(_gen_int_types())
 
@@ -76,6 +77,7 @@ def _enum_hook(en, global_data, enum_data):
 
 def header_hook(header, data):
     """Called for each header"""
+    data["trampoline_signature"] = trampoline_signature
     global_data = data.get("data", {})
     for en in header.enums:
         en["x_namespace"] = en["namespace"]
@@ -373,14 +375,34 @@ def class_hook(cls, data):
     # update inheritance
     for base in cls["inherits"]:
         if "::" not in base["class"]:
-            base["ns_class"] = f'{cls["namespace"]}::{base["class"]}'
+            base["x_qualname"] = f'{cls["namespace"]}::{base["class"]}'
         else:
-            base["ns_class"] = base["class"]
+            base["x_qualname"] = base["class"]
+
+        base["x_qualname_"] = base["x_qualname"].replace(":", "_")
+
+    cls["x_qualname"] = cls["namespace"] + "::" + cls["name"]
+    cls["x_qualname_"] = cls["x_qualname"].replace(":", "_")
 
     cls["data"] = class_data
+    has_constructor = False
     methods_data = class_data.methods
     for fn in cls["methods"]["public"]:
+        if fn["constructor"]:
+            has_constructor = True
         try:
             _function_hook(fn, global_data, methods_data, MethodData)
         except Exception as e:
             raise HookError(f"{cls['name']}::{fn['name']}") from e
+    for fn in cls["methods"]["protected"]:
+        if fn["constructor"]:
+            has_constructor = True
+        try:
+            _function_hook(fn, global_data, methods_data, MethodData)
+        except Exception as e:
+            raise HookError(f"{cls['name']}::{fn['name']}") from e
+    for fn in cls["methods"]["private"]:
+        if fn["constructor"]:
+            has_constructor = True
+
+    cls["x_has_constructor"] = has_constructor
