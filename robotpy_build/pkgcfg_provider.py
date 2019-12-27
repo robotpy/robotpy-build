@@ -15,16 +15,25 @@ class PkgCfg:
         self.import_name = getattr(self.module, "import_name", None)
 
     def get_include_dirs(self):
+        """
+            Include directories provided by this module
+        """
         fn = getattr(self.module, "get_include_dirs", None)
         if fn:
             return fn()
 
     def get_library_dirs(self):
+        """
+            Directories where libraries reside
+        """
         fn = getattr(self.module, "get_library_dirs", None)
         if fn:
             return fn()
 
     def get_library_names(self):
+        """
+            Names of libraries provided
+        """
         fn = getattr(self.module, "get_library_names", None)
         if fn:
             return fn()
