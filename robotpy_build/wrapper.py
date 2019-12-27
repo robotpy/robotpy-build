@@ -216,7 +216,7 @@ class Wrapper:
         with open(fname, "w") as fp:
             fp.write(pkgcfg)
 
-    def on_build_gen(self):
+    def on_build_gen(self, cxx_gen_dir):
 
         if not self.cfg.generate:
             return
@@ -224,14 +224,20 @@ class Wrapper:
         thisdir = abspath(dirname(__file__))
 
         incdir = join(self.root, "include")
-        outdir = join(self.root, "gensrc")
+        hppoutdir = join(incdir, "rpygen")
         hooks = join(thisdir, "hooks.py")
         cpp_tmpl = join(thisdir, "templates", "gen_pybind11.cpp.j2")
 
         pp_includes = self._all_includes(False)
 
-        shutil.rmtree(outdir, ignore_errors=True)
-        os.makedirs(outdir)
+        # TODO: only regenerate files if the generated files
+        #       have changed
+
+        shutil.rmtree(cxx_gen_dir, ignore_errors=True)
+        os.makedirs(cxx_gen_dir)
+
+        shutil.rmtree(hppoutdir, ignore_errors=True)
+        os.makedirs(hppoutdir)
 
         data = {}
         if self.cfg.generation_data:
@@ -247,15 +253,16 @@ class Wrapper:
         for gen in self.cfg.generate:
             for name, header in gen.items():
 
-                dst = join(outdir, f"{name}.cpp")
-                sources.append(dst)
+                cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
+                sources.append(cpp_dst)
 
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     "headers": [join(incdir, normpath(header))],
-                    "templates": [{"src": cpp_tmpl, "dst": dst}],
+                    "templates": [{"src": cpp_tmpl, "dst": cpp_dst}],
                     "hooks": hooks,
                     "preprocess": True,
+                    "pp_retain_all_content": False,
                     "pp_include_paths": pp_includes,
                     "vars": {"mod_fn": name},
                 }
@@ -267,15 +274,15 @@ class Wrapper:
                 process_config(cfg, data)
 
         # generate an inline file that can be included + called
-        self._write_module_inl(outdir)
+        self._write_wrapper_hpp(cxx_gen_dir)
 
         # update the build extension so that build_ext works
         self.extension.sources = sources
-        self.extension.include_dirs = self._all_includes(True)
+        self.extension.include_dirs = self._all_includes(True) + [cxx_gen_dir]
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
 
-    def _write_module_inl(self, outdir):
+    def _write_wrapper_hpp(self, outdir):
 
         decls = []
         calls = []
@@ -306,5 +313,5 @@ class Wrapper:
             .replace("##CALLS##", "\n".join(calls))
         )
 
-        with open(join(outdir, "module.hpp"), "w") as fp:
+        with open(join(outdir, "rpygen_wrapper.hpp"), "w") as fp:
             fp.write(content)
