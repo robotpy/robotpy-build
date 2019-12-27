@@ -69,10 +69,15 @@ class Wrapper:
         return [join(self.root, "include")]
 
     def get_library_dirs(self):
-        return [join(self.root, "lib")]
+        if self.get_library_names():
+            return [join(self.root, "lib")]
+        return []
 
     def get_library_names(self):
-        return [self.cfg.name]
+        if self.cfg.libs is None:
+            return [self.cfg.name]
+        else:
+            return self.cfg.libs
 
     def _all_includes(self, include_rpyb):
         includes = self.get_include_dirs()
@@ -116,9 +121,7 @@ class Wrapper:
 
         self._extract_zip_to("headers", incdir, cache)
 
-        libnames = self.cfg.libs
-        if libnames is None:
-            libnames = [self.cfg.name]
+        libnames = self.get_library_names()
 
         if libnames:
             libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
@@ -179,6 +182,11 @@ class Wrapper:
 
     def _write_pkgcfg_py(self, fname):
 
+        library_dirs = "[]"
+        library_names = self.get_library_names()
+        if library_names:
+            library_dirs = '[join(_root, "lib")]'
+
         # write pkgcfg.py
         pkgcfg = inspect.cleandoc(
             f"""
@@ -194,10 +202,10 @@ class Wrapper:
             return [join(_root, "include")##EXTRAINCLUDES##]
 
         def get_library_dirs():
-            return [join(_root, "lib")]
+            return {library_dirs}
         
         def get_library_names():
-            return ["{self.cfg.name}"]
+            return {repr(library_names)}
         """
         )
 
