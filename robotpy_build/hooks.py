@@ -144,12 +144,6 @@ def _function_hook(fn, global_data, fn_data, typ):
     # Use this if one of the parameter types don't quite match
     param_override = data.param_override
 
-    # fix cppheaderparser quirk
-    if len(fn["parameters"]) == 1:
-        p = fn["parameters"][0]
-        if p["type"] == "void" and not p["pointer"]:
-            fn["parameters"] = []
-
     # buffers: accepts a python object that supports the buffer protocol
     #          as input. If the buffer is an 'out' buffer, then it
     #          will request a writeable buffer. Data is written by the
