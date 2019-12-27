@@ -1,10 +1,12 @@
 # Used by robotpybuild entry point
 
-from os.path import abspath, dirname, join
+from os.path import abspath, join, dirname
+
+_root = abspath(dirname(__file__))
 
 
 def get_include_dirs():
-    return [abspath(join(dirname(__file__), "pybind11", "include"))]
+    return [join(_root, "pybind11", "include"), join(_root, "include")]
 
 
 def get_library_dirs():
