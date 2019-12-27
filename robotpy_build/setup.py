@@ -59,6 +59,8 @@ class Setup:
 
         self.setup_kwargs["long_description"] = self._generate_long_description()
 
+        # get_version expects the directory to exist
+        os.makedirs(self.base_package, exist_ok=True)
         self.setup_kwargs["version"] = get_version(
             write_to=join(self.base_package, "version.py"), fallback_version="master"
         )
