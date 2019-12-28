@@ -64,7 +64,9 @@ def _encode_type(param):
     typ = _builtins.get(raw_type)
     if not typ:
         # assert " " not in raw_type, raw_type
-        typ = "T" + raw_type.replace("::", "_").replace("<", "_").replace(" ", "")
+        typ = "T" + raw_type.replace("::", "_").replace("<", "_").replace(
+            ">", "_"
+        ).replace(" ", "")
 
     names.append(typ)
     return "".join(names)
