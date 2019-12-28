@@ -1,6 +1,8 @@
+from os.path import join
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import setuptools
+import tempfile
 
 from ..platforms import get_platform
 
@@ -10,12 +12,12 @@ def has_flag(compiler, flagname):
     """Return a boolean indicating whether a flag name is supported on
     the specified compiler.
     """
-    import tempfile
-
-    with tempfile.NamedTemporaryFile("w", suffix=".cpp") as f:
-        f.write("int main (int argc, char **argv) { return 0; }")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fname = join(tmpdir, "test.cpp")
+        with open(fname, "w") as fp:
+            fp.write("int main (int argc, char **argv) { return 0; }")
         try:
-            compiler.compile([f.name], extra_postargs=[flagname])
+            compiler.compile([fname], output_dir=tmpdir, extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
             return False
     return True
