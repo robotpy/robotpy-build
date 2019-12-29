@@ -352,8 +352,7 @@ def _function_hook(fn, global_data, fn_data, typ, fn_report, internal=False):
     if data.doc is not None:
         doc = data.doc
     elif "doxygen" in fn:
-        # work around a CppHeaderParser bug
-        doc = fn["doxygen"].rpartition("*//*")[2]
+        doc = fn["doxygen"]
         doc = sphinxify.process_raw(doc)
 
     if doc:
