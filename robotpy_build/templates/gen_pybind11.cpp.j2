@@ -1,5 +1,5 @@
 {%- macro genbase(cls) -%}
-{% if cls.inherits %}, {{ cls.inherits | join(', ', attribute='x_qualname')}}{% endif %}
+{% if cls.x_inherits %}, {{ cls.x_inherits | join(', ', attribute='class')}}{% endif %}
 {%- endmacro -%}
 
 {%- macro fndef(fn) %}
@@ -10,7 +10,7 @@
 {% if fn.data.cpp_code %}
 {{ fn.data.cpp_code }}
 {% elif not fn.x_genlambda %}
-&{% if cls %}{{ fn.namespace }}{{ cls.name }}::{% endif %}{{ fn.name }}
+&{% if cls %}{{ cls.x_qualname }}::{% endif %}{{ fn.name }}
 {% else %}
 []({{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
           {% for stmt in fn.x_lambda_pre %}
@@ -30,14 +30,17 @@
     .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
   {% else %}
     .{{ fndef(fn) }}("{{ fn.x_name }}",{{ ' ' }}
-      {%- if fn.data.overloads is defined and fn.data.overloads -%}
-        py::overload_cast<{{ fn.x_in_params | join(', ', attribute='x_type_full')}}>(
+      {%- if fn.x_overloaded -%}
+        {#-
+          py::overload_cast fails in some obscure cases, so we don't use it here
+          https://github.com/pybind/pybind11/issues/1153
+        -#}
+        static_cast<{{ fn.rtnType }} ({% if not fn.static %}{{ cls.name }}::{% endif %}*)({{
+          fn.x_in_params | join(', ', attribute='x_type_full')
+        }}){% if fn.const %} const{% endif %}>(
       {%- endif -%}
 	     {{ fnptr(cls, fn) }}
-      {%- if fn.data.overloads is defined and fn.data.overloads -%}
-        {% if fn.const %}, py::const_{% endif -%}
-        )
-      {%- endif -%}
+      {%- if fn.x_overloaded -%}){%- endif -%}
 		 {% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}
      {%- if not fn.data.no_release_gil -%}
       , release_gil()
@@ -52,7 +55,7 @@
 
 {%- macro genprop(cls, prop) %}
     {% if prop.array_size is defined %}
-    .def_property_readonly("{{ prop.name }}", []({{ prop.namespace}}{{ cls.name }}& inst) {
+    .def_property_readonly("{{ prop.x_name }}", []({{ cls.x_qualname }}& inst) {
         return py::memoryview(py::buffer_info(
           &inst.{{ prop.name }}, sizeof({{ prop.type }}),
           py::format_descriptor<{{ prop.type }}>::format(),
@@ -60,9 +63,9 @@
         ));
     })
     {% elif prop.array %}
-    .def_property("{{ prop.name }}",
-      [](const {{ prop.namespace}}{{ cls.name }}& inst) { return inst.{{ prop.name}}; },
-      []({{ prop.namespace}}{{ cls.name }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
+    .def_property("{{ prop.x_name }}",
+      [](const {{ cls.x_qualname }}& inst) { return inst.{{ prop.name}}; },
+      []({{ cls.x_qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
     {% else %}
     .def_
       {%- if prop.constant or prop.constexpr -%}
@@ -71,7 +74,7 @@
         readwrite
       {%- endif -%}
       {%- if prop.static %}_static{% endif -%}
-      ("{{ prop.name }}", &{{ prop.namespace }}{{ cls.name }}::{{ prop.name}})
+      ("{{ prop.x_name }}", &{{ cls.x_qualname }}::{{ prop.name}})
     {% endif %}
 {% endmacro -%}
 
@@ -99,20 +102,32 @@ using {{ using.raw_type }};
 {% endfor %}
 
 {% for header in headers %}
-{% for cls in header.classes if not cls.data.ignore %}
+{% for cls in header.classes
+  if not cls.data.ignore and cls.x_has_trampoline %}
 #include <rpygen/{{ cls.x_qualname_ }}.hpp>
 {% endfor %}
 {% endfor %}
 
 {% for inc in data.extra_includes %}
-#include "{{ inc }}"
+#include <{{ inc }}>
 {% endfor %}
 
 void init_{{ mod_fn }}(py::module &m) {
 {% for header in headers %}
 {% for cls in header.classes if not cls.data.ignore %}
-  py::class_<{{ cls.x_qualname }}, rpygen::Py{{ cls.x_qualname_ }}<{{ cls.x_qualname }}>{{ genbase(cls) }}> {{ cls.name.lower() }}(m, "{{ cls.name }}");
-  {{ cls.name.lower() }}
+
+{% if cls.namespace %}
+  using namespace {{ cls.namespace }};
+{% endif %}
+
+  py::class_<{{ cls.name }}
+    {%- if cls.data.shared_ptr -%}
+      , std::shared_ptr<{{ cls.name }}>
+    {%- endif -%}
+    {%- if cls.x_has_trampoline -%}
+      , rpygen::Py{{ cls.x_qualname_ }}<{{ cls.name }}>
+    {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.name }}");
+  {{ cls.x_varname }}
   {# default constructor if not defined #}
   {% if not cls.x_has_constructor %}
     .def(py::init<>())
@@ -123,21 +138,21 @@ void init_{{ mod_fn }}(py::module &m) {
   {% for prop in cls.properties.public %}
   {{ genprop(cls, prop) }}
   {%- endfor %}
-  {% for prop in cls.properties.protected %}
+  {% for prop in cls.properties.protected if cls.x_has_trampoline %}
   {{ genprop(cls, prop) }}
   {%- endfor %}
   ;
-  {{ unnamed_enum(cls.name.lower(), cls.enums.public) }}
+  {{ unnamed_enum(cls.x_varname, cls.enums.public) }}
 {% endfor %}
 {% endfor %}
 {% for header in headers %}
 {% for cls in header.classes if 'has_fwd_declare' in cls %}
-  {{ cls.name.lower() }}
+  {{ cls.x_varname }}
   {% for fn in cls.methods.public if 'forward_declare' in fn %}
   {{ genmethod(cls, fn) }}
   {%- endfor %}
   ;
-  {{ unnamed_enum(cls.name.lower(), cls.enums.public) }}
+  {{ unnamed_enum(cls.x_varname, cls.enums.public) }}
 {% endfor %}
 
 

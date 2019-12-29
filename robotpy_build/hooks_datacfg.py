@@ -76,7 +76,18 @@ class MethodData(FunctionData):
 
 class ClassData(BaseModel):
     ignore: bool = False
+    ignored_bases: List[str] = []
     methods: Dict[str, Optional[MethodData]] = {}
+    is_polymorphic: bool = False
+
+    #: If the type was created as a shared_ptr (such as via std::make_shared)
+    #: then pybind11 needs to be informed of this.
+    #:
+    #: https://github.com/pybind/pybind11/issues/1215
+    #:
+    #: One way you can tell we messed this up is if there's a double-free
+    #: error and the stack trace involves a unique_ptr destructor
+    shared_ptr: bool = True
 
 
 class EnumData(BaseModel):

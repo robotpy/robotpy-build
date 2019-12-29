@@ -3,6 +3,7 @@
 """
 
 import sphinxify
+import yaml
 
 # terrible hack
 __name__ = "robotpy_build.hooks"
@@ -26,6 +27,39 @@ _int32_types = set(_gen_int_types())
 
 class HookError(Exception):
     pass
+
+
+def _process_fn_report(clsname, fn_report):
+    # generate a structure that can be copy/pasted into the generation
+    # data yaml and print it out if there's missing data
+
+    # data is missing if either: has_data is False, or there are multiple
+    # overloads and one of them is missing
+
+    data = {}
+
+    for fn, fndata in fn_report.items():
+        overloads_count = len(fndata["overloads"])
+        has_data = fndata["has_data"] and (
+            overloads_count == 1 or all(fndata["overloads"].values())
+        )
+        if not has_data:
+            if overloads_count > 1:
+                data[fn] = {
+                    "overloads": {
+                        k: {} for k, v in fndata["overloads"].items() if not v
+                    }
+                }
+            else:
+                data[fn] = {}
+
+    if data:
+        if clsname:
+            data = {"classes": {clsname: {"methods": data}}}
+        else:
+            data = {"functions": data}
+        print("WARNING: some methods not in generation spec")
+        print(yaml.safe_dump(data, sort_keys=False))
 
 
 def _strip_prefixes(global_data, name):
@@ -84,7 +118,7 @@ def header_hook(header, data):
         _enum_hook(en, global_data, global_data.enums)
 
 
-def _function_hook(fn, global_data, fn_data, typ):
+def _function_hook(fn, global_data, fn_data, typ, fn_report, internal=False):
     """shared with methods/functions"""
 
     # Ignore operators, move constructors, copy constructors
@@ -114,18 +148,25 @@ def _function_hook(fn, global_data, fn_data, typ):
     x_lambda_pre = []
     x_lambda_post = []
 
+    param_sig = ", ".join(
+        p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
+        for p in fn["parameters"]
+    )
+
+    fn_report_data = fn_report.setdefault(
+        fn["name"], {"has_data": False, "overloads": {}, "first": fn}
+    )
+
     data = fn_data.get(fn["name"], _missing)
     if data is _missing:
-        # ensure every function is in our yaml so someone can review it
-        if "parent" in fn:
-            print("WARNING:", fn["parent"]["name"], "method", fn["name"], "missing")
-        else:
-            print("WARNING: function", fn["name"], "missing")
         data = typ()
         # assert False, fn['name']
-    elif data is None:
-        data = typ()
+    else:
+        fn_report_data["has_data"] = True
+        if data is None:
+            data = typ()
 
+    has_report_overload_data = False
     if getattr(data, "overloads", {}):
         _sig = ", ".join(
             p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
@@ -134,14 +175,15 @@ def _function_hook(fn, global_data, fn_data, typ):
         if _sig in data.overloads:
             overload = data.overloads[_sig]
             if overload:
+                has_report_overload_data = True
                 data = data.dict(exclude_unset=True)
                 data.update(overload.dict(exclude_unset=True))
                 data = typ(**data)
-        else:
-            print(
-                "WARNING: Missing overload %s::%s(%s)"
-                % (fn["parent"]["name"], fn["name"], _sig)
-            )
+
+    fn_report_data["overloads"][param_sig] = has_report_overload_data
+    is_overloaded = len(fn_report_data["overloads"]) > 1
+    if is_overloaded:
+        fn_report_data["first"]["x_overloaded"] = True
 
     # Use this if one of the parameter types don't quite match
     param_override = data.param_override
@@ -334,6 +376,8 @@ def _function_hook(fn, global_data, fn_data, typ):
             x_in_params=x_in_params,
             x_out_params=x_out_params,
             x_rets=x_rets,
+            # other
+            x_overloaded=is_overloaded,
             # lambda generation
             x_genlambda=x_genlambda,
             x_callstart=x_callstart,
@@ -351,7 +395,9 @@ def _function_hook(fn, global_data, fn_data, typ):
 def function_hook(fn, data):
     global_data = data.get("data", {})
     functions_data = global_data.functions
-    _function_hook(fn, global_data, functions_data, FunctionData)
+    fn_report = {}
+    _function_hook(fn, global_data, functions_data, FunctionData, fn_report)
+    _process_fn_report(None, fn_report)
 
 
 def class_hook(cls, data):
@@ -361,10 +407,13 @@ def class_hook(cls, data):
         cls["data"] = {"ignore": True}
         return
 
+    # key: function name
+    # value: {has_data=bool, overloads={ "int,int"=bool }}
+    fn_report = {}
+
     global_data = data.get("data", {})
     class_data = global_data.classes.get(cls["name"])
     if class_data is None:
-        print("WARNING: class", cls["name"], "missing")
         class_data = ClassData()
 
     # fix enum paths
@@ -381,28 +430,51 @@ def class_hook(cls, data):
 
         base["x_qualname_"] = base["x_qualname"].replace(":", "_")
 
+    cls["x_inherits"] = [
+        base
+        for base in cls["inherits"]
+        if base["class"] not in class_data.ignored_bases
+    ]
+
     cls["x_qualname"] = cls["namespace"] + "::" + cls["name"]
     cls["x_qualname_"] = cls["x_qualname"].replace(":", "_")
 
     cls["data"] = class_data
     has_constructor = False
+    is_polymorphic = class_data.is_polymorphic
     methods_data = class_data.methods
-    for fn in cls["methods"]["public"]:
-        if fn["constructor"]:
-            has_constructor = True
-        try:
-            _function_hook(fn, global_data, methods_data, MethodData)
-        except Exception as e:
-            raise HookError(f"{cls['name']}::{fn['name']}") from e
-    for fn in cls["methods"]["protected"]:
-        if fn["constructor"]:
-            has_constructor = True
-        try:
-            _function_hook(fn, global_data, methods_data, MethodData)
-        except Exception as e:
-            raise HookError(f"{cls['name']}::{fn['name']}") from e
-    for fn in cls["methods"]["private"]:
-        if fn["constructor"]:
-            has_constructor = True
 
+    # bad assumption?
+    if cls["inherits"]:
+        is_polymorphic = True
+
+    for access in ("public", "protected", "private"):
+
+        for fn in cls["methods"][access]:
+            if fn["constructor"]:
+                has_constructor = True
+            if fn["override"] or fn["virtual"]:
+                is_polymorphic = True
+
+            if access != "private":
+                internal = access != "public"
+                try:
+                    _function_hook(
+                        fn,
+                        global_data,
+                        methods_data,
+                        MethodData,
+                        fn_report,
+                        internal=internal,
+                    )
+                except Exception as e:
+                    raise HookError(f"{cls['name']}::{fn['name']}") from e
+
+        for v in cls["properties"][access]:
+            v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
+
+    cls["x_has_trampoline"] = is_polymorphic and not cls["final"]
     cls["x_has_constructor"] = has_constructor
+    cls["x_varname"] = "cls_" + cls["name"]
+
+    _process_fn_report(cls["name"], fn_report)
