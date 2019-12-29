@@ -152,6 +152,7 @@ def _function_hook(fn, global_data, fn_data, typ, fn_report, internal=False):
         p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
         for p in fn["parameters"]
     )
+    param_sig = param_sig.replace(" >", ">")
 
     fn_report_data = fn_report.setdefault(
         fn["name"], {"has_data": False, "overloads": {}, "first": fn}
@@ -168,14 +169,10 @@ def _function_hook(fn, global_data, fn_data, typ, fn_report, internal=False):
 
     has_report_overload_data = False
     if getattr(data, "overloads", {}):
-        _sig = ", ".join(
-            p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
-            for p in fn["parameters"]
-        )
-        if _sig in data.overloads:
-            overload = data.overloads[_sig]
+        if param_sig in data.overloads:
+            has_report_overload_data = True
+            overload = data.overloads[param_sig]
             if overload:
-                has_report_overload_data = True
                 data = data.dict(exclude_unset=True)
                 data.update(overload.dict(exclude_unset=True))
                 data = typ(**data)
