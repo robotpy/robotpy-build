@@ -296,11 +296,11 @@ def _function_hook(fn, global_data, fn_data, typ):
         for out in reversed(x_temps):
             x_lambda_pre.insert(0, "%(x_type)s %(name)s = 0" % out)
 
-    # Rename internal functions
-    if data.internal:
-        x_name = "_" + x_name
-    elif data.rename:
+    # Rename functions
+    if data.rename:
         x_name = data.rename
+    elif data.internal or internal:
+        x_name = "_" + x_name
     elif fn["constructor"]:
         x_name = "__init__"
 
