@@ -68,7 +68,7 @@ setup(
         "sphinxify",
         "pydantic",
         "toml",
-        "pyyaml",
+        "pyyaml >= 5.1",
     ],
     requires_python=">=3.6",
     classifiers=[
