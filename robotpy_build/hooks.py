@@ -158,6 +158,11 @@ def _function_hook(fn, global_data, fn_data, typ, fn_report, internal=False):
         for p in fn["parameters"]
     )
     param_sig = param_sig.replace(" >", ">")
+    if fn["const"]:
+        if param_sig:
+            param_sig += " [const]"
+        else:
+            param_sig = "[const]"
 
     fn_report_data = fn_report.setdefault(
         fn["name"], {"has_data": False, "overloads": {}, "first": fn}
