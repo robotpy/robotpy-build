@@ -53,9 +53,9 @@
   {% endif %}
 {% endmacro -%}
 
-{%- macro genprop(cls, prop) %}
+{%- macro genprop(qualname, prop) %}
     {% if prop.array_size is defined %}
-    .def_property_readonly("{{ prop.x_name }}", []({{ cls.x_qualname }}& inst) {
+    .def_property_readonly("{{ prop.x_name }}", []({{ qualname }}& inst) {
         return py::memoryview(py::buffer_info(
           &inst.{{ prop.name }}, sizeof({{ prop.type }}),
           py::format_descriptor<{{ prop.type }}>::format(),
@@ -64,8 +64,8 @@
     })
     {% elif prop.array %}
     .def_property("{{ prop.x_name }}",
-      [](const {{ cls.x_qualname }}& inst) { return inst.{{ prop.name}}; },
-      []({{ cls.x_qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
+      [](const {{ qualname }}& inst) { return inst.{{ prop.name}}; },
+      []({{ qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
     {% else %}
     .def_
       {%- if prop.constant or prop.constexpr -%}
@@ -74,7 +74,7 @@
         readwrite
       {%- endif -%}
       {%- if prop.static %}_static{% endif -%}
-      ("{{ prop.x_name }}", &{{ cls.x_qualname }}::{{ prop.name}})
+      ("{{ prop.x_name }}", &{{ qualname }}::{{ prop.name}})
     {% endif %}
 {% endmacro -%}
 
@@ -125,7 +125,7 @@ void init_{{ mod_fn }}(py::module &m) {
       , std::shared_ptr<{{ cls.name }}>
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
-      , rpygen::Py{{ cls.x_qualname_ }}<{{ cls.name }}>
+      , {{ cls.x_trampoline_name }}
     {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.name }}");
   {{ cls.x_varname }}
   {# default constructor if not defined #}
@@ -136,10 +136,10 @@ void init_{{ mod_fn }}(py::module &m) {
   {{ genmethod(cls, fn) }}
   {%- endfor %}
   {% for prop in cls.properties.public %}
-  {{ genprop(cls, prop) }}
+  {{ genprop(cls.x_qualname, prop) }}
   {%- endfor %}
   {% for prop in cls.properties.protected if cls.x_has_trampoline %}
-  {{ genprop(cls, prop) }}
+  {{ genprop(cls.x_trampoline_name, prop) }}
   {%- endfor %}
   ;
   {{ unnamed_enum(cls.x_varname, cls.enums.public) }}

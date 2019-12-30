@@ -484,6 +484,8 @@ def class_hook(cls, data):
             v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
 
     cls["x_has_trampoline"] = is_polymorphic and not cls["final"]
+    if cls["x_has_trampoline"]:
+        cls["x_trampoline_name"] = f"rpygen::Py{cls['x_qualname_']}<{cls['name']}>"
     cls["x_has_constructor"] = has_constructor
     cls["x_varname"] = "cls_" + cls["name"]
 
