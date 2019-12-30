@@ -75,6 +75,7 @@ class MethodData(FunctionData):
 
 
 class ClassData(BaseModel):
+    extra_includes: List[str] = []
     ignore: bool = False
     ignored_bases: List[str] = []
     methods: Dict[str, Optional[MethodData]] = {}

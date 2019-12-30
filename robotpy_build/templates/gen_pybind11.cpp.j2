@@ -111,6 +111,11 @@ using {{ using.raw_type }};
 {% for inc in data.extra_includes %}
 #include <{{ inc }}>
 {% endfor %}
+{% for header in headers %}{% for cls in header.classes %}
+{% for inc in cls.data.extra_includes %}
+#include <{{ inc }}>
+{% endfor %}
+{% endfor %}{% endfor %}
 
 void init_{{ mod_fn }}(py::module &m) {
 {% for header in headers %}
