@@ -59,7 +59,7 @@ def _process_fn_report(clsname, fn_report):
 
     if data:
         if clsname:
-            data = {"classes": {clsname: {"shared_ptr": False, "methods": data}}}
+            data = {"classes": {clsname: {"shared_ptr": True, "methods": data}}}
         else:
             data = {"functions": data}
         print("WARNING: some methods not in generation spec")
