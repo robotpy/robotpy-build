@@ -29,6 +29,10 @@ class HookError(Exception):
     pass
 
 
+def _using_signature(fn):
+    return f"{fn['parent']['x_qualname_']}_{fn['name']}"
+
+
 def _process_fn_report(clsname, fn_report):
     # generate a structure that can be copy/pasted into the generation
     # data yaml and print it out if there's missing data
@@ -112,6 +116,7 @@ def _enum_hook(en, global_data, enum_data):
 def header_hook(header, data):
     """Called for each header"""
     data["trampoline_signature"] = trampoline_signature
+    data["using_signature"] = _using_signature
     global_data = data.get("data", {})
     for en in header.enums:
         en["x_namespace"] = en["namespace"]

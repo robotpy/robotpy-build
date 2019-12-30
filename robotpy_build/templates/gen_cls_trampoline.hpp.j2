@@ -101,7 +101,13 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     {% for fn in cls.methods.protected
            if not fn.data.ignore and not (fn.virtual or fn.override) %}
 #ifndef RPYBLD_DISABLE_{{ trampoline_signature(fn) }}
+{# hack to ensure we don't do 'using' twice' in the same class, while
+   also ensuring that the overrides can be selectively disabled by
+   child trampoline functions #}
+  #ifndef RPYBLD_UDISABLE_{{ using_signature(fn) }}
     using {{ cls.x_qualname }}::{{ fn.name }};
+    #define RPYBLD_UDISABLE_{{ using_signature(fn) }}
+  #endif
 #endif
     {% endfor %}
 
