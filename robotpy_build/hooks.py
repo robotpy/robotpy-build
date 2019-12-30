@@ -63,7 +63,7 @@ def _process_fn_report(clsname, fn_report):
         else:
             data = {"functions": data}
         print("WARNING: some methods not in generation spec")
-        print(yaml.safe_dump(data, sort_keys=False))
+        print(yaml.safe_dump(data, sort_keys=False).replace(" {}", ""))
 
 
 def _strip_prefixes(global_data, name):
