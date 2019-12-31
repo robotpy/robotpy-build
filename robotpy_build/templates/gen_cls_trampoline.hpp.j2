@@ -78,6 +78,13 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     using CxxBase::CxxBase;
 {% endif %}
 
+{% for typealias in cls.data.typealias %}
+    using {{ typealias.split('::')[-1] }} = {{ typealias }};
+{% endfor %}
+{% for constant in cls.data.constants %}
+    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
+{% endfor %}
+
     {# virtual methods #}
     {% for fn in cls.methods.public + cls.methods.protected
            if not fn.data.ignore and (fn.virtual or fn.override) and not fn.final %}

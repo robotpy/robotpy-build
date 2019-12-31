@@ -124,6 +124,12 @@ void init_{{ mod_fn }}(py::module &m) {
 {% if cls.namespace %}
   using namespace {{ cls.namespace }};
 {% endif %}
+{% for typealias in cls.data.typealias %}
+  using {{ typealias.split('::')[-1] }} = {{ typealias }};
+{% endfor %}
+{% for constant in cls.data.constants %}
+  static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
+{% endfor %}
 
   py::class_<{{ cls.name }}
     {%- if cls.data.shared_ptr -%}

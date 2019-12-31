@@ -90,6 +90,13 @@ class ClassData(BaseModel):
     #: error and the stack trace involves a unique_ptr destructor
     shared_ptr: bool = True
 
+    #: Extra 'using' directives to insert into the trampoline and the
+    #: wrapping scope
+    typealias: List[str] = []
+
+    #: Extra constexpr to insert into the trampoline and wrapping scopes
+    constants: List[str] = []
+
 
 class EnumData(BaseModel):
     value_prefix: Optional[str] = None
