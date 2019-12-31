@@ -12,11 +12,13 @@
 {% elif not fn.x_genlambda %}
 &{% if cls %}{{ cls.x_qualname }}::{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}
 {% else %}
-[]({{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
+[]({% if cls -%}
+{{ cls.x_qualname }} * __that{% if fn.x_in_params %},{% endif %}
+{% endif -%}{{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
           {% for stmt in fn.x_lambda_pre %}
           {{ stmt }};
           {% endfor %}
-          {{ fn.x_callstart }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {{ fn.x_callstart }} {% if cls %}__that->{% endif %}{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
           {% for stmt in fn.x_lambda_post %}
           {{ stmt }};
           {% endfor %}
