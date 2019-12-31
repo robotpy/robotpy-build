@@ -7,7 +7,7 @@ import yaml
 
 # terrible hack
 __name__ = "robotpy_build.hooks"
-from .hooks_datacfg import BufferType, ClassData, FunctionData, MethodData
+from .hooks_datacfg import BufferType, ClassData, FunctionData, MethodData, PropData
 from .mangle import trampoline_signature
 
 _missing = object()
@@ -481,7 +481,14 @@ def class_hook(cls, data):
                     raise HookError(f"{cls['name']}::{fn['name']}") from e
 
         for v in cls["properties"][access]:
-            v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
+            propdata = class_data.attributes.get(v["name"])
+            if propdata is None:
+                propdata = PropData()
+            v["data"] = propdata
+            if propdata.rename:
+                v["x_name"] = v["name"]
+            else:
+                v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
 
     cls["x_has_trampoline"] = is_polymorphic and not cls["final"]
     if cls["x_has_trampoline"]:

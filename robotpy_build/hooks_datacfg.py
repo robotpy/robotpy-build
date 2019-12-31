@@ -74,11 +74,24 @@ class MethodData(FunctionData):
     overloads: Optional[Dict[str, Optional[FunctionData]]] = None
 
 
+class PropData(BaseModel):
+    ignore: bool = False
+
+    #: Set the name of this property to the specified value
+    rename: Optional[str]
+
+    #: Allow python users access to the value, but ensure it can't
+    #: change. This is useful for properties that are defined directly
+    #: in the class, as opposed to being a reference or pointer.
+    readonly: bool = False
+
+
 class ClassData(BaseModel):
     extra_includes: List[str] = []
     ignore: bool = False
     ignored_bases: List[str] = []
     methods: Dict[str, Optional[MethodData]] = {}
+    attributes: Dict[str, Optional[PropData]] = {}
     is_polymorphic: bool = False
 
     #: If the type was created as a shared_ptr (such as via std::make_shared)

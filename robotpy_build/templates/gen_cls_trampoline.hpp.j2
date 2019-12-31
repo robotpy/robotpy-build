@@ -118,7 +118,7 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
 #endif
     {% endfor %}
 
-    {% for prop in cls.properties.protected %}
+    {% for prop in cls.properties.protected if not prop.data.ignore %}
     using {{ cls.x_qualname }}::{{ prop.name }};
     {% endfor %}
 };
