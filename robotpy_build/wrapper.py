@@ -40,7 +40,12 @@ class Wrapper:
             # actually modify extensions all the way up until the build
             # really happens
             extname = f"{self.import_name}.{self.name}"
-            self.extension = Extension(extname, self.cfg.sources, language="c++")
+            self.extension = Extension(
+                extname,
+                self.cfg.sources,
+                define_macros=[("RPYBUILD_MODULE_NAME", self.name)],
+                language="c++",
+            )
 
         if self.cfg.generate and not self.cfg.generation_data:
             raise ValueError(
