@@ -10,7 +10,7 @@
 {% if fn.data.cpp_code %}
 {{ fn.data.cpp_code }}
 {% elif not fn.x_genlambda %}
-&{% if cls %}{{ cls.x_qualname }}::{% endif %}{{ fn.name }}
+&{% if cls %}{{ cls.x_qualname }}::{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}
 {% else %}
 []({{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
           {% for stmt in fn.x_lambda_pre %}
