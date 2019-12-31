@@ -414,7 +414,7 @@ def class_hook(cls, data):
 
     # work around CppHeaderParser hoisting structs nested in classes to top
     if cls["parent"] is not None:
-        cls["data"] = {"ignore": True}
+        cls["data"] = ClassData(ignore=True)
         return
 
     # key: function name
