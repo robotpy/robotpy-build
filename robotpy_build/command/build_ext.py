@@ -27,16 +27,9 @@ def cpp_flag(compiler):
     """Return the -std=c++[11/14/17] compiler flag.
     The newer version is prefered over c++11 (when it is available).
     """
-    # HACK: c++17 fails on OSX with the following errors:
-    # - error: aligned allocation function of type
-    # - error: no matching function for call to 'operator delete'
-    # .. fix seems to be set -mmacosx-version-min=10.14, but that's
-    #    fairly new, so would rather not do that
+
     platform = get_platform()
-    if platform.os == "osx":
-        flags = ["-std=c++14", "-std=c++11"]
-    else:
-        flags = ["-std=c++17", "-std=c++14", "-std=c++11"]
+    flags = ["-std=c++17", "-std=c++14", "-std=c++11"]
 
     for flag in flags:
         if has_flag(compiler, flag):
@@ -51,7 +44,7 @@ def get_opts(typ):
 
     platform = get_platform()
     if platform.os == "osx":
-        darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
+        darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.14"]
         c_opts["unix"] += darwin_opts
         l_opts["unix"] += darwin_opts
 
