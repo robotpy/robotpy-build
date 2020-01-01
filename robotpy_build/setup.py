@@ -126,6 +126,7 @@ class Setup:
             include_dirs=include_dirs,
             library_dirs=library_dirs,
             libraries=libraries,
+            define_macros=[("RPYBUILD_MODULE_NAME", cfg.name)],
             language="c++",
         )
 
