@@ -9,7 +9,12 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 
-class ParamData(BaseModel):
+class Model(BaseModel):
+    class Config:
+        extra = "forbid"
+
+
+class ParamData(Model):
     """Various ways to modify parameters"""
 
     # C++ type emitted
@@ -25,7 +30,7 @@ class BufferType(str, enum.Enum):
     INOUT = "inout"
 
 
-class BufferData(BaseModel):
+class BufferData(Model):
     """Describes buffers"""
 
     # Indicates what type of buffer is required: out/inout buffers require
@@ -46,7 +51,7 @@ class BufferData(BaseModel):
     minsz: Optional[int] = None
 
 
-class FunctionData(BaseModel):
+class FunctionData(Model):
     # If True, don't wrap this
     ignore: bool = False
 
@@ -74,7 +79,7 @@ class MethodData(FunctionData):
     overloads: Optional[Dict[str, Optional[FunctionData]]] = None
 
 
-class PropData(BaseModel):
+class PropData(Model):
     ignore: bool = False
 
     #: Set the name of this property to the specified value
@@ -86,7 +91,7 @@ class PropData(BaseModel):
     readonly: bool = False
 
 
-class ClassData(BaseModel):
+class ClassData(Model):
     extra_includes: List[str] = []
     ignore: bool = False
     ignored_bases: List[str] = []
@@ -111,11 +116,11 @@ class ClassData(BaseModel):
     constants: List[str] = []
 
 
-class EnumData(BaseModel):
+class EnumData(Model):
     value_prefix: Optional[str] = None
 
 
-class HooksDataYaml(BaseModel):
+class HooksDataYaml(Model):
     """
         Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
         generation_data

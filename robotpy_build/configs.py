@@ -12,6 +12,9 @@ class ExtensionConfig(BaseModel):
         [tool.robotpy-build.ext."package-name"]
     """
 
+    class Config:
+        extra = "forbid"
+
     # Module name: must match the name given to the PYBIND11_MODULE() macro
     name: str
 
@@ -29,6 +32,9 @@ class WrapperConfig(BaseModel):
 
         [tool.robotpy-build.wrappers."package-name"]
     """
+
+    class Config:
+        extra = "forbid"
 
     # List of extra headers to export
     extra_headers: List[str] = []
@@ -77,6 +83,9 @@ class WrapperConfig(BaseModel):
 
 
 class DistutilsMetadata(BaseModel):
+    class Config:
+        # allow passing in extra keywords to setuptools
+        extra = "allow"
 
     name: str
     description: Optional[str] = None
@@ -104,6 +113,9 @@ class RobotpyBuildConfig(BaseModel):
 
         [tool.robotpy-build]
     """
+
+    class Config:
+        extra = "forbid"
 
     # package to store version information in
     base_package: str
