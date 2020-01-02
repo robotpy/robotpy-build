@@ -6,7 +6,7 @@
 import enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class Model(BaseModel):
@@ -76,7 +76,14 @@ class FunctionData(Model):
 
 
 class MethodData(FunctionData):
-    overloads: Optional[Dict[str, Optional[FunctionData]]] = None
+    overloads: Dict[str, FunctionData] = {}
+
+    @validator("overloads", pre=True)
+    def validate_overloads(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = FunctionData()
+        return value
 
 
 class PropData(Model):
@@ -91,12 +98,20 @@ class PropData(Model):
     readonly: bool = False
 
 
+class EnumData(Model):
+    ignore: bool = False
+    value_prefix: Optional[str] = None
+
+
 class ClassData(Model):
-    extra_includes: List[str] = []
+
     ignore: bool = False
     ignored_bases: List[str] = []
-    methods: Dict[str, Optional[MethodData]] = {}
-    attributes: Dict[str, Optional[PropData]] = {}
+
+    attributes: Dict[str, PropData] = {}
+    enums: Dict[str, EnumData] = {}
+    methods: Dict[str, MethodData] = {}
+
     is_polymorphic: bool = False
 
     #: If the type was created as a shared_ptr (such as via std::make_shared)
@@ -115,9 +130,26 @@ class ClassData(Model):
     #: Extra constexpr to insert into the trampoline and wrapping scopes
     constants: List[str] = []
 
+    @validator("attributes", pre=True)
+    def validate_attributes(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = PropData()
+        return value
 
-class EnumData(Model):
-    value_prefix: Optional[str] = None
+    @validator("enums", pre=True)
+    def validate_enums(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = EnumData()
+        return value
+
+    @validator("methods", pre=True)
+    def validate_methods(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = MethodData()
+        return value
 
 
 class HooksDataYaml(Model):
@@ -128,6 +160,36 @@ class HooksDataYaml(Model):
 
     strip_prefixes: List[str] = []
     extra_includes: List[str] = []
-    functions: Dict[str, Optional[FunctionData]] = {}
-    classes: Dict[str, Optional[ClassData]] = {}
-    enums: Dict[str, Optional[EnumData]] = {}
+
+    attributes: Dict[str, PropData] = {}
+    classes: Dict[str, ClassData] = {}
+    functions: Dict[str, FunctionData] = {}
+    enums: Dict[str, EnumData] = {}
+
+    @validator("attributes", pre=True)
+    def validate_attributes(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = PropData()
+        return value
+
+    @validator("classes", pre=True)
+    def validate_classes(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = ClassData()
+        return value
+
+    @validator("enums", pre=True)
+    def validate_enums(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = EnumData()
+        return value
+
+    @validator("functions", pre=True)
+    def validate_functions(cls, value):
+        for k, v in value.items():
+            if v is None:
+                value[k] = FunctionData()
+        return value
