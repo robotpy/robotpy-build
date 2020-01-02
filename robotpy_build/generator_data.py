@@ -125,7 +125,7 @@ class GeneratorData:
 
         return data
 
-    def report_missing(self, name: str, fp=sys.stdout):
+    def report_missing(self, name: str, reporter: "MissingReporter"):
         """
             Generate a structure that can be copy/pasted into the generation
             data yaml and print it out if there's missing data
@@ -155,13 +155,9 @@ class GeneratorData:
             data["classes"] = all_cls_data
 
         if data:
-            print("WARNING: some items not in generation yaml for", name)
-            print(
-                yaml.safe_dump(data, sort_keys=False)
-                .replace(" {}", "")
-                .replace("? ''\n          :", '"":'),
-                file=fp,
-            )
+            reporter.add_report(name, data)
+
+        return data
 
     def _process_missing(self, attrs, fns, enums, fn_key: str):
 
@@ -190,14 +186,54 @@ class GeneratorData:
                 has_data = not fndata["missing"]
 
             if not has_data:
+                d = {}
+                if fn == "swap":
+                    d = {"ignore": True}
+
                 if overloads_count > 1:
                     fn_report[fn] = {
-                        "overloads": {k: {} for k, v in overloads.items() if not v}
+                        "overloads": {
+                            k: dict(**d) for k, v in overloads.items() if not v
+                        }
                     }
+
+                    for k, v in fn_report[fn]["overloads"].items():
+                        if "initializer_list" in k:
+                            v["ignore"] = True
                 else:
-                    fn_report[fn] = {}
+                    fn_report[fn] = d
         if fn_report:
             data[fn_key] = fn_report
 
         return data
+
+
+class MissingReporter:
+    def __init__(self):
+        self.reports = {}
+
+    def _merge(self, src, dst):
+        for k, v in src.items():
+            if isinstance(v, dict):
+                if k not in dst:
+                    dst[k] = v
+                else:
+                    self._merge(v, dst[k])
+            else:
+                dst[k] = v
+
+    def add_report(self, name, data):
+        if name in self.reports:
+            self._merge(data, self.reports[name])
+        else:
+            self.reports[name] = data
+
+    def as_yaml(self):
+        for name, report in self.reports.items():
+            yield name, (
+                yaml.safe_dump(report, sort_keys=False)
+                .replace(" {}", "")
+                .replace("? ''\n          :", '"":')
+                .replace("? ''\n      :", '"":')
+            )
 

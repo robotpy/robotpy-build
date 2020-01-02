@@ -1,7 +1,19 @@
 import inspect
 import os
-from os.path import abspath, dirname, exists, isdir, join, normpath, relpath, sep
+from os.path import (
+    abspath,
+    basename,
+    dirname,
+    exists,
+    isdir,
+    join,
+    normpath,
+    relpath,
+    sep,
+)
+import sys
 import shutil
+import typing
 import yaml
 
 from header2whatever.config import Config
@@ -9,6 +21,7 @@ from header2whatever.parse import ConfigProcessor
 
 from setuptools import Extension
 
+from .generator_data import MissingReporter
 from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
 from .download import download_and_extract_zip
@@ -239,10 +252,18 @@ class Wrapper:
 
         return HooksDataYaml(**data)
 
-    def on_build_gen(self, cxx_gen_dir):
+    def on_build_gen(
+        self, cxx_gen_dir, missing_reporter: typing.Optional[MissingReporter] = None
+    ):
 
         if not self.cfg.generate:
             return
+
+        if missing_reporter:
+            report_only = True
+        else:
+            report_only = False
+            missing_reporter = MissingReporter()
 
         thisdir = abspath(dirname(__file__))
 
@@ -256,14 +277,16 @@ class Wrapper:
 
         # TODO: only regenerate files if the generated files
         #       have changed
+        if not report_only:
 
-        shutil.rmtree(cxx_gen_dir, ignore_errors=True)
-        os.makedirs(cxx_gen_dir)
+            shutil.rmtree(cxx_gen_dir, ignore_errors=True)
+            os.makedirs(cxx_gen_dir)
 
-        shutil.rmtree(hppoutdir, ignore_errors=True)
-        os.makedirs(hppoutdir)
+            shutil.rmtree(hppoutdir, ignore_errors=True)
+            os.makedirs(hppoutdir)
 
         per_header = False
+        data_fname = self.cfg.generation_data
         if self.cfg.generation_data:
             datapath = join(self.setup_root, normpath(self.cfg.generation_data))
             per_header = isdir(datapath)
@@ -278,20 +301,25 @@ class Wrapper:
 
         for gen in self.cfg.generate:
             for name, header in gen.items():
+                if report_only:
+                    templates = []
+                    class_templates = []
+                else:
+                    cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
+                    sources.append(cpp_dst)
 
-                cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                sources.append(cpp_dst)
-
-                hpp_dst = join(
-                    hppoutdir,
-                    "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
-                )
+                    hpp_dst = join(
+                        hppoutdir,
+                        "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
+                    )
+                    templates = [{"src": cpp_tmpl, "dst": cpp_dst}]
+                    class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
 
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     "headers": [join(incdir, normpath(header))],
-                    "templates": [{"src": cpp_tmpl, "dst": cpp_dst}],
-                    "class_templates": [{"src": hpp_tmpl, "dst": hpp_dst}],
+                    "templates": templates,
+                    "class_templates": class_templates,
                     "preprocess": True,
                     "pp_retain_all_content": False,
                     "pp_include_paths": pp_includes,
@@ -303,24 +331,33 @@ class Wrapper:
                 cfg.root = incdir
 
                 if per_header:
-                    perpath = join(datapath, name + ".yml")
-                    if not exists(perpath):
-                        print("WARNING: could not find", perpath)
+                    data_fname = join(datapath, name + ".yml")
+                    if not exists(data_fname):
+                        print("WARNING: could not find", data_fname)
                         data = HooksDataYaml()
                     else:
-                        data = self._load_generation_data(perpath)
+                        data = self._load_generation_data(data_fname)
 
                 hooks = Hooks(data)
                 processor.process_config(cfg, data, hooks)
 
-                hooks.report_missing(name + ".yml")
+                hooks.report_missing(data_fname, missing_reporter)
+
+        if not report_only:
+            for name, contents in missing_reporter.as_yaml():
+                print("WARNING: some items not in generation yaml for", basename(name))
+                print(contents)
 
         # generate an inline file that can be included + called
-        self._write_wrapper_hpp(cxx_gen_dir)
+        if not report_only:
+            self._write_wrapper_hpp(cxx_gen_dir)
+            gen_includes = [cxx_gen_dir]
+        else:
+            gen_includes = []
 
         # update the build extension so that build_ext works
         self.extension.sources = sources
-        self.extension.include_dirs = self._all_includes(True) + [cxx_gen_dir]
+        self.extension.include_dirs = self._all_includes(True) + gen_includes
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
 

@@ -8,7 +8,7 @@ from .hooks_datacfg import (
     FunctionData,
     PropData,
 )
-from .generator_data import GeneratorData
+from .generator_data import GeneratorData, MissingReporter
 from .mangle import trampoline_signature
 
 _missing = object()
@@ -43,8 +43,8 @@ class Hooks:
         self.gendata = GeneratorData(data)
         self.rawdata = data
 
-    def report_missing(self, name: str):
-        self.gendata.report_missing(name)
+    def report_missing(self, name: str, reporter: MissingReporter):
+        self.gendata.report_missing(name, reporter)
 
     def _strip_prefixes(self, name: str):
         sp = self.rawdata.strip_prefixes

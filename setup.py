@@ -80,5 +80,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Topic :: Software Development",
     ],
-    entry_points={"robotpybuild": ["robotpy-build = robotpy_build.pkgcfg"]},
+    entry_points={
+        "console_scripts": ["robotpy-build = robotpy_build.tool:main"],
+        "robotpybuild": ["robotpy-build = robotpy_build.pkgcfg"],
+    },
 )

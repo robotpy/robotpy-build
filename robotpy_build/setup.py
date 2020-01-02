@@ -5,6 +5,7 @@ from setuptools import Extension
 from setuptools_scm import get_version
 import toml
 
+
 from .command.build_dl import BuildDl
 from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
@@ -25,8 +26,13 @@ class Setup:
         self.root = abspath(os.getcwd())
         self.wrappers = []
 
-        with open(join(self.root, "pyproject.toml")) as fp:
-            self.pyproject = toml.load(fp)
+        project_fname = join(self.root, "pyproject.toml")
+
+        try:
+            with open(project_fname) as fp:
+                self.pyproject = toml.load(fp)
+        except FileNotFoundError as e:
+            raise ValueError("current directory is not a robotpy-build project") from e
 
         self.project_dict = self.pyproject.get("tool", {}).get("robotpy-build", {})
         try:
