@@ -5,10 +5,11 @@ import shutil
 import yaml
 
 from header2whatever.config import Config
-from header2whatever.parse import process_config
+from header2whatever.parse import ConfigProcessor
 
 from setuptools import Extension
 
+from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
 from .download import download_and_extract_zip
 
@@ -238,9 +239,9 @@ class Wrapper:
 
         incdir = join(self.root, "include")
         hppoutdir = join(incdir, "rpygen")
-        hooks = join(thisdir, "hooks.py")
-        cpp_tmpl = join(thisdir, "templates", "gen_pybind11.cpp.j2")
-        hpp_tmpl = join(thisdir, "templates", "gen_cls_trampoline.hpp.j2")
+        tmpl_dir = join(thisdir, "templates")
+        cpp_tmpl = join(tmpl_dir, "gen_pybind11.cpp.j2")
+        hpp_tmpl = join(tmpl_dir, "gen_cls_trampoline.hpp.j2")
 
         pp_includes = self._all_includes(False)
 
@@ -264,6 +265,8 @@ class Wrapper:
 
         sources = self.cfg.sources[:]
 
+        processor = ConfigProcessor(tmpl_dir)
+
         for gen in self.cfg.generate:
             for name, header in gen.items():
 
@@ -275,12 +278,13 @@ class Wrapper:
                     "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
                 )
 
+                hooks = Hooks()
+
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     "headers": [join(incdir, normpath(header))],
                     "templates": [{"src": cpp_tmpl, "dst": cpp_dst}],
                     "class_templates": [{"src": hpp_tmpl, "dst": hpp_dst}],
-                    "hooks": hooks,
                     "preprocess": True,
                     "pp_retain_all_content": False,
                     "pp_include_paths": pp_includes,
@@ -291,7 +295,7 @@ class Wrapper:
                 cfg.validate()
                 cfg.root = incdir
 
-                process_config(cfg, data)
+                processor.process_config(cfg, data, hooks)
 
         # generate an inline file that can be included + called
         self._write_wrapper_hpp(cxx_gen_dir)
