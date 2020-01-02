@@ -56,7 +56,6 @@
 {% endmacro -%}
 
 {%- macro genprop(qualname, prop) %}
-  {% if not prop.data.ignore %}
     {% if prop.array_size is defined %}
     .def_property_readonly("{{ prop.x_name }}", []({{ qualname }}& inst) {
         return py::memoryview(py::buffer_info(
@@ -79,7 +78,6 @@
       {%- if prop.static %}_static{% endif -%}
       ("{{ prop.x_name }}", &{{ qualname }}::{{ prop.name}})
     {% endif %}
-  {% endif %}
 {% endmacro -%}
 
 {%- macro unnamed_enum(x, enums) %}
@@ -115,11 +113,6 @@ using {{ using.raw_type }};
 {% for inc in data.extra_includes %}
 #include <{{ inc }}>
 {% endfor %}
-{% for header in headers %}{% for cls in header.classes %}
-{% for inc in cls.data.extra_includes %}
-#include <{{ inc }}>
-{% endfor %}
-{% endfor %}{% endfor %}
 
 void init_{{ mod_fn }}(py::module &m) {
 {% for header in headers %}
@@ -150,10 +143,10 @@ void init_{{ mod_fn }}(py::module &m) {
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}
   {{ genmethod(cls, fn) }}
   {%- endfor %}
-  {% for prop in cls.properties.public %}
+  {% for prop in cls.properties.public if not prop.data.ignore %}
   {{ genprop(cls.x_qualname, prop) }}
   {%- endfor %}
-  {% for prop in cls.properties.protected if cls.x_has_trampoline %}
+  {% for prop in cls.properties.protected if not prop.data.ignore %}
   {{ genprop(cls.x_trampoline_name, prop) }}
   {%- endfor %}
   ;

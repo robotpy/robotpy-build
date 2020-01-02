@@ -1,7 +1,15 @@
 import sphinxify
 import yaml
 
-from .hooks_datacfg import BufferType, ClassData, FunctionData, MethodData, PropData
+from .hooks_datacfg import (
+    HooksDataYaml,
+    BufferType,
+    ClassData,
+    FunctionData,
+    MethodData,
+    PropData,
+)
+from .generator_data import GeneratorData
 from .mangle import trampoline_signature
 
 _missing = object()
@@ -32,44 +40,15 @@ class Hooks:
         Header2Whatever hooks used for generating C++ wrappers
     """
 
-    def _process_fn_report(self, clsname, fn_report):
-        # generate a structure that can be copy/pasted into the generation
-        # data yaml and print it out if there's missing data
+    def __init__(self, data: HooksDataYaml):
+        self.gendata = GeneratorData(data)
+        self.rawdata = data
 
-        # data is missing if either: has_data is False, or there are multiple
-        # overloads and one of them is missing
+    def report_missing(self, name: str):
+        self.gendata.report_missing(name)
 
-        data = {}
-
-        for fn, fndata in fn_report.items():
-            overloads_count = len(fndata["overloads"])
-            has_data = fndata["has_data"] and (
-                overloads_count == 1 or all(fndata["overloads"].values())
-            )
-            if not has_data:
-                if overloads_count > 1:
-                    data[fn] = {
-                        "overloads": {
-                            k: {} for k, v in fndata["overloads"].items() if not v
-                        }
-                    }
-                else:
-                    data[fn] = {}
-
-        if data:
-            if clsname:
-                data = {"classes": {clsname: {"shared_ptr": True, "methods": data}}}
-            else:
-                data = {"functions": data}
-            print("WARNING: some methods not in generation spec")
-            print(
-                yaml.safe_dump(data, sort_keys=False)
-                .replace(" {}", "")
-                .replace("? ''\n          :", '"":')
-            )
-
-    def _strip_prefixes(self, global_data, name):
-        sp = global_data.strip_prefixes
+    def _strip_prefixes(self, name: str):
+        sp = self.rawdata.strip_prefixes
         if sp:
             for pfx in sp:
                 if name.startswith(pfx):
@@ -92,17 +71,29 @@ class Hooks:
                     name = f"{parent['namespace']}::{parent['name']}::{name}"
         return name
 
-    def _enum_hook(self, en, global_data, enum_data):
+    def _get_function_signature(self, fn):
+        param_sig = ", ".join(
+            p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
+            for p in fn["parameters"]
+        )
+        param_sig = param_sig.replace(" >", ">")
+        if fn["const"]:
+            if param_sig:
+                param_sig += " [const]"
+            else:
+                param_sig = "[const]"
+
+        return param_sig
+
+    def _enum_hook(self, en, enum_data):
         ename = en.get("name")
         value_prefix = None
         if ename:
-            data = enum_data.get(ename)
-            if data and data.value_prefix:
-                value_prefix = data.value_prefix
-            else:
+            value_prefix = enum_data.value_prefix
+            if not value_prefix:
                 value_prefix = ename
 
-            en["x_name"] = self._strip_prefixes(global_data, ename)
+            en["x_name"] = self._strip_prefixes(ename)
 
         for v in en["values"]:
             name = v["name"]
@@ -116,30 +107,22 @@ class Hooks:
         """Called for each header"""
         data["trampoline_signature"] = trampoline_signature
         data["using_signature"] = _using_signature
-        global_data = data.get("data", {})
+
         for en in header.enums:
             en["x_namespace"] = en["namespace"]
-            self._enum_hook(en, global_data, global_data.enums)
+            enum_data = self.gendata.get_enum_data(en.get("name"))
+            en["data"] = enum_data
+            self._enum_hook(en, enum_data)
 
-    def _function_hook(self, fn, global_data, fn_data, typ, fn_report, internal=False):
+        for v in header.variables:
+            var_data = self.gendata.get_prop_data(v["name"])
+            v["data"] = var_data
+
+    def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
 
-        # Ignore operators, move constructors, copy constructors
-        if (
-            fn.get("operator")
-            or fn.get("destructor")
-            or (
-                fn.get("constructor")
-                and fn["parameters"]
-                and fn["parameters"][0]["class"]
-                and fn["parameters"][0]["class"]["name"] == fn["name"]
-            )
-        ):
-            fn["data"] = typ(ignore=True)
-            return
-
         # Python exposed function name converted to camelcase
-        x_name = self._strip_prefixes(global_data, fn["name"])
+        x_name = self._strip_prefixes(fn["name"])
         x_name = x_name[0].lower() + x_name[1:]
 
         x_in_params = []
@@ -150,45 +133,6 @@ class Hooks:
         x_genlambda = False
         x_lambda_pre = []
         x_lambda_post = []
-
-        param_sig = ", ".join(
-            p.get("enum", p["raw_type"]) + "&" * p["reference"] + "*" * p["pointer"]
-            for p in fn["parameters"]
-        )
-        param_sig = param_sig.replace(" >", ">")
-        if fn["const"]:
-            if param_sig:
-                param_sig += " [const]"
-            else:
-                param_sig = "[const]"
-
-        fn_report_data = fn_report.setdefault(
-            fn["name"], {"has_data": False, "overloads": {}, "first": fn}
-        )
-
-        data = fn_data.get(fn["name"], _missing)
-        if data is _missing:
-            data = typ()
-            # assert False, fn['name']
-        else:
-            fn_report_data["has_data"] = True
-            if data is None:
-                data = typ()
-
-        has_report_overload_data = False
-        if getattr(data, "overloads", {}):
-            if param_sig in data.overloads:
-                has_report_overload_data = True
-                overload = data.overloads[param_sig]
-                if overload:
-                    data = data.dict(exclude_unset=True)
-                    data.update(overload.dict(exclude_unset=True))
-                    data = typ(**data)
-
-        fn_report_data["overloads"][param_sig] = has_report_overload_data
-        is_overloaded = len(fn_report_data["overloads"]) > 1
-        if is_overloaded:
-            fn_report_data["first"]["x_overloaded"] = True
 
         # Use this if one of the parameter types don't quite match
         param_override = data.param_override
@@ -381,8 +325,6 @@ class Hooks:
                 x_in_params=x_in_params,
                 x_out_params=x_out_params,
                 x_rets=x_rets,
-                # other
-                x_overloaded=is_overloaded,
                 # lambda generation
                 x_genlambda=x_genlambda,
                 x_callstart=x_callstart,
@@ -397,11 +339,13 @@ class Hooks:
         )
 
     def function_hook(self, fn, data):
-        global_data = data.get("data", {})
-        functions_data = global_data.functions
-        fn_report = {}
-        self._function_hook(fn, global_data, functions_data, FunctionData, fn_report)
-        self._process_fn_report(None, fn_report)
+        if fn.get("operator"):
+            fn["data"] = FunctionData(ignore=True)
+            return
+
+        signature = self._get_function_signature(fn)
+        data = self.gendata.get_function_data(fn, signature)
+        self._function_hook(fn, data)
 
     def class_hook(self, cls, data):
 
@@ -410,19 +354,17 @@ class Hooks:
             cls["data"] = ClassData(ignore=True)
             return
 
-        # key: function name
-        # value: {has_data=bool, overloads={ "int,int"=bool }}
-        fn_report = {}
-
-        global_data = data.get("data", {})
-        class_data = global_data.classes.get(cls["name"])
-        if class_data is None:
-            class_data = ClassData()
+        cls_name = cls["name"]
+        class_data = self.gendata.get_class_data(cls_name)
 
         # fix enum paths
         for e in cls["enums"]["public"]:
-            e["x_namespace"] = e["namespace"] + "::" + cls["name"] + "::"
-            self._enum_hook(e, global_data, global_data.enums)
+            e["x_namespace"] = e["namespace"] + "::" + cls_name + "::"
+            enum_data = self.gendata.get_cls_enum_data(
+                e.get("name"), cls_name, class_data
+            )
+            e["data"] = enum_data
+            self._enum_hook(e, enum_data)
 
         # update inheritance
         for base in cls["inherits"]:
@@ -439,13 +381,13 @@ class Hooks:
             if base["class"] not in class_data.ignored_bases
         ]
 
-        cls["x_qualname"] = cls["namespace"] + "::" + cls["name"]
+        cls["x_qualname"] = cls["namespace"] + "::" + cls_name
         cls["x_qualname_"] = cls["x_qualname"].replace(":", "_")
 
         cls["data"] = class_data
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
-        methods_data = class_data.methods
+        has_trampoline = is_polymorphic and not cls["final"]
 
         # bad assumption?
         if cls["inherits"]:
@@ -459,34 +401,54 @@ class Hooks:
                 if fn["override"] or fn["virtual"]:
                     is_polymorphic = True
 
+                # Ignore operators, move constructors, copy constructors
+                if (
+                    fn.get("operator")
+                    or fn.get("destructor")
+                    or (
+                        fn.get("constructor")
+                        and fn["parameters"]
+                        and fn["parameters"][0]["class"] is cls
+                    )
+                ):
+                    fn["data"] = MethodData(ignore=True)
+                    continue
+
                 if access != "private":
                     internal = access != "public"
+
+                    signature = self._get_function_signature(fn)
+                    method_data = self.gendata.get_function_data(
+                        fn, signature, cls_name, class_data
+                    )
+
                     try:
                         self._function_hook(
-                            fn,
-                            global_data,
-                            methods_data,
-                            MethodData,
-                            fn_report,
-                            internal=internal,
+                            fn, method_data, internal=internal,
                         )
                     except Exception as e:
-                        raise HookError(f"{cls['name']}::{fn['name']}") from e
+                        raise HookError(f"{cls_name}::{fn['name']}") from e
 
+            # class attributes
             for v in cls["properties"][access]:
-                propdata = class_data.attributes.get(v["name"])
-                if propdata is None:
-                    propdata = PropData()
+                if access in "private" or (
+                    access == "protected" and not has_trampoline
+                ):
+                    v["data"] = PropData(ignore=True)
+                    continue
+
+                prop_name = v["name"]
+                propdata = self.gendata.get_cls_prop_data(
+                    prop_name, cls_name, class_data
+                )
                 v["data"] = propdata
                 if propdata.rename:
-                    v["x_name"] = v["name"]
+                    v["x_name"] = propdata.rename
                 else:
                     v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
 
-        cls["x_has_trampoline"] = is_polymorphic and not cls["final"]
+        cls["x_has_trampoline"] = has_trampoline
         if cls["x_has_trampoline"]:
-            cls["x_trampoline_name"] = f"rpygen::Py{cls['x_qualname_']}<{cls['name']}>"
+            cls["x_trampoline_name"] = f"rpygen::Py{cls['x_qualname_']}<{cls_name}>"
         cls["x_has_constructor"] = has_constructor
-        cls["x_varname"] = "cls_" + cls["name"]
-
-        self._process_fn_report(cls["name"], fn_report)
+        cls["x_varname"] = "cls_" + cls_name

@@ -287,8 +287,6 @@ class Wrapper:
                     "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
                 )
 
-                hooks = Hooks()
-
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     "headers": [join(incdir, normpath(header))],
@@ -312,7 +310,10 @@ class Wrapper:
                     else:
                         data = self._load_generation_data(perpath)
 
+                hooks = Hooks(data)
                 processor.process_config(cfg, data, hooks)
+
+                hooks.report_missing(name + ".yml")
 
         # generate an inline file that can be included + called
         self._write_wrapper_hpp(cxx_gen_dir)
