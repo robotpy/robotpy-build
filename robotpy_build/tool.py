@@ -1,5 +1,6 @@
 import argparse
-from os.path import exists
+import glob
+from os.path import basename, exists, join, relpath, splitext
 
 from .setup import Setup
 from .generator_data import MissingReporter
@@ -19,9 +20,7 @@ class GenCreator:
 
         parser.set_defaults(cls=cls)
 
-    def run(self, args):
-        s = Setup()
-        s.prepare()
+    def run(self, s: Setup, args):
 
         for wrapper in s.wrappers:
             reporter = MissingReporter()
@@ -45,6 +44,33 @@ class GenCreator:
                 print("Nothing to do!")
 
 
+class HeaderScanner:
+    @classmethod
+    def add_subparser(cls, parent_parser, subparsers):
+        parser = subparsers.add_parser(
+            "scan-headers",
+            help="Generate a list of headers in TOML form",
+            parents=[parent_parser],
+        )
+        parser.set_defaults(cls=cls)
+
+    def run(self, s: Setup, args):
+        for wrapper in s.wrappers:
+            for incdir in wrapper.get_include_dirs():
+                files = list(
+                    sorted(
+                        relpath(f, incdir) for f in glob.glob(join(incdir, "**", "*.h"))
+                    )
+                )
+
+                print("generate = [")
+                for f in files:
+                    if "rpygen" not in f:
+                        base = splitext(basename(f))[0]
+                        print(f'    {{ {base} = "{f}" }},')
+                print("]")
+
+
 def main():
 
     parser = argparse.ArgumentParser(prog="robotpy-build")
@@ -53,9 +79,14 @@ def main():
     subparsers.required = True
 
     GenCreator.add_subparser(parent_parser, subparsers)
+    HeaderScanner.add_subparser(parent_parser, subparsers)
 
     args = parser.parse_args()
-    retval = args.cls().run(args)
+    cmd = args.cls()
+
+    s = Setup()
+    s.prepare()
+    retval = cmd.run(s, args)
 
     if retval is False:
         retval = 1
