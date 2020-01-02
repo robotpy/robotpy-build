@@ -6,7 +6,6 @@ from .hooks_datacfg import (
     BufferType,
     ClassData,
     FunctionData,
-    MethodData,
     PropData,
 )
 from .generator_data import GeneratorData
@@ -411,7 +410,7 @@ class Hooks:
                         and fn["parameters"][0]["class"] is cls
                     )
                 ):
-                    fn["data"] = MethodData(ignore=True)
+                    fn["data"] = FunctionData(ignore=True)
                     continue
 
                 if access != "private":

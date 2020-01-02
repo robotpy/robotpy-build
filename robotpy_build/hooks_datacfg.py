@@ -74,9 +74,7 @@ class FunctionData(Model):
 
     buffers: List[BufferData] = []
 
-
-class MethodData(FunctionData):
-    overloads: Dict[str, FunctionData] = {}
+    overloads: Dict[str, "FunctionData"] = {}
 
     @validator("overloads", pre=True)
     def validate_overloads(cls, value):
@@ -84,6 +82,9 @@ class MethodData(FunctionData):
             if v is None:
                 value[k] = FunctionData()
         return value
+
+
+FunctionData.update_forward_refs()
 
 
 class PropData(Model):
@@ -110,7 +111,7 @@ class ClassData(Model):
 
     attributes: Dict[str, PropData] = {}
     enums: Dict[str, EnumData] = {}
-    methods: Dict[str, MethodData] = {}
+    methods: Dict[str, FunctionData] = {}
 
     is_polymorphic: bool = False
 
@@ -148,7 +149,7 @@ class ClassData(Model):
     def validate_methods(cls, value):
         for k, v in value.items():
             if v is None:
-                value[k] = MethodData()
+                value[k] = FunctionData()
         return value
 
 
