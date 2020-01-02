@@ -128,6 +128,6 @@ class HooksDataYaml(Model):
 
     strip_prefixes: List[str] = []
     extra_includes: List[str] = []
-    functions: Dict[str, FunctionData] = {}
-    classes: Dict[str, ClassData] = {}
-    enums: Dict[str, EnumData] = {}
+    functions: Dict[str, Optional[FunctionData]] = {}
+    classes: Dict[str, Optional[ClassData]] = {}
+    enums: Dict[str, Optional[EnumData]] = {}
