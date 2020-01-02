@@ -78,7 +78,9 @@ class WrapperConfig(BaseModel):
     # header that is being wrapped
     generate: Optional[List[Dict[str, str]]] = None
 
-    # Path to a data.yml to use during code generation
+    # Path to a data.yml to use during code generation, or a directory
+    # of yaml files. If a directory, generation data will be looked up
+    # using the key in the generate dictionary
     generation_data: Optional[str] = None
 
 

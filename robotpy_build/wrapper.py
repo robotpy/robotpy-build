@@ -1,6 +1,6 @@
 import inspect
 import os
-from os.path import abspath, dirname, join, normpath, relpath, sep
+from os.path import abspath, dirname, exists, isdir, join, normpath, relpath, sep
 import shutil
 import yaml
 
@@ -230,6 +230,15 @@ class Wrapper:
         with open(fname, "w") as fp:
             fp.write(pkgcfg)
 
+    def _load_generation_data(self, datafile):
+        with open(datafile) as fp:
+            data = yaml.safe_load(fp)
+
+        if data is None:
+            data = {}
+
+        return HooksDataYaml(**data)
+
     def on_build_gen(self, cxx_gen_dir):
 
         if not self.cfg.generate:
@@ -254,14 +263,14 @@ class Wrapper:
         shutil.rmtree(hppoutdir, ignore_errors=True)
         os.makedirs(hppoutdir)
 
-        data = {}
+        per_header = False
         if self.cfg.generation_data:
-            datafile = join(self.setup_root, normpath(self.cfg.generation_data))
-
-            with open(datafile) as fp:
-                data = yaml.safe_load(fp)
-
-        data = HooksDataYaml(**data)
+            datapath = join(self.setup_root, normpath(self.cfg.generation_data))
+            per_header = isdir(datapath)
+            if not per_header:
+                data = self._load_generation_data(datapath)
+        else:
+            data = HooksDataYaml()
 
         sources = self.cfg.sources[:]
 
@@ -294,6 +303,14 @@ class Wrapper:
                 cfg = Config(cfgd)
                 cfg.validate()
                 cfg.root = incdir
+
+                if per_header:
+                    perpath = join(datapath, name + ".yml")
+                    if not exists(perpath):
+                        print("WARNING: could not find", perpath)
+                        data = HooksDataYaml()
+                    else:
+                        data = self._load_generation_data(perpath)
 
                 processor.process_config(cfg, data, hooks)
 
