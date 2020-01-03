@@ -407,8 +407,9 @@ class Hooks:
             if base["class"] not in class_data.ignored_bases
         ]
 
-        cls["x_qualname"] = cls["namespace"] + "::" + cls_name
-        cls["x_qualname_"] = cls["x_qualname"].replace(":", "_")
+        cls_qualname = cls["namespace"] + "::" + cls_name
+        cls["x_qualname"] = cls_qualname
+        cls["x_qualname_"] = cls_qualname.replace(":", "_")
 
         cls["data"] = class_data
         has_constructor = False
@@ -477,6 +478,6 @@ class Hooks:
 
         cls["x_has_trampoline"] = has_trampoline
         if cls["x_has_trampoline"]:
-            cls["x_trampoline_name"] = f"rpygen::Py{cls['x_qualname_']}<{cls_name}>"
+            cls["x_trampoline_name"] = f"rpygen::Py{cls_qualname}<{cls_name}>"
         cls["x_has_constructor"] = has_constructor
         cls["x_varname"] = "cls_" + cls_name
