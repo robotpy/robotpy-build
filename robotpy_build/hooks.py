@@ -386,7 +386,6 @@ class Hooks:
         cls["data"] = class_data
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
-        has_trampoline = is_polymorphic and not cls["final"]
 
         # bad assumption?
         if cls["inherits"]:
@@ -428,6 +427,8 @@ class Hooks:
                     except Exception as e:
                         raise HookError(f"{cls_name}::{fn['name']}") from e
 
+        has_trampoline = is_polymorphic and not cls["final"]
+        for access in ("public", "protected", "private"):
             # class attributes
             for v in cls["properties"][access]:
                 if access in "private" or (
