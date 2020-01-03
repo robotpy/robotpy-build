@@ -21,6 +21,7 @@ from header2whatever.parse import ConfigProcessor
 
 from setuptools import Extension
 
+from .pyproject_configs import WrapperConfig
 from .generator_data import MissingReporter
 from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
@@ -32,7 +33,7 @@ class Wrapper:
         Wraps downloading bindings and generating them
     """
 
-    def __init__(self, name, wrapcfg, setup):
+    def __init__(self, name, wrapcfg: WrapperConfig, setup):
 
         # must match PkgCfg.name
         self.name = wrapcfg.name

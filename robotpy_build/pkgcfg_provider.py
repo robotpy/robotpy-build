@@ -1,4 +1,5 @@
 from pkg_resources import iter_entry_points
+from typing import Dict, List, Optional, Set
 import warnings
 
 
@@ -14,7 +15,7 @@ class PkgCfg:
         # could deduce this, but this is probably fine
         self.import_name = getattr(self.module, "import_name", None)
 
-    def get_include_dirs(self):
+    def get_include_dirs(self) -> Optional[List[str]]:
         """
             Include directories provided by this module
         """
@@ -22,7 +23,7 @@ class PkgCfg:
         if fn:
             return fn()
 
-    def get_library_dirs(self):
+    def get_library_dirs(self) -> Optional[List[str]]:
         """
             Directories where libraries reside
         """
@@ -30,7 +31,7 @@ class PkgCfg:
         if fn:
             return fn()
 
-    def get_library_names(self):
+    def get_library_names(self) -> Optional[List[str]]:
         """
             Names of libraries provided
         """
@@ -56,10 +57,10 @@ class PkgCfgProvider:
             else:
                 self.add_pkg(pkg)
 
-    def add_pkg(self, pkg):
+    def add_pkg(self, pkg: PkgCfg) -> None:
         self.pkgs[pkg.name] = pkg
 
-    def get_pkg(self, name):
+    def get_pkg(self, name: str) -> str:
         try:
             return self.pkgs[name]
         except KeyError:
