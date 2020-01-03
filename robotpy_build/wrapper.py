@@ -46,6 +46,11 @@ class Wrapper:
         self.platform = setup.platform
         self.pkgcfg = setup.pkgcfg
 
+        # Used by pkgcfg
+        self.depends = self.cfg.depends
+
+        self._all_deps = None
+
         if not self.cfg.artname:
             self.cfg.artname = self.cfg.name
 
@@ -98,6 +103,11 @@ class Wrapper:
             return [self.cfg.name]
         else:
             return self.cfg.libs
+
+    def all_deps(self):
+        if self._all_deps is None:
+            self._all_deps = self.pkgcfg.get_all_deps(self.name)
+        return self._all_deps
 
     def _all_includes(self, include_rpyb):
         includes = self.get_include_dirs()
@@ -217,6 +227,7 @@ class Wrapper:
         _root = abspath(dirname(__file__))
 
         import_name = "{self.import_name}"
+        depends = {repr(self.cfg.depends)}
 
         def get_include_dirs():
             return [join(_root, "include")##EXTRAINCLUDES##]

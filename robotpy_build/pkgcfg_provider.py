@@ -14,6 +14,7 @@ class PkgCfg:
 
         # could deduce this, but this is probably fine
         self.import_name = getattr(self.module, "import_name", None)
+        self.depends = getattr(self.module, "depends", [])
 
     def get_include_dirs(self) -> Optional[List[str]]:
         """
@@ -65,3 +66,16 @@ class PkgCfgProvider:
             return self.pkgs[name]
         except KeyError:
             raise KeyError("robotpy-build package '%s' not installed" % name)
+
+    def get_all_deps(self, name: str) -> Set[PkgCfg]:
+        deps = set()
+
+        def _get(name: str):
+            pkg = self.get_pkg(name)
+            for dep in pkg.depends:
+                if dep not in deps:
+                    deps.add(_get(dep))
+            return pkg
+
+        _get(name)
+        return deps
