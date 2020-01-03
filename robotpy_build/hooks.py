@@ -264,7 +264,7 @@ class Hooks:
                     x_temps.append(p)
                     ptype = "ignored"
 
-            elif p["pointer"] and not p["constant"] and p["fundamental"]:
+            elif p.get("force_out") or (p["pointer"] and not p["constant"] and p["fundamental"]):
                 p["x_callname"] = "&%(x_callname)s" % p
                 ptype = "out"
             elif p["array"]:

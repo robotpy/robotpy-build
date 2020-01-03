@@ -23,6 +23,8 @@ class ParamData(Model):
     # Default value for parameter
     default: Optional[str] = None
 
+    force_out: bool = False
+
     ignore: bool = False
 
 
