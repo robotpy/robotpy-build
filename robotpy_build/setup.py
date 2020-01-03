@@ -10,7 +10,7 @@ from .command.build_dl import BuildDl
 from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
 
-from .configs import RobotpyBuildConfig
+from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
 from .platforms import get_platform
 from .wrapper import Wrapper
