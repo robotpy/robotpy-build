@@ -47,6 +47,7 @@
      {%- if not fn.data.no_release_gil -%}
       , release_gil()
      {%- endif -%}
+     {{- fn.x_return_value_policy -}}
      {%- if fn.x_doc %},
        {% for dq in fn.x_doc_quoted %}
           {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}

@@ -51,6 +51,20 @@ class BufferData(Model):
     minsz: Optional[int] = None
 
 
+class ReturnValuePolicy(enum.Enum):
+    """
+        see pybind11 documentation for this
+    """
+
+    TAKE_OWNERSHIP = "take_ownership"
+    COPY = "copy"
+    MOVE = "move"
+    REFERENCE = "reference"
+    REFERENCE_INTERNAL = "reference_internal"
+    AUTOMATIC = "automatic"
+    AUTOMATIC_REFERENCE = "automatic_reference"
+
+
 class FunctionData(Model):
     # If True, don't wrap this
     ignore: bool = False
@@ -75,6 +89,8 @@ class FunctionData(Model):
     buffers: List[BufferData] = []
 
     overloads: Dict[str, "FunctionData"] = {}
+
+    return_value_policy: ReturnValuePolicy = ReturnValuePolicy.AUTOMATIC
 
     @validator("overloads", pre=True)
     def validate_overloads(cls, value):

@@ -8,6 +8,7 @@ from .hooks_datacfg import (
     ClassData,
     FunctionData,
     PropData,
+    ReturnValuePolicy,
 )
 from .generator_data import GeneratorData, MissingReporter
 from .mangle import trampoline_signature
@@ -25,6 +26,17 @@ def _gen_int_types():
 
 
 _int32_types = set(_gen_int_types())
+
+
+_rvp_map = {
+    ReturnValuePolicy.TAKE_OWNERSHIP: ", py::return_value_policy::take_ownership",
+    ReturnValuePolicy.COPY: ", py::return_value_policy::copy",
+    ReturnValuePolicy.MOVE: ", py::return_value_policy::move",
+    ReturnValuePolicy.REFERENCE: ", py::return_value_policy::reference",
+    ReturnValuePolicy.REFERENCE_INTERNAL: ", py::return_value_policy::reference_internal",
+    ReturnValuePolicy.AUTOMATIC: "",
+    ReturnValuePolicy.AUTOMATIC_REFERENCE: ", py::return_value_policy::automatic_reference",
+}
 
 
 class HookError(Exception):
@@ -291,6 +303,7 @@ class Hooks:
         x_callstart = ""
         x_callend = ""
         x_wrap_return = ""
+        x_return_value_policy = _rvp_map[data.return_value_policy]
 
         if x_out_params:
             x_genlambda = True
@@ -351,6 +364,7 @@ class Hooks:
                 x_in_params=x_in_params,
                 x_out_params=x_out_params,
                 x_rets=x_rets,
+                x_return_value_policy=x_return_value_policy,
                 # lambda generation
                 x_genlambda=x_genlambda,
                 x_callstart=x_callstart,
