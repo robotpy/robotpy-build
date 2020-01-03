@@ -106,4 +106,3 @@ def trampoline_signature(fn):
         names.append("_z")
 
     return "".join(names)
-

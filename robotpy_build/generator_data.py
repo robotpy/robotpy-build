@@ -236,4 +236,3 @@ class MissingReporter:
                 .replace("? ''\n          :", '"":')
                 .replace("? ''\n      :", '"":')
             )
-
