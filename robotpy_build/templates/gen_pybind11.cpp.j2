@@ -42,7 +42,7 @@
         }}){% if fn.const %} const{% endif %}>(
       {%- endif -%}
 	     {{ fnptr(cls, fn) }}
-      {%- if fn.x_overloaded -%}){%- endif -%}
+      {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}){%- endif -%}
 		 {% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}
      {%- if not fn.data.no_release_gil -%}
       , release_gil()
