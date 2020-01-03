@@ -37,8 +37,9 @@ class WrapperConfig(BaseModel):
     class Config:
         extra = "forbid"
 
-    # List of extra headers to export
-    extra_headers: List[str] = []
+    # List of extra include directories to export, relative to the
+    # project root
+    extra_includes: List[str] = []
 
     # List of robotpy-build library dependencies
     # .. would be nice to auto-infer this from the python install dependencies

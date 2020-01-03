@@ -91,7 +91,10 @@ class Wrapper:
 
     # pkgcfg interface
     def get_include_dirs(self):
-        return [join(self.root, "include")]
+        includes = [join(self.root, "include")]
+        for h in self.cfg.extra_includes:
+            includes.append(join(self.setup_root, normpath(h)))
+        return includes
 
     def get_library_dirs(self):
         if self.get_library_names():
@@ -261,12 +264,12 @@ class Wrapper:
         )
 
         extraincludes = ""
-        if self.cfg.extra_headers:
+        if self.cfg.extra_includes:
             # these are relative to the root of the project, need
             # to resolve the path relative to the pkgcfg directory
             pth = join(*self.import_name.split("."))
 
-            for h in self.cfg.extra_headers:
+            for h in self.cfg.extra_includes:
                 h = '", "'.join(relpath(normpath(h), pth).split(sep))
                 extraincludes += f', join(_root, "{h}")'
 
