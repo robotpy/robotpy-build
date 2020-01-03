@@ -130,6 +130,7 @@ class ClassData(Model):
     methods: Dict[str, FunctionData] = {}
 
     is_polymorphic: bool = False
+    force_no_trampoline: bool = False
 
     #: If the object shouldn't be deleted by pybind11, use this
     nodelete: bool = False
