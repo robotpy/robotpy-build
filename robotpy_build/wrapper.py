@@ -367,6 +367,7 @@ class Wrapper:
                     "preprocess": True,
                     "pp_retain_all_content": False,
                     "pp_include_paths": pp_includes,
+                    "pp_defines": ["__cplusplus 201703L"],
                     "vars": {"mod_fn": name},
                 }
 
