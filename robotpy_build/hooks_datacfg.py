@@ -115,6 +115,9 @@ class ClassData(Model):
 
     is_polymorphic: bool = False
 
+    #: If the object shouldn't be deleted by pybind11, use this
+    nodelete: bool = False
+
     #: If the type was created as a shared_ptr (such as via std::make_shared)
     #: then pybind11 needs to be informed of this.
     #:

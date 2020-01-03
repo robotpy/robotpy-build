@@ -133,7 +133,9 @@ void init_{{ mod_fn }}(py::module &m) {
 {% endfor %}
 
   py::class_<{{ cls.name }}
-    {%- if cls.data.shared_ptr -%}
+    {%- if cls.data.nodelete -%}
+      , std::unique_ptr<{{ cls.name }}, py::nodelete>
+    {%- elif cls.data.shared_ptr -%}
       , std::shared_ptr<{{ cls.name }}>
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
