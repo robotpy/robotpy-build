@@ -25,10 +25,16 @@ class GenCreator:
         parser.add_argument(
             "--write", help="Write to files if they don't exist", action="store_true"
         )
+        parser.add_argument("--strip-prefixes", action="append")
 
         return parser
 
     def run(self, args):
+
+        pfx = ""
+        if args.strip_prefixes:
+            pfx = "strip_prefixes:\n- " + "\n- ".join(args.strip_prefixes) + "\n\n"
+
         s = get_setup()
         for wrapper in s.wrappers:
             reporter = MissingReporter()
@@ -36,6 +42,8 @@ class GenCreator:
 
             nada = True
             for name, report in reporter.as_yaml():
+                report = f"---\n\n{pfx}{report}"
+
                 nada = False
                 if args.write:
                     if not exists(name):
