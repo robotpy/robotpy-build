@@ -104,6 +104,11 @@ class Wrapper:
         else:
             return self.cfg.libs
 
+    def get_type_casters(self, casters):
+        for header, types in self.cfg.type_casters.items():
+            for typ in types:
+                casters[typ] = header
+
     def all_deps(self):
         if self._all_deps is None:
             self._all_deps = self.pkgcfg.get_all_deps(self.name)
@@ -128,6 +133,21 @@ class Wrapper:
         for dep in self.cfg.depends:
             libs.extend(self.pkgcfg.get_pkg(dep).get_library_names())
         return list(reversed(libs))
+
+    def _all_casters(self):
+        casters = {}
+        for dep in self.all_deps():
+            dep.get_type_casters(casters)
+        self.pkgcfg.get_pkg("robotpy-build").get_type_casters(casters)
+        self.get_type_casters(casters)
+
+        # add non-namespaced versions of all casters
+        # -> in theory this could lead to a conflict, but
+        #    let's see how it works in practice?
+        for k, v in list(casters.items()):
+            k = k.split("::")[-1]
+            casters[k] = v
+        return casters
 
     def on_build_dl(self, cache):
 
@@ -252,6 +272,14 @@ class Wrapper:
 
         pkgcfg = pkgcfg.replace("##EXTRAINCLUDES##", extraincludes)
 
+        type_casters = {}
+        self.get_type_casters(type_casters)
+        if type_casters:
+            pkgcfg += (
+                f"\n\ndef get_type_casters(casters):\n"
+                f"    casters.update({repr(type_casters)})\n"
+            )
+
         with open(fname, "w") as fp:
             fp.write(pkgcfg)
 
@@ -308,6 +336,7 @@ class Wrapper:
             data = HooksDataYaml()
 
         sources = self.cfg.sources[:]
+        casters = self._all_casters()
 
         processor = ConfigProcessor(tmpl_dir)
 
@@ -350,7 +379,7 @@ class Wrapper:
                     else:
                         data = self._load_generation_data(data_fname)
 
-                hooks = Hooks(data)
+                hooks = Hooks(data, casters)
                 processor.process_config(cfg, data, hooks)
 
                 hooks.report_missing(data_fname, missing_reporter)

@@ -97,6 +97,10 @@
 #include <{{ header.rel_fname }}>
 {% endfor %}
 
+{% for inc in type_caster_includes %}
+#include <{{ inc }}>
+{% endfor %}
+
 {% for header in headers %}
 {% for using in header.using.values() %}
 using {{ using.raw_type }};

@@ -83,6 +83,15 @@ class WrapperConfig(BaseModel):
     # using the key in the generate dictionary
     generation_data: Optional[str] = None
 
+    # Specifies type casters that this package exports. robotpy-build
+    # will attempt to detect these types at generation time and include
+    # them in generated wrappers.
+    #
+    # [tool.robotpy-build.wrappers."package-name".type_casters]
+    # "namespace_type1_type_caster.h" = ["namespace::type1", .. ]
+    #
+    type_casters: Dict[str, List[str]] = {}
+
 
 class DistutilsMetadata(BaseModel):
     class Config:

@@ -40,6 +40,14 @@ class PkgCfg:
         if fn:
             return fn()
 
+    def get_type_casters(self, casters: Dict[str, str]) -> None:
+        """
+            Type caster headers provided
+        """
+        fn = getattr(self.module, "get_type_casters", None)
+        if fn:
+            return fn(casters)
+
 
 class PkgCfgProvider:
     """

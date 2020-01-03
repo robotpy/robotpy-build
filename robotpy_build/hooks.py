@@ -1,4 +1,5 @@
 import sphinxify
+import typing
 import yaml
 
 from .hooks_datacfg import (
@@ -39,12 +40,31 @@ class Hooks:
         Header2Whatever hooks used for generating C++ wrappers
     """
 
-    def __init__(self, data: HooksDataYaml):
+    def __init__(self, data: HooksDataYaml, casters: typing.Dict[str, str]):
         self.gendata = GeneratorData(data)
         self.rawdata = data
+        self.casters = casters
+
+        self.types = set()
 
     def report_missing(self, name: str, reporter: MissingReporter):
         self.gendata.report_missing(name, reporter)
+
+    def _add_type_caster(self, typename: str):
+        # defer until the end since there's lots of duplication
+        self.types.add(typename)
+
+    def _get_type_caster_includes(self):
+        includes = set()
+        for typename in self.types:
+            tmpl_idx = typename.find("<")
+            if tmpl_idx != -1:
+                typename = typename[:tmpl_idx]
+
+            header = self.casters.get(typename)
+            if header:
+                includes.add(header)
+        return sorted(includes)
 
     def _strip_prefixes(self, name: str):
         sp = self.rawdata.strip_prefixes
@@ -116,6 +136,9 @@ class Hooks:
         for v in header.variables:
             var_data = self.gendata.get_prop_data(v["name"])
             v["data"] = var_data
+            self._add_type_caster(v["raw_type"])
+
+        data["type_caster_includes"] = self._get_type_caster_includes()
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -151,6 +174,8 @@ class Hooks:
                     )
                 buffer_params[bufinfo.src] = bufinfo
                 buflen_params[bufinfo.len] = bufinfo
+
+        self._add_type_caster(fn["returns"])
 
         for i, p in enumerate(fn["parameters"]):
 
@@ -245,6 +270,8 @@ class Hooks:
                 x_temps.append(p)
             elif ptype == "in":
                 x_in_params.append(p)
+
+            self._add_type_caster(p["x_type"])
 
             if p["constant"]:
                 p["x_type"] = "const " + p["x_type"]
@@ -441,6 +468,7 @@ class Hooks:
                 propdata = self.gendata.get_cls_prop_data(
                     prop_name, cls_name, class_data
                 )
+                self._add_type_caster(v["raw_type"])
                 v["data"] = propdata
                 if propdata.rename:
                     v["x_name"] = propdata.rename
