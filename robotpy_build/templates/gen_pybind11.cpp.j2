@@ -37,7 +37,7 @@
           py::overload_cast fails in some obscure cases, so we don't use it here
           https://github.com/pybind/pybind11/issues/1153
         -#}
-        static_cast<{{ fn.rtnType }} ({% if not fn.static %}{{ cls.name }}::{% endif %}*)({{
+        static_cast<{{ fn.rtnType }} ({% if cls and not fn.static %}{{ cls.name }}::{% endif %}*)({{
           fn.x_in_params | join(', ', attribute='x_type_full')
         }}){% if fn.const %} const{% endif %}>(
       {%- endif -%}
