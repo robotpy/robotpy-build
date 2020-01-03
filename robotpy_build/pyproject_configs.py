@@ -22,7 +22,8 @@ class ExtensionConfig(BaseModel):
     # .. would be nice to auto-infer this from the python install dependencies
     depends: List[str] = []
 
-    # Source files to compile
+    # Source files to compile. Path is relative to the root of
+    # the project.
     sources: List[str]
 
 
@@ -70,12 +71,13 @@ class WrapperConfig(BaseModel):
     # Wrapper generation settings
     #
 
-    # Source files to compile
+    # Source files to compile. Path is relative to the root of
+    # the project.
     sources: List[str] = []
 
     # List of dictionaries: each dictionary key is the function
     # name for the initialization function, the value is the
-    # header that is being wrapped
+    # header that is being wrapped.
     generate: Optional[List[Dict[str, str]]] = None
 
     # Path to a data.yml to use during code generation, or a directory
