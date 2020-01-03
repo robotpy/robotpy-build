@@ -32,7 +32,7 @@
     .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
   {% else %}
     .{{ fndef(fn) }}("{{ fn.x_name }}",{{ ' ' }}
-      {%- if fn.x_overloaded -%}
+      {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
         {#-
           py::overload_cast fails in some obscure cases, so we don't use it here
           https://github.com/pybind/pybind11/issues/1153
