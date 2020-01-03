@@ -23,6 +23,8 @@ class ParamData(Model):
     # Default value for parameter
     default: Optional[str] = None
 
+    ignore: bool = False
+
 
 class BufferType(str, enum.Enum):
     IN = "in"

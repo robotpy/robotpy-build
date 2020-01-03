@@ -277,7 +277,9 @@ class Hooks:
                     pass
                 ptype = "out"
 
-            if ptype == "out":
+            if p.get("ignore"):
+                pass
+            elif ptype == "out":
                 x_out_params.append(p)
                 x_temps.append(p)
             elif ptype == "in":
