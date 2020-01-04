@@ -2,8 +2,8 @@
 {% if cls.x_inherits %}, {{ cls.x_inherits | join(', ', attribute='class')}}{% endif %}
 {%- endmacro -%}
 
-{%- macro fndef(fn) %}
-{% if fn.static %}def_static{% else %}def{% endif %}
+{%- macro fndef(cls, fn) %}
+{% if cls and fn.static %}def_static{% else %}def{% endif %}
 {% endmacro -%}
 
 {%- macro fnptr(cls, fn) -%}
@@ -31,7 +31,7 @@
   {% if fn.constructor %}
     .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
   {% else %}
-    .{{ fndef(fn) }}("{{ fn.x_name }}",{{ ' ' }}
+    .{{ fndef(cls, fn) }}("{{ fn.x_name }}",{{ ' ' }}
       {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
         {#-
           py::overload_cast fails in some obscure cases, so we don't use it here
