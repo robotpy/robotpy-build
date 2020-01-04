@@ -141,7 +141,7 @@ void init_{{ mod_fn }}(py::module &m) {
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
       , {{ cls.x_trampoline_name }}
-    {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.name }}");
+    {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.x_name }}");
   {{ cls.x_varname }}
   {# default constructor if not defined #}
   {% if not cls.x_has_constructor %}

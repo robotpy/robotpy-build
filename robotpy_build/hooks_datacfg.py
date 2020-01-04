@@ -121,6 +121,7 @@ class PropData(Model):
 
 class EnumData(Model):
     ignore: bool = False
+    rename: Optional[str] = None
     value_prefix: Optional[str] = None
 
 
@@ -138,6 +139,9 @@ class ClassData(Model):
 
     #: If the object shouldn't be deleted by pybind11, use this
     nodelete: bool = False
+
+    #: Set the python name of the class to this
+    rename: Optional[str] = None
 
     #: If the type was created as a shared_ptr (such as via std::make_shared)
     #: then pybind11 needs to be informed of this.

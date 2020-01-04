@@ -78,7 +78,10 @@ class Hooks:
                 includes.add(header)
         return sorted(includes)
 
-    def _strip_prefixes(self, name: str):
+    def _set_name(self, name, data):
+        if data.rename:
+            return data.rename
+
         sp = self.rawdata.strip_prefixes
         if sp:
             for pfx in sp:
@@ -124,7 +127,7 @@ class Hooks:
             if not value_prefix:
                 value_prefix = ename
 
-            en["x_name"] = self._strip_prefixes(ename)
+            en["x_name"] = self._set_name(ename, enum_data)
 
         for v in en["values"]:
             name = v["name"]
@@ -156,8 +159,9 @@ class Hooks:
         """shared with methods/functions"""
 
         # Python exposed function name converted to camelcase
-        x_name = self._strip_prefixes(fn["name"])
-        x_name = x_name[0].lower() + x_name[1:]
+        x_name = self._set_name(fn["name"], data)
+        if not data.rename and not x_name[:2].isupper():
+            x_name = x_name[0].lower() + x_name[1:]
 
         x_in_params = []
         x_out_params = []
@@ -264,7 +268,9 @@ class Hooks:
                     x_temps.append(p)
                     ptype = "ignored"
 
-            elif p.get("force_out") or (p["pointer"] and not p["constant"] and p["fundamental"]):
+            elif p.get("force_out") or (
+                p["pointer"] and not p["constant"] and p["fundamental"]
+            ):
                 p["x_callname"] = "&%(x_callname)s" % p
                 ptype = "out"
             elif p["array"]:
@@ -499,3 +505,4 @@ class Hooks:
             cls["x_trampoline_name"] = f"rpygen::Py{cls['x_qualname_']}<{cls_name}>"
         cls["x_has_constructor"] = has_constructor
         cls["x_varname"] = "cls_" + cls_name
+        cls["x_name"] = self._set_name(cls_name, class_data)
