@@ -1,7 +1,7 @@
 import argparse
 import glob
 import inspect
-from os.path import basename, exists, join, relpath, splitext
+from os.path import basename, dirname, exists, join, relpath, splitext
 import subprocess
 
 from .setup import Setup
@@ -82,8 +82,19 @@ class HeaderScanner:
                 )
 
                 print("generate = [")
+                lastdir = None
                 for f in files:
                     if "rpygen" not in f:
+                        thisdir = dirname(f)
+                        if lastdir is None:
+                            if thisdir:
+                                print("    #", thisdir)
+                        elif lastdir != thisdir:
+                            print()
+                            if thisdir:
+                                print("    #", thisdir)
+                        lastdir = thisdir
+
                         base = splitext(basename(f))[0]
                         print(f'    {{ {base} = "{f}" }},')
                 print("]")
