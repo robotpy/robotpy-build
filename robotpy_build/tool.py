@@ -76,7 +76,8 @@ class HeaderScanner:
             for incdir in wrapper.get_include_dirs():
                 files = list(
                     sorted(
-                        relpath(f, incdir) for f in glob.glob(join(incdir, "**", "*.h"))
+                        relpath(f, incdir)
+                        for f in glob.glob(join(incdir, "**", "*.h"), recursive=True)
                     )
                 )
 
