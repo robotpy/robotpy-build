@@ -207,7 +207,7 @@ class Hooks:
 
             if "forward_declared" in p:
                 fn["forward_declare"] = True
-                if "parent" in fn:
+                if fn["parent"]:
                     fn["parent"]["has_fwd_declare"] = True
 
             po = param_override.get(p["name"])
