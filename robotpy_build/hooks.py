@@ -423,11 +423,20 @@ class Hooks:
 
             base["x_qualname_"] = base["x_qualname"].replace(":", "_")
 
+        ignored_bases = {ib: True for ib in class_data.ignored_bases}
+
         cls["x_inherits"] = [
             base
             for base in cls["inherits"]
-            if base["class"] not in class_data.ignored_bases
+            if not ignored_bases.pop(base["class"], None)
         ]
+        if ignored_bases:
+            bases = ", ".join(base["class"] for base in cls["inherits"])
+            invalid_bases = ", ".join(ignored_bases.keys())
+            raise ValueError(
+                f"{cls_name}: ignored_bases contains non-existant bases "
+                + f"{invalid_bases}; valid bases are {bases}"
+            )
 
         cls_qualname = cls["namespace"] + "::" + cls_name
         cls["x_qualname"] = cls_qualname
