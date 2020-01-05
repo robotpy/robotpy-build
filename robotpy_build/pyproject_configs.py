@@ -95,6 +95,9 @@ class WrapperConfig(BaseModel):
     #
     type_casters: Dict[str, List[str]] = {}
 
+    # Preprocessor definitions
+    pp_defines: List[str] = []
+
 
 class DistutilsMetadata(BaseModel):
     class Config:

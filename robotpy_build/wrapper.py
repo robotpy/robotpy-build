@@ -33,6 +33,10 @@ class Wrapper:
         Wraps downloading bindings and generating them
     """
 
+    # Used during preprocessing
+    # -> should we change this based on what flags the compiler supports?
+    _cpp_version = "__cplusplus 201703L"
+
     def __init__(self, name, wrapcfg: WrapperConfig, setup):
 
         # must match PkgCfg.name
@@ -56,15 +60,15 @@ class Wrapper:
 
         self.extension = None
         if self.cfg.sources or self.cfg.generate:
+            define_macros = [("RPYBUILD_MODULE_NAME", self.name)]
+            define_macros += [tuple(m.split(" ", 1)) for m in self.cfg.pp_defines]
+
             # extensions just hold data about what to actually build, we can
             # actually modify extensions all the way up until the build
             # really happens
             extname = f"{self.import_name}.{self.name}"
             self.extension = Extension(
-                extname,
-                self.cfg.sources,
-                define_macros=[("RPYBUILD_MODULE_NAME", self.name)],
-                language="c++",
+                extname, self.cfg.sources, define_macros=define_macros, language="c++",
             )
 
         if self.cfg.generate and not self.cfg.generation_data:
@@ -339,6 +343,7 @@ class Wrapper:
             data = HooksDataYaml()
 
         sources = self.cfg.sources[:]
+        pp_defines = [self._cpp_version] + self.cfg.pp_defines
         casters = self._all_casters()
 
         processor = ConfigProcessor(tmpl_dir)
@@ -359,6 +364,14 @@ class Wrapper:
                     templates = [{"src": cpp_tmpl, "dst": cpp_dst}]
                     class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
 
+                if per_header:
+                    data_fname = join(datapath, name + ".yml")
+                    if not exists(data_fname):
+                        print("WARNING: could not find", data_fname)
+                        data = HooksDataYaml()
+                    else:
+                        data = self._load_generation_data(data_fname)
+
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     "headers": [join(incdir, normpath(header))],
@@ -367,21 +380,13 @@ class Wrapper:
                     "preprocess": True,
                     "pp_retain_all_content": False,
                     "pp_include_paths": pp_includes,
-                    "pp_defines": ["__cplusplus 201703L"],
+                    "pp_defines": pp_defines,
                     "vars": {"mod_fn": name},
                 }
 
                 cfg = Config(cfgd)
                 cfg.validate()
                 cfg.root = incdir
-
-                if per_header:
-                    data_fname = join(datapath, name + ".yml")
-                    if not exists(data_fname):
-                        print("WARNING: could not find", data_fname)
-                        data = HooksDataYaml()
-                    else:
-                        data = self._load_generation_data(data_fname)
 
                 hooks = Hooks(data, casters)
                 processor.process_config(cfg, data, hooks)
