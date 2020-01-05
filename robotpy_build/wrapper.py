@@ -21,6 +21,7 @@ from header2whatever.parse import ConfigProcessor
 
 from setuptools import Extension
 
+from .devcfg import get_dev_config
 from .pyproject_configs import WrapperConfig
 from .generator_data import MissingReporter
 from .hooks import Hooks
@@ -85,6 +86,8 @@ class Wrapper:
 
         self.incdir = join(self.root, "include")
         self.rpy_incdir = join(self.root, "rpy-include")
+
+        self.dev_config = get_dev_config(self.name)
 
     def _dl_url(self, thing):
         # TODO: support development against locally installed things?
@@ -328,11 +331,12 @@ class Wrapper:
         #       have changed
         if not report_only:
 
-            shutil.rmtree(cxx_gen_dir, ignore_errors=True)
-            os.makedirs(cxx_gen_dir)
+            if self.dev_config.only_generate is None:
+                shutil.rmtree(cxx_gen_dir, ignore_errors=True)
+                shutil.rmtree(hppoutdir, ignore_errors=True)
 
-            shutil.rmtree(hppoutdir, ignore_errors=True)
-            os.makedirs(hppoutdir)
+            os.makedirs(cxx_gen_dir, exist_ok=True)
+            os.makedirs(hppoutdir, exist_ok=True)
 
         per_header = False
         data_fname = self.cfg.generation_data
@@ -350,8 +354,14 @@ class Wrapper:
 
         processor = ConfigProcessor(tmpl_dir)
 
+        if self.dev_config.only_generate is not None:
+            only_generate = {n: True for n in self.dev_config.only_generate}
+        else:
+            only_generate = None
+
         for gen in self.cfg.generate:
             for name, header in gen.items():
+
                 if report_only:
                     templates = []
                     class_templates = []
@@ -365,6 +375,9 @@ class Wrapper:
                     )
                     templates = [{"src": cpp_tmpl, "dst": cpp_dst}]
                     class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
+
+                if only_generate is not None and not only_generate.pop(name, False):
+                    continue
 
                 if per_header:
                     data_fname = join(datapath, name + ".yml")
@@ -394,6 +407,10 @@ class Wrapper:
                 processor.process_config(cfg, data, hooks)
 
                 hooks.report_missing(data_fname, missing_reporter)
+
+        if only_generate:
+            unused = ", ".join(sorted(only_generate))
+            raise ValueError(f"only_generate specified unused headers! {unused}")
 
         if not report_only:
             for name, contents in missing_reporter.as_yaml():
