@@ -83,6 +83,9 @@ class Wrapper:
         ep = setup_kwargs.setdefault("entry_points", {})
         ep.setdefault("robotpybuild", []).append(entry_point)
 
+        self.incdir = join(self.root, "include")
+        self.rpy_incdir = join(self.root, "rpy-include")
+
     def _dl_url(self, thing):
         # TODO: support development against locally installed things?
         base = self.cfg.baseurl
@@ -95,7 +98,7 @@ class Wrapper:
 
     # pkgcfg interface
     def get_include_dirs(self):
-        includes = [join(self.root, "include")]
+        includes = [self.incdir, self.rpy_incdir]
         for h in self.cfg.extra_includes:
             includes.append(join(self.setup_root, normpath(h)))
         return includes
@@ -314,8 +317,7 @@ class Wrapper:
 
         thisdir = abspath(dirname(__file__))
 
-        incdir = join(self.root, "include")
-        hppoutdir = join(incdir, "rpygen")
+        hppoutdir = join(self.rpy_incdir, "rpygen")
         tmpl_dir = join(thisdir, "templates")
         cpp_tmpl = join(tmpl_dir, "gen_pybind11.cpp.j2")
         hpp_tmpl = join(tmpl_dir, "gen_cls_trampoline.hpp.j2")
@@ -374,7 +376,7 @@ class Wrapper:
 
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
-                    "headers": [join(incdir, normpath(header))],
+                    "headers": [join(self.incdir, normpath(header))],
                     "templates": templates,
                     "class_templates": class_templates,
                     "preprocess": True,
@@ -386,7 +388,7 @@ class Wrapper:
 
                 cfg = Config(cfgd)
                 cfg.validate()
-                cfg.root = incdir
+                cfg.root = self.incdir
 
                 hooks = Hooks(data, casters)
                 processor.process_config(cfg, data, hooks)
