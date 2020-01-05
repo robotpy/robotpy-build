@@ -71,7 +71,7 @@
       []({{ qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
     {% else %}
     .def_
-      {%- if prop.constant or prop.constexpr or prop.data.readonly -%}
+      {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
         readonly
       {%- else -%}
         readwrite

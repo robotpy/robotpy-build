@@ -8,6 +8,7 @@ from .hooks_datacfg import (
     ClassData,
     FunctionData,
     PropData,
+    PropAccess,
     ReturnValuePolicy,
 )
 from .generator_data import GeneratorData, MissingReporter
@@ -511,6 +512,17 @@ class Hooks:
                     v["x_name"] = propdata.rename
                 else:
                     v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
+
+                if propdata.access == PropAccess.AUTOMATIC:
+                    # Properties that aren't fundamental are readonly unless
+                    # overridden by the hook configuration
+                    x_readonly = not v["fundamental"]
+                elif propdata.access == PropAccess.READONLY:
+                    x_readonly = True
+                else:
+                    x_readonly = False
+
+                v["x_readonly"] = x_readonly
 
         cls["x_has_trampoline"] = has_trampoline
         if cls["x_has_trampoline"]:

@@ -107,16 +107,28 @@ class FunctionData(Model):
 FunctionData.update_forward_refs()
 
 
+class PropAccess(enum.Enum):
+
+    #: Determine read/read-write automatically
+    AUTOMATIC = "auto"
+
+    #: Allow python users access to the value, but ensure it can't
+    #: change. This is useful for properties that are defined directly
+    #: in the class
+    READONLY = "readonly"
+
+    #: Allows python users to read/write the value
+    READWRITE = "readwrite"
+
+
 class PropData(Model):
     ignore: bool = False
 
     #: Set the name of this property to the specified value
     rename: Optional[str]
 
-    #: Allow python users access to the value, but ensure it can't
-    #: change. This is useful for properties that are defined directly
-    #: in the class, as opposed to being a reference or pointer.
-    readonly: bool = False
+    #: Python code access to this property
+    access: PropAccess = PropAccess.AUTOMATIC
 
 
 class EnumData(Model):
