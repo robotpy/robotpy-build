@@ -52,6 +52,9 @@ class Hooks:
         Header2Whatever hooks used for generating C++ wrappers
     """
 
+    _qualname_bad = ":<>="
+    _qualname_trans = str.maketrans(_qualname_bad, "_" * len(_qualname_bad))
+
     def __init__(self, data: HooksDataYaml, casters: typing.Dict[str, str]):
         self.gendata = GeneratorData(data)
         self.rawdata = data
@@ -421,7 +424,7 @@ class Hooks:
             else:
                 base["x_qualname"] = base["class"]
 
-            base["x_qualname_"] = base["x_qualname"].replace(":", "_")
+            base["x_qualname_"] = base["x_qualname"].translate(self._qualname_trans)
 
         ignored_bases = {ib: True for ib in class_data.ignored_bases}
 
@@ -440,7 +443,7 @@ class Hooks:
 
         cls_qualname = cls["namespace"] + "::" + cls_name
         cls["x_qualname"] = cls_qualname
-        cls["x_qualname_"] = cls_qualname.replace(":", "_")
+        cls["x_qualname_"] = cls_qualname.translate(self._qualname_trans)
 
         cls["data"] = class_data
         has_constructor = False

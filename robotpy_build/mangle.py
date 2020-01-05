@@ -36,6 +36,9 @@ _builtins = {
     "auto": "Da",
 }
 
+_type_bad_chars = ":<>=()&"
+_type_trans = str.maketrans(_type_bad_chars, "_" * len(_type_bad_chars))
+
 
 def _encode_type(param):
     names = []
@@ -64,9 +67,7 @@ def _encode_type(param):
     typ = _builtins.get(raw_type)
     if not typ:
         # assert " " not in raw_type, raw_type
-        typ = "T" + raw_type.replace("::", "_").replace("<", "_").replace(
-            ">", "_"
-        ).replace(" ", "")
+        typ = "T" + raw_type.replace(" ", "").translate(_type_trans)
 
     names.append(typ)
     return "".join(names)
