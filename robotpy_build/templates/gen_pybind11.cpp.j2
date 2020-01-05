@@ -2,23 +2,23 @@
 {% if cls.x_inherits %}, {{ cls.x_inherits | join(', ', attribute='class')}}{% endif %}
 {%- endmacro -%}
 
-{%- macro fndef(cls, fn) %}
-{% if cls and fn.static %}def_static{% else %}def{% endif %}
+{%- macro fndef(cls_qualname, fn) %}
+{% if cls_qualname and fn.static %}def_static{% else %}def{% endif %}
 {% endmacro -%}
 
-{%- macro fnptr(cls, fn) -%}
+{%- macro fnptr(cls_qualname, fn) -%}
 {% if fn.data.cpp_code %}
 {{ fn.data.cpp_code }}
 {% elif not fn.x_genlambda %}
-&{% if cls %}{{ cls.x_qualname }}::{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}
+&{% if cls_qualname %}{{ cls_qualname }}::{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}
 {% else %}
-[]({% if cls -%}
-{{ cls.x_qualname }} * __that{% if fn.x_in_params %},{% endif %}
+[]({% if cls_qualname -%}
+{{ cls_qualname }} * __that{% if fn.x_in_params %},{% endif %}
 {% endif -%}{{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
           {% for stmt in fn.x_lambda_pre %}
           {{ stmt }};
           {% endfor %}
-          {{ fn.x_callstart }} {% if cls %}__that->{% endif %}{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {{ fn.x_callstart }} {% if cls_qualname %}__that->{% endif %}{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
           {% for stmt in fn.x_lambda_post %}
           {{ stmt }};
           {% endfor %}
@@ -27,21 +27,21 @@
 {%- endif %}
 {%- endmacro -%}
 
-{%- macro genmethod(cls, fn) %}
+{%- macro genmethod(cls_qualname, fn) %}
   {% if fn.constructor %}
     .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
   {% else %}
-    .{{ fndef(cls, fn) }}("{{ fn.x_name }}",{{ ' ' }}
+    .{{ fndef(cls_qualname, fn) }}("{{ fn.x_name }}",{{ ' ' }}
       {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
         {#-
           py::overload_cast fails in some obscure cases, so we don't use it here
           https://github.com/pybind/pybind11/issues/1153
         -#}
-        static_cast<{{ fn.rtnType }} ({% if cls and not fn.static %}{{ cls.name }}::{% endif %}*)({{
+        static_cast<{{ fn.rtnType }} ({% if cls_qualname and not fn.static %}{{ cls_qualname }}::{% endif %}*)({{
           fn.x_in_params | join(', ', attribute='x_type_full')
         }}){% if fn.const %} const{% endif %}>(
       {%- endif -%}
-	     {{ fnptr(cls, fn) }}
+	     {{ fnptr(cls_qualname, fn) }}
       {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}){%- endif -%}
 		 {% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}
      {%- if not fn.data.no_release_gil -%}
@@ -148,8 +148,16 @@ void init_{{ mod_fn }}(py::module &m) {
     .def(py::init<>())
   {% endif %}
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}
-  {{ genmethod(cls, fn) }}
+  {{ genmethod(cls.x_qualname, fn) }}
   {%- endfor %}
+  {#
+    Binding protected trampoline methods doesn't seem to work directly,
+    I think it needs a lambda?
+
+    {% for fn in cls.methods.protected if not fn.data.ignore and 'forward_declare' not in fn %}
+    {{ genmethod(cls.x_trampoline_name, fn) }}
+    {%- endfor %}
+  #}
   {% for prop in cls.properties.public if not prop.data.ignore %}
   {{ genprop(cls.x_qualname, prop) }}
   {%- endfor %}
@@ -164,8 +172,16 @@ void init_{{ mod_fn }}(py::module &m) {
 {% for cls in header.classes if 'has_fwd_declare' in cls %}
   {{ cls.x_varname }}
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' in fn %}
-  {{ genmethod(cls, fn) }}
+  {{ genmethod(cls.x_qualname, fn) }}
   {%- endfor %}
+  {#
+    Binding protected trampoline methods doesn't seem to work directly,
+    I think it needs a lambda?
+
+    {% for fn in cls.methods.protected if not fn.data.ignore and 'forward_declare' in fn %}
+    {{ genmethod(cls.x_trampoline_name, fn) }}
+    {%- endfor %}
+  #}
   ;
   {{ unnamed_enum(cls.x_varname, cls.enums.public) }}
 {% endfor %}
