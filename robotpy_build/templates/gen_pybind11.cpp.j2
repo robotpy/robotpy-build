@@ -144,7 +144,7 @@ void init_{{ mod_fn }}(py::module &m) {
     {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.x_name }}");
   {{ cls.x_varname }}
   {# default constructor if not defined #}
-  {% if not cls.x_has_constructor %}
+  {% if not cls.x_has_constructor and not cls.data.nodelete %}
     .def(py::init<>())
   {% endif %}
   {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}

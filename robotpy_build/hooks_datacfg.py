@@ -137,7 +137,8 @@ class ClassData(Model):
     is_polymorphic: bool = False
     force_no_trampoline: bool = False
 
-    #: If the object shouldn't be deleted by pybind11, use this
+    #: If the object shouldn't be deleted by pybind11, use this. Disables
+    #: implicit constructors.
     nodelete: bool = False
 
     #: Set the python name of the class to this
