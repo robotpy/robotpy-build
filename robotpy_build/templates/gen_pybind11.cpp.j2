@@ -18,7 +18,7 @@
           {% for stmt in fn.x_lambda_pre %}
           {{ stmt }};
           {% endfor %}
-          {{ fn.x_callstart }} {% if cls_qualname %}__that->{% endif %}{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {{ fn.x_callstart }} {% if cls_qualname %}__that->{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
           {% for stmt in fn.x_lambda_post %}
           {{ stmt }};
           {% endfor %}
