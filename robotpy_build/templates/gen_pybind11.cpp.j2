@@ -163,7 +163,7 @@ void init_{{ mod_fn }}(py::module &m) {
 {% for header in headers %}
 {% for cls in header.classes if 'has_fwd_declare' in cls %}
   {{ cls.x_varname }}
-  {% for fn in cls.methods.public if 'forward_declare' in fn %}
+  {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' in fn %}
   {{ genmethod(cls, fn) }}
   {%- endfor %}
   ;
