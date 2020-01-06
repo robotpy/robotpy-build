@@ -1,3 +1,4 @@
+import json
 import inspect
 import os
 from os.path import (
@@ -13,6 +14,7 @@ from os.path import (
 )
 import sys
 import shutil
+import toposort
 import typing
 import yaml
 
@@ -324,6 +326,7 @@ class Wrapper:
         tmpl_dir = join(thisdir, "templates")
         cpp_tmpl = join(tmpl_dir, "gen_pybind11.cpp.j2")
         hpp_tmpl = join(tmpl_dir, "gen_cls_trampoline.hpp.j2")
+        classdeps_tmpl = join(tmpl_dir, "gen_classdeps.json.j2")
 
         pp_includes = self._all_includes(False)
 
@@ -352,6 +355,9 @@ class Wrapper:
         pp_defines = [self._cpp_version] + self.cfg.pp_defines
         casters = self._all_casters()
 
+        # These are written to file to make it easier for dev mode to work
+        classdeps = {}
+
         processor = ConfigProcessor(tmpl_dir)
 
         if self.dev_config.only_generate is not None:
@@ -368,12 +374,18 @@ class Wrapper:
                 else:
                     cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
                     sources.append(cpp_dst)
+                    classdeps_dst = join(cxx_gen_dir, f"{name}.json")
+                    classdeps[name] = classdeps_dst
 
                     hpp_dst = join(
                         hppoutdir,
                         "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
                     )
-                    templates = [{"src": cpp_tmpl, "dst": cpp_dst}]
+
+                    templates = [
+                        {"src": cpp_tmpl, "dst": cpp_dst},
+                        {"src": classdeps_tmpl, "dst": classdeps_dst},
+                    ]
                     class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
 
                 if only_generate is not None and not only_generate.pop(name, False):
@@ -419,7 +431,7 @@ class Wrapper:
 
         # generate an inline file that can be included + called
         if not report_only:
-            self._write_wrapper_hpp(cxx_gen_dir)
+            self._write_wrapper_hpp(cxx_gen_dir, classdeps)
             gen_includes = [cxx_gen_dir]
         else:
             gen_includes = []
@@ -430,15 +442,47 @@ class Wrapper:
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
 
-    def _write_wrapper_hpp(self, outdir):
+    def _write_wrapper_hpp(self, outdir, classdeps):
 
         decls = []
         calls = []
 
-        for gen in self.cfg.generate:
-            for name in gen.keys():
-                decls.append(f"void init_{name}(py::module &m);")
-                calls.append(f"    init_{name}(m);")
+        def _clean(n):
+            tmpl_idx = n.find("<")
+            if tmpl_idx != -1:
+                n = n[:tmpl_idx]
+            return n
+
+        # Need to ensure that wrapper initialization is called in base order
+        # so we have to toposort it here. The data is written at gen time
+        # to JSON files
+        types2name = {}
+        types2deps = {}
+        for name, jsonfile in classdeps.items():
+            with open(jsonfile) as fp:
+                dep = json.load(fp)
+
+            for clsname, bases in dep.items():
+                clsname = _clean(clsname)
+                if clsname in types2name:
+                    raise ValueError(f"duplicate class {clsname}")
+                types2name[clsname] = name
+                types2deps[clsname] = [_clean(base) for base in bases]
+
+        to_sort = {}
+        for clsname, bases in types2deps.items():
+            clsname = types2name[clsname]
+            deps = to_sort.setdefault(clsname, set())
+            for base in bases:
+                base = types2name.get(base)
+                if base and base != clsname:
+                    deps.add(base)
+
+        ordering = toposort.toposort_flatten(to_sort, sort=True)
+
+        for name in ordering:
+            decls.append(f"void init_{name}(py::module &m);")
+            calls.append(f"    init_{name}(m);")
 
         content = (
             inspect.cleandoc(

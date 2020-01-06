@@ -62,6 +62,7 @@ class Hooks:
         self.casters = casters
 
         self.types = set()
+        self.class_hierarchy = {}
 
     def report_missing(self, name: str, reporter: MissingReporter):
         self.gendata.report_missing(name, reporter)
@@ -158,6 +159,7 @@ class Hooks:
             self._add_type_caster(v["raw_type"])
 
         data["type_caster_includes"] = self._get_type_caster_includes()
+        data["class_hierarchy"] = self.class_hierarchy
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -445,6 +447,10 @@ class Hooks:
         cls_qualname = cls["namespace"] + "::" + cls_name
         cls["x_qualname"] = cls_qualname
         cls["x_qualname_"] = cls_qualname.translate(self._qualname_trans)
+
+        self.class_hierarchy[cls_qualname] = [
+            base["x_qualname"] for base in cls["x_inherits"]
+        ]
 
         cls["data"] = class_data
         has_constructor = False

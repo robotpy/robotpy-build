@@ -68,6 +68,7 @@ setup(
         "sphinxify",
         "pydantic",
         "toml",
+        "toposort",
         "pyyaml >= 5.1",
     ],
     requires_python=">=3.6",
