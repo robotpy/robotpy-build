@@ -458,9 +458,15 @@ class Wrapper:
         # to JSON files
         types2name = {}
         types2deps = {}
+        ordering = []
+
         for name, jsonfile in classdeps.items():
             with open(jsonfile) as fp:
                 dep = json.load(fp)
+
+            # make sure objects without classes are also included!
+            if not dep:
+                ordering.append(name)
 
             for clsname, bases in dep.items():
                 clsname = _clean(clsname)
@@ -478,7 +484,7 @@ class Wrapper:
                 if base and base != clsname:
                     deps.add(base)
 
-        ordering = toposort.toposort_flatten(to_sort, sort=True)
+        ordering.extend(toposort.toposort_flatten(to_sort, sort=True))
 
         for name in ordering:
             decls.append(f"void init_{name}(py::module &m);")
