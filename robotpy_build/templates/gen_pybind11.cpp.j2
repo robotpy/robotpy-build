@@ -81,6 +81,16 @@
     {% endif %}
 {% endmacro -%}
 
+{%- macro genenum(scope, enum) %}
+{%- if 'name' in enum -%}
+py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}")
+  {% for val in enum['values'] %}
+    .value("{{ val.x_name }}", {{ enum.x_namespace }}{{ enum.name }}::{{ val.name }})
+  {% endfor -%}
+  ;
+{%- endif -%}
+{% endmacro -%}
+
 {%- macro unnamed_enum(x, enums) %}
 {% for enum in enums %}
 {% if 'name' not in enum %}
@@ -142,6 +152,12 @@ void init_{{ mod_fn }}(py::module &m) {
     {%- if cls.x_has_trampoline -%}
       , {{ cls.x_trampoline_name }}
     {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.x_name }}");
+
+  {# define enums in case they are used as default args #}
+  {% for enum in cls.enums.public %}
+  {{ genenum(cls.x_varname, enum) }}
+  {% endfor %}
+
   {{ cls.x_varname }}
   {# default constructor if not defined #}
   {% if not cls.x_has_constructor and not cls.data.nodelete %}
@@ -195,5 +211,9 @@ void init_{{ mod_fn }}(py::module &m) {
 {% endif %}
 {% endfor %}
 
-  {% include "gen_enum_pybind11.cpp.j2" %}
+  {% for header in headers %}
+  {% for enum in header.enums %}
+  {{ genenum("m", enum) }}
+  {% endfor %}
+  {% endfor %}
 }
