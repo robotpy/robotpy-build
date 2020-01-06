@@ -263,7 +263,7 @@ class Wrapper:
         depends = {repr(self.cfg.depends)}
 
         def get_include_dirs():
-            return [join(_root, "include")##EXTRAINCLUDES##]
+            return [join(_root, "include"), join(_root, "rpy-include")##EXTRAINCLUDES##]
 
         def get_library_dirs():
             return {library_dirs}
