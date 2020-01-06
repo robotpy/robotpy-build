@@ -143,6 +143,13 @@ void init_{{ mod_fn }}(py::module &m) {
   static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
 {% endfor %}
 
+  {# define global enums in case they are used as default args #}
+  {% for header in headers %}
+  {% for enum in header.enums %}
+  {{ genenum("m", enum) }}
+  {% endfor %}
+  {% endfor %}
+
   py::class_<{{ cls.name }}
     {%- if cls.data.nodelete -%}
       , std::unique_ptr<{{ cls.name }}, py::nodelete>
@@ -153,7 +160,7 @@ void init_{{ mod_fn }}(py::module &m) {
       , {{ cls.x_trampoline_name }}
     {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.x_name }}");
 
-  {# define enums in case they are used as default args #}
+  {# define class enums in case they are used as default args #}
   {% for enum in cls.enums.public %}
   {{ genenum(cls.x_varname, enum) }}
   {% endfor %}
@@ -210,10 +217,4 @@ void init_{{ mod_fn }}(py::module &m) {
 {%- endfor %};
 {% endif %}
 {% endfor %}
-
-  {% for header in headers %}
-  {% for enum in header.enums %}
-  {{ genenum("m", enum) }}
-  {% endfor %}
-  {% endfor %}
 }
