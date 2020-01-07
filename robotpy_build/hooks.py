@@ -394,6 +394,10 @@ class Hooks:
 
         signature = self._get_function_signature(fn)
         data = self.gendata.get_function_data(fn, signature)
+        if data.ignore:
+            fn["data"] = data
+            return
+
         self._function_hook(fn, data)
 
     def class_hook(self, cls, data):
@@ -410,6 +414,10 @@ class Hooks:
             cls_key = c["name"] + "::" + cls_key
 
         class_data = self.gendata.get_class_data(cls_key)
+        cls["data"] = class_data
+
+        if class_data.ignore:
+            return
 
         # fix enum paths
         for e in cls["enums"]["public"]:
@@ -452,7 +460,6 @@ class Hooks:
             base["x_qualname"] for base in cls["x_inherits"]
         ]
 
-        cls["data"] = class_data
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
 
@@ -488,6 +495,9 @@ class Hooks:
                     method_data = self.gendata.get_function_data(
                         fn, signature, cls_key, class_data
                     )
+                    if method_data.ignore:
+                        fn["data"] = method_data
+                        continue
 
                     try:
                         self._function_hook(
