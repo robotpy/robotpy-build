@@ -26,9 +26,7 @@
 #pragma once
 #include <robotpy_build.h>
 
-{% for header in headers %}
 #include <{{ header.rel_fname }}>
-{% endfor %}
 
 {# delete any finals #}
 {% for fn in cls.methods.public + cls.methods.protected if fn.final %}

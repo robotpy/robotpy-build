@@ -1,5 +1,5 @@
 {%- macro genbase(cls) -%}
-{% if cls.x_inherits %}, {{ cls.x_inherits | join(', ', attribute='class')}}{% endif %}
+  
 {%- endmacro -%}
 
 {%- macro fndef(cls_qualname, fn) %}
@@ -7,14 +7,24 @@
 {% endmacro -%}
 
 {%- macro fnptr(cls_qualname, fn) -%}
-{% if fn.data.cpp_code %}
-{{ fn.data.cpp_code }}
-{% elif not fn.x_genlambda %}
-&{% if cls_qualname %}{{ cls_qualname }}::{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}
-{% else %}
-[]({% if cls_qualname -%}
-{{ cls_qualname }} * __that{% if fn.x_in_params %},{% endif %}
-{% endif -%}{{ fn.x_in_params | join(', ', attribute='x_decl') }}) {
+  {%- if fn.data.cpp_code -%}
+    {{ fn.data.cpp_code }}
+  {%- elif not fn.x_genlambda -%}
+    &
+    {%- if cls_qualname -%}
+      {{ cls_qualname }}::
+    {%- else -%}
+      {{ fn.namespace }}
+    {%- endif -%}
+    {{ fn.name }}
+  {%- else -%}
+    [](
+      {%- if cls_qualname -%}
+        {{ cls_qualname }} * __that
+        {%- if fn.x_in_params %},{% endif -%}
+      {% endif -%}
+      {{ fn.x_in_params | join(', ', attribute='x_decl') -}}
+      ) {
           {% for stmt in fn.x_lambda_pre %}
           {{ stmt }};
           {% endfor %}
@@ -24,40 +34,53 @@
           {% endfor %}
           {{ fn.x_wrap_return }}
         }
-{%- endif %}
+  {%- endif -%}
 {%- endmacro -%}
 
-{%- macro genmethod(cls_qualname, fn) %}
-  {% if fn.constructor %}
+{%- macro genmethod(cls_qualname, fn) -%}
+  {%- if fn.constructor -%}
     .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
-  {% else %}
+  {%- else -%}
     .{{ fndef(cls_qualname, fn) }}("{{ fn.x_name }}",{{ ' ' }}
       {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
         {#-
           py::overload_cast fails in some obscure cases, so we don't use it here
           https://github.com/pybind/pybind11/issues/1153
         -#}
-        static_cast<{{ fn.rtnType }} ({% if cls_qualname and not fn.static %}{{ cls_qualname }}::{% endif %}*)({{
-          fn.x_in_params | join(', ', attribute='x_type_full')
-        }}){% if fn.const %} const{% endif %}>(
+        static_cast<{{ fn.rtnType }} (
+          {%- if cls_qualname and not fn.static -%}
+            {{ cls_qualname }}::{% endif %}*)(
+              {{- fn.x_in_params | join(', ', attribute='x_type_full') -}}
+            )
+        {%- if fn.const %} const{% endif -%}
+        >(
       {%- endif -%}
-	     {{ fnptr(cls_qualname, fn) }}
-      {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}){%- endif -%}
-		 {% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}
-     {%- if not fn.data.no_release_gil -%}
-      , release_gil()
-     {%- endif -%}
-     {{- fn.x_return_value_policy -}}
-     {%- if fn.x_doc %},
-       {% for dq in fn.x_doc_quoted %}
-          {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
-       {%- endfor -%}
-     {%- endif -%})
-  {% endif %}
-{% endmacro -%}
+	     {{- fnptr(cls_qualname, fn) -}}
+      {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
+        )
+      {%- endif -%}
 
-{%- macro genprop(qualname, prop) %}
-    {% if prop.array_size is defined %}
+		  {%- if fn.x_in_params -%},
+         {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}
+      {%- endif -%}
+
+      {%- if not fn.data.no_release_gil -%}
+        , release_gil()
+      {%- endif -%}
+
+      {{- fn.x_return_value_policy -}}
+
+      {%- if fn.x_doc %},
+       {% for dq in fn.x_doc_quoted %}
+         {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
+       {%- endfor -%}
+     {%- endif -%}
+     )
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro genprop(qualname, prop) -%}
+  {%- if prop.array_size is defined -%}
     .def_property_readonly("{{ prop.x_name }}", []({{ qualname }}& inst) {
         return py::memoryview(py::buffer_info(
           &inst.{{ prop.name }}, sizeof({{ prop.type }}),
@@ -65,11 +88,11 @@
           1, {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.type }})}
         ));
     })
-    {% elif prop.array %}
+  {%- elif prop.array -%}
     .def_property("{{ prop.x_name }}",
       [](const {{ qualname }}& inst) { return inst.{{ prop.name}}; },
       []({{ qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
-    {% else %}
+  {%- else -%}
     .def_
       {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
         readonly
@@ -78,8 +101,8 @@
       {%- endif -%}
       {%- if prop.static %}_static{% endif -%}
       ("{{ prop.x_name }}", &{{ qualname }}::{{ prop.name}})
-    {% endif %}
-{% endmacro -%}
+  {%- endif -%}
+{%- endmacro -%}
 
 {%- macro genenum(scope, enum) %}
 {%- if 'name' in enum -%}
@@ -92,64 +115,68 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
 {% endmacro -%}
 
 {%- macro unnamed_enum(x, enums) %}
-{% for enum in enums %}
-{% if 'name' not in enum %}
-{% for val in enum['values'] %}
-{{ x }}.attr("{{ val.name }}") = (int){{ enum.x_namespace }}{{ val.name }};
-{% endfor %}
-{% endif %}
+{% for enum in enums if 'name' not in enum -%}
+  {% for val in enum['values'] -%}
+    {{ x }}.attr("{{ val.name }}") = (int){{ enum.x_namespace }}{{ val.name }};
+  {% endfor %}
 {% endfor %}
 {% endmacro -%}
 
 // This file is autogenerated. DO NOT EDIT
 #include <robotpy_build.h>
-
-{% for header in headers %}
 #include <{{ header.rel_fname }}>
-{% endfor %}
 
 {% for inc in type_caster_includes %}
 #include <{{ inc }}>
 {% endfor %}
 
-{% for header in headers %}
 {% for using in header.using.values() if using.using_type != "typealias" %}
 using {{ using.raw_type }};
 {% endfor %}
+
+{% for cls in header.classes
+   if not cls.data.ignore and cls.x_has_trampoline -%}
+     #include <rpygen/{{ cls.x_qualname_ }}.hpp>
 {% endfor %}
 
-{% for header in headers %}
-{% for cls in header.classes
-  if not cls.data.ignore and cls.x_has_trampoline %}
-#include <rpygen/{{ cls.x_qualname_ }}.hpp>
-{% endfor %}
-{% endfor %}
 
 {% for inc in data.extra_includes %}
 #include <{{ inc }}>
 {% endfor %}
 
+{#
+  Ordering of the initialization function
+
+  - namespace/typealiases
+  - global enums
+  - class declarations
+  - class enums
+  - class methods
+  - global methods
+#}
+
 void init_{{ mod_fn }}(py::module &m) {
-{% for header in headers %}
+
+{# namespaces/typealiases #}
 {% for cls in header.classes if not cls.data.ignore %}
-
-{% if cls.namespace %}
-  using namespace {{ cls.namespace }};
-{% endif %}
-{% for typealias in cls.data.typealias %}
-  using {{ typealias.split('::')[-1] }} = {{ typealias }};
+  {% if cls.namespace %}
+    using namespace {{ cls.namespace }};
+  {% endif %}
+  {% for typealias in cls.data.typealias -%}
+    using {{ typealias.split('::')[-1] }} = {{ typealias }};
+  {% endfor %}
+  {% for constant in cls.data.constants -%}
+    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
+  {% endfor %}
 {% endfor %}
-{% for constant in cls.data.constants %}
-  static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
-{% endfor %}
 
-  {# define global enums in case they are used as default args #}
-  {% for header in headers %}
-  {% for enum in header.enums %}
+{# define global enums in case they are used as default args #}  
+{% for enum in header.enums %}
   {{ genenum("m", enum) }}
-  {% endfor %}
-  {% endfor %}
+{% endfor %}
 
+{# class declarations #}
+{% for cls in header.classes if not cls.data.ignore %}
   py::class_<{{ cls.name }}
     {%- if cls.data.nodelete -%}
       , std::unique_ptr<{{ cls.name }}, py::nodelete>
@@ -158,21 +185,32 @@ void init_{{ mod_fn }}(py::module &m) {
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
       , {{ cls.x_trampoline_name }}
-    {%- endif %}{{ genbase(cls) }}> {{ cls.x_varname }}(m, "{{ cls.x_name }}");
+    {%- endif -%}
 
+    {%- if cls.x_inherits -%}
+      , {{ cls.x_inherits | join(', ', attribute='class') }}
+    {%- endif -%}
+    
+    >
+      {{ cls.x_varname }}(m, "{{ cls.x_name }}");
+  
   {# define class enums in case they are used as default args #}
-  {% for enum in cls.enums.public %}
-  {{ genenum(cls.x_varname, enum) }}
-  {% endfor %}
+  {% for enum in cls.enums.public -%}
+    {{ genenum(cls.x_varname, enum) }}
+  {% endfor -%}
 
+{% endfor %}
+
+{# class methods #}
+{% for cls in header.classes if not cls.data.ignore %}
   {{ cls.x_varname }}
   {# default constructor if not defined #}
   {% if not cls.x_has_constructor and not cls.data.nodelete %}
-    .def(py::init<>())
-  {% endif %}
-  {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' not in fn %}
-  {{ genmethod(cls.x_qualname, fn) }}
-  {%- endfor %}
+    .def(py::init<>(), release_gil())
+  {% endif -%}
+  {%- for fn in cls.methods.public if not fn.data.ignore %}
+    {{ genmethod(cls.x_qualname, fn) }}
+  {% endfor -%}
   {#
     Binding protected trampoline methods doesn't seem to work directly,
     I think it needs a lambda?
@@ -181,40 +219,21 @@ void init_{{ mod_fn }}(py::module &m) {
     {{ genmethod(cls.x_trampoline_name, fn) }}
     {%- endfor %}
   #}
-  {% for prop in cls.properties.public if not prop.data.ignore %}
-  {{ genprop(cls.x_qualname, prop) }}
-  {%- endfor %}
-  {% for prop in cls.properties.protected if not prop.data.ignore %}
-  {{ genprop(cls.x_trampoline_name, prop) }}
-  {%- endfor %}
-  ;
-  {{ unnamed_enum(cls.x_varname, cls.enums.public) }}
-{% endfor %}
-{% endfor %}
-{% for header in headers %}
-{% for cls in header.classes if 'has_fwd_declare' in cls %}
-  {{ cls.x_varname }}
-  {% for fn in cls.methods.public if not fn.data.ignore and 'forward_declare' in fn %}
-  {{ genmethod(cls.x_qualname, fn) }}
-  {%- endfor %}
-  {#
-    Binding protected trampoline methods doesn't seem to work directly,
-    I think it needs a lambda?
+  {%- for prop in cls.properties.public if not prop.data.ignore %}
+    {{ genprop(cls.x_qualname, prop) }}
+  {% endfor -%}
+  {%- for prop in cls.properties.protected if not prop.data.ignore %}
+    {{ genprop(cls.x_trampoline_name, prop) }}
+  {%- endfor %};
 
-    {% for fn in cls.methods.protected if not fn.data.ignore and 'forward_declare' in fn %}
-    {{ genmethod(cls.x_trampoline_name, fn) }}
-    {%- endfor %}
-  #}
-  ;
   {{ unnamed_enum(cls.x_varname, cls.enums.public) }}
 {% endfor %}
 
-
+{# global methods #}
 {% if header.functions %}
-{% for fn in header.functions if not fn.data.ignore %}
-  {% if loop.first %}m{% endif %}
-  {{ genmethod(None, fn) }}
-{%- endfor %};
+  {% for fn in header.functions if not fn.data.ignore -%}
+    {% if loop.first %}m{% endif %}
+    {{ genmethod(None, fn) }}
+  {% endfor %};
 {% endif %}
-{% endfor %}
 }

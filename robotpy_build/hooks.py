@@ -211,11 +211,6 @@ class Hooks:
             p["x_callname"] = p["name"]
             p["x_retname"] = p["name"]
 
-            if "forward_declared" in p:
-                fn["forward_declare"] = True
-                if fn["parent"]:
-                    fn["parent"]["has_fwd_declare"] = True
-
             po = param_override.get(p["name"])
             if po:
                 p.update(po.dict(exclude_unset=True))

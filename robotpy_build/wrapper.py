@@ -401,6 +401,7 @@ class Wrapper:
 
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
+                    # generation code depends on this being just one header!
                     "headers": [join(self.incdir, normpath(header))],
                     "templates": templates,
                     "class_templates": class_templates,
