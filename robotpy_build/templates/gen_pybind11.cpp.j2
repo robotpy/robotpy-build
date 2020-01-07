@@ -6,12 +6,14 @@
 {% if cls_qualname and fn.static %}def_static{% else %}def{% endif %}
 {% endmacro -%}
 
-{%- macro fnptr(cls_qualname, fn) -%}
+{%- macro fnptr(cls_qualname, fn, trampoline_qualname) -%}
   {%- if fn.data.cpp_code -%}
     {{ fn.data.cpp_code }}
   {%- elif not fn.x_genlambda -%}
     &
-    {%- if cls_qualname -%}
+    {%- if trampoline_qualname -%}
+      {{ trampoline_qualname }}::
+    {%- elif cls_qualname -%}
       {{ cls_qualname }}::
     {%- else -%}
       {{ fn.namespace }}
@@ -28,7 +30,15 @@
           {% for stmt in fn.x_lambda_pre %}
           {{ stmt }};
           {% endfor %}
-          {{ fn.x_callstart }} {% if cls_qualname %}__that->{% else %}{{ fn.namespace }}{% endif %}{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {{ fn.x_callstart }}
+          {%- if trampoline_qualname -%}
+            (({{ trampoline_qualname }}*)__that)->
+          {%- elif cls_qualname -%}
+            __that->
+          {%- else -%}
+            {{ fn.namespace }}
+          {%- endif -%}
+          {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
           {% for stmt in fn.x_lambda_post %}
           {{ stmt }};
           {% endfor %}
@@ -37,46 +47,71 @@
   {%- endif -%}
 {%- endmacro -%}
 
-{%- macro genmethod(cls_qualname, fn) -%}
+{%- macro gensig(cls_qualname, fn) -%}
+  {#-
+    py::overload_cast fails in some obscure cases, so we don't use it here
+    https://github.com/pybind/pybind11/issues/1153
+  -#}
+  {{- fn.rtnType }} (
+  {%- if cls_qualname and not fn.static -%}
+    {{ cls_qualname }}::
+  {%- endif -%}
+  *)(
+      {{- fn.x_in_params | join(', ', attribute='x_type_full') -}}
+  )
+  {%- if fn.const %} const{% endif -%}
+{%- endmacro -%}
+
+{%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
+  {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
   {%- if fn.constructor -%}
-    .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>(){% if fn.x_in_params %}, {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}{% endif %}, release_gil())
+    {%- set ns.arg_params = fn.parameters -%}
+    {%- if fn.data.cpp_code -%}
+      {{ fn.data.cpp_code }}
+    {%- elif trampoline_qualname -%}
+      .def(py::init([]({{ fn.parameters | join(', ', attribute='x_decl') }}) {
+        return new {{ trampoline_qualname }}(
+          {{- fn.parameters | join(', ', attribute='x_callname') -}}
+        );
+      })
+    {%- else -%}
+      .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>()
+    {%- endif -%}
   {%- else -%}
     .{{ fndef(cls_qualname, fn) }}("{{ fn.x_name }}",{{ ' ' }}
-      {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
-        {#-
-          py::overload_cast fails in some obscure cases, so we don't use it here
-          https://github.com/pybind/pybind11/issues/1153
-        -#}
-        static_cast<{{ fn.rtnType }} (
-          {%- if cls_qualname and not fn.static -%}
-            {{ cls_qualname }}::{% endif %}*)(
-              {{- fn.x_in_params | join(', ', attribute='x_type_full') -}}
-            )
-        {%- if fn.const %} const{% endif -%}
-        >(
+      {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
+        
+        {%- if trampoline_qualname -%}
+          {%- set ns.qualname = trampoline_qualname -%}
+          static_cast<{{ gensig(cls_qualname, fn) }}>(
+        {%- endif -%}
+        {%- if fn.x_overloaded -%}
+          static_cast<{{ gensig(ns.qualname, fn) }}>(
+        {% endif -%}
       {%- endif -%}
-	     {{- fnptr(cls_qualname, fn) -}}
-      {%- if fn.x_overloaded and not fn.data.cpp_code and not fn.x_genlambda -%}
-        )
+	      {{- fnptr(cls_qualname, fn, trampoline_qualname) -}}
+      {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
+        {%- if fn.x_overloaded -%}){%- endif -%}
+        {%- if trampoline_qualname -%}){%- endif -%}
       {%- endif -%}
-
-		  {%- if fn.x_in_params -%},
-         {{ fn.x_in_params | join(', ', attribute='x_pyarg') }}
-      {%- endif -%}
-
-      {%- if not fn.data.no_release_gil -%}
-        , release_gil()
-      {%- endif -%}
-
-      {{- fn.x_return_value_policy -}}
-
-      {%- if fn.x_doc %},
-       {% for dq in fn.x_doc_quoted %}
-         {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
-       {%- endfor -%}
-     {%- endif -%}
-     )
   {%- endif -%}
+
+  {%- if ns.arg_params -%},
+      {{ ns.arg_params | join(', ', attribute='x_pyarg') }}
+  {%- endif -%}
+
+  {%- if not fn.data.no_release_gil -%}
+    , release_gil()
+  {%- endif -%}
+
+  {{- fn.x_return_value_policy -}}
+
+  {%- if fn.x_doc %},
+    {% for dq in fn.x_doc_quoted %}
+      {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
+    {%- endfor -%}
+  {%- endif -%}
+  )
 {%- endmacro -%}
 
 {%- macro genprop(qualname, prop) -%}
@@ -135,10 +170,10 @@ using {{ using.raw_type }};
 {% endfor %}
 
 {% for cls in header.classes
-   if not cls.data.ignore and cls.x_has_trampoline -%}
-     #include <rpygen/{{ cls.x_qualname_ }}.hpp>
+   if not cls.data.ignore and cls.x_has_trampoline %}
+#define RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
+#include <rpygen/{{ cls.x_qualname_ }}.hpp>
 {% endfor %}
-
 
 {% for inc in data.extra_includes %}
 #include <{{ inc }}>
@@ -218,16 +253,15 @@ void init_{{ mod_fn }}(py::module &m) {
     .def(py::init<>(), release_gil())
   {% endif -%}
   {%- for fn in cls.methods.public if not fn.data.ignore %}
-    {{ genmethod(cls.x_qualname, fn) }}
+    {{ genmethod(cls.x_qualname, fn, None) }}
   {% endfor -%}
-  {#
-    Binding protected trampoline methods doesn't seem to work directly,
-    I think it needs a lambda?
 
-    {% for fn in cls.methods.protected if not fn.data.ignore and 'forward_declare' not in fn %}
-    {{ genmethod(cls.x_trampoline_name, fn) }}
-    {%- endfor %}
-  #}
+  {%- if cls.x_has_trampoline -%}
+  {%- for fn in cls.methods.protected if not fn.data.ignore %}
+    {{ genmethod(cls.x_qualname, fn, cls.x_trampoline_name) }}
+  {% endfor -%}
+  {%- endif -%}
+
   {%- for prop in cls.properties.public if not prop.data.ignore %}
     {{ genprop(cls.x_qualname, prop) }}
   {% endfor -%}
@@ -242,7 +276,7 @@ void init_{{ mod_fn }}(py::module &m) {
 {% if header.functions %}
   {% for fn in header.functions if not fn.data.ignore -%}
     {% if loop.first %}m{% endif %}
-    {{ genmethod(None, fn) }}
+    {{ genmethod(None, fn, None) }}
   {% endfor %};
 {% endif %}
 }

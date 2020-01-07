@@ -76,6 +76,20 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     using CxxBase::CxxBase;
 {% endif %}
 
+{# protected constructors -- only used by the direct child #}
+{% for fn in cls.methods.protected if not fn.data.ignore and fn.constructor %}
+#ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
+    Py{{ cls.x_qualname_ }}({{ fn.parameters | join(', ', attribute='x_decl') }}) :
+        {% if cls.x_inherits -%}
+             PyBase{{ cls.x_qualname_ }}<CxxBase>
+        {%- else -%}
+            CxxBase
+        {%- endif -%}
+        ({{ fn.parameters | join(', ', attribute='x_callname') }})
+    {}
+#endif
+{% endfor %}
+
 {% for typealias in cls.data.typealias %}
     using {{ typealias.split('::')[-1] }} = {{ typealias }};
 {% endfor %}
@@ -87,7 +101,7 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     {% for fn in cls.methods.public + cls.methods.protected
            if not fn.data.ignore and (fn.virtual or fn.override) and not fn.final %}
 #ifndef RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
-    {{ fn.rtnType }} {{ fn.name }}({{ fn.x_in_params | join(', ', attribute='x_decl') }}){%
+    {{ fn.rtnType }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_decl') }}){%
         if fn.const %} const{% endif
     %} override {
     {# TODO: probably will break for things like out parameters, etc #}
