@@ -398,19 +398,24 @@ class Hooks:
 
     def class_hook(self, cls, data):
 
-        # work around CppHeaderParser hoisting structs nested in classes to top
-        if cls["parent"] is not None:
+        if cls["parent"] is not None and cls["access_in_parent"] == "private":
             cls["data"] = ClassData(ignore=True)
             return
 
         cls_name = cls["name"]
-        class_data = self.gendata.get_class_data(cls_name)
+        cls_key = cls_name
+        c = cls
+        while c["parent"]:
+            c = c["parent"]
+            cls_key = c["name"] + "::" + cls_key
+
+        class_data = self.gendata.get_class_data(cls_key)
 
         # fix enum paths
         for e in cls["enums"]["public"]:
             e["x_namespace"] = e["namespace"] + "::" + cls_name + "::"
             enum_data = self.gendata.get_cls_enum_data(
-                e.get("name"), cls_name, class_data
+                e.get("name"), cls_key, class_data
             )
             e["data"] = enum_data
             self._enum_hook(e, enum_data)
@@ -481,7 +486,7 @@ class Hooks:
 
                     signature = self._get_function_signature(fn)
                     method_data = self.gendata.get_function_data(
-                        fn, signature, cls_name, class_data
+                        fn, signature, cls_key, class_data
                     )
 
                     try:
@@ -489,7 +494,7 @@ class Hooks:
                             fn, method_data, internal=internal,
                         )
                     except Exception as e:
-                        raise HookError(f"{cls_name}::{fn['name']}") from e
+                        raise HookError(f"{cls_key}::{fn['name']}") from e
 
         has_trampoline = (
             is_polymorphic and not cls["final"] and not class_data.force_no_trampoline
@@ -505,7 +510,7 @@ class Hooks:
 
                 prop_name = v["name"]
                 propdata = self.gendata.get_cls_prop_data(
-                    prop_name, cls_name, class_data
+                    prop_name, cls_key, class_data
                 )
                 self._add_type_caster(v["raw_type"])
                 v["data"] = propdata

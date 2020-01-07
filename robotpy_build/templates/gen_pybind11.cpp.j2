@@ -159,7 +159,9 @@ void init_{{ mod_fn }}(py::module &m) {
 
 {# namespaces/typealiases #}
 {% for cls in header.classes if not cls.data.ignore %}
-  {% if cls.namespace %}
+  {% if cls.parent %}
+    using {{ cls.name }} = {{ cls.parent.name }}::{{ cls.name }};
+  {% elif cls.namespace %}
     using namespace {{ cls.namespace }};
   {% endif %}
   {% for typealias in cls.data.typealias -%}
@@ -192,7 +194,14 @@ void init_{{ mod_fn }}(py::module &m) {
     {%- endif -%}
     
     >
-      {{ cls.x_varname }}(m, "{{ cls.x_name }}");
+      {{ cls.x_varname }}(
+
+    {%- if cls.parent -%}
+      {{ cls.parent.x_varname }}
+    {%- else -%}
+      m
+    {%- endif -%}
+    , "{{ cls.x_name }}");
   
   {# define class enums in case they are used as default args #}
   {% for enum in cls.enums.public -%}

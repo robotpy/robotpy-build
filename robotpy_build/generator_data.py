@@ -47,14 +47,14 @@ class GeneratorData:
         return data
 
     def get_cls_enum_data(
-        self, name: str, cls_name: str, cls_data: ClassData
+        self, name: str, cls_key: str, cls_data: ClassData
     ) -> EnumData:
         if name is None:
             # TODO
             return EnumData()
         data = cls_data.enums.get(name, _missing)
         if data is _missing:
-            self.classes[cls_name]["enums"][name] = False
+            self.classes[cls_key]["enums"][name] = False
             data = EnumData()
 
         return data
@@ -70,13 +70,13 @@ class GeneratorData:
         self,
         fn: dict,
         signature: str,
-        cls_name: Optional[str] = None,
+        cls_key: Optional[str] = None,
         cls_data: Optional[ClassData] = None,
     ) -> FunctionData:
         name = fn["name"]
         if cls_data:
             data = cls_data.methods.get(name, _missing)
-            report_base = self.classes[cls_name]["functions"]
+            report_base = self.classes[cls_key]["functions"]
         else:
             data = self.data.functions.get(name, _missing)
             report_base = self.functions
@@ -108,11 +108,11 @@ class GeneratorData:
         return data
 
     def get_cls_prop_data(
-        self, name: str, cls_name: str, cls_data: ClassData
+        self, name: str, cls_key: str, cls_data: ClassData
     ) -> PropData:
         data = cls_data.attributes.get(name, _missing)
         if data is _missing:
-            self.classes[cls_name]["attributes"][name] = False
+            self.classes[cls_key]["attributes"][name] = False
             data = PropData()
 
         return data
@@ -139,7 +139,7 @@ class GeneratorData:
         )
 
         all_cls_data = {}
-        for cls_name, cls_data in self.classes.items():
+        for cls_key, cls_data in self.classes.items():
             result = self._process_missing(
                 cls_data["attributes"],
                 cls_data["functions"],
@@ -150,7 +150,7 @@ class GeneratorData:
                 # show this first
                 r = {"shared_ptr": True}
                 r.update(result)
-                all_cls_data[str(cls_name)] = r
+                all_cls_data[str(cls_key)] = r
         if all_cls_data:
             data["classes"] = all_cls_data
 
