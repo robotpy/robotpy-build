@@ -1,3 +1,4 @@
+import os
 from os.path import join
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
@@ -83,15 +84,48 @@ class BuildExt(build_ext):
         build_ext.run(self)
 
 
-# ext_modules = [
-#     Extension(
-#         "python_example",
-#         ["src/main.cpp"],
-#         include_dirs=[
-#             # include dirs: iterate robotpy-build entrypoints, retrieve
-#         ],
-#         # library_dirs=
-#         # libraries=
-#         language="c++",
-#     )
-# ]
+if os.environ.get("RPYBUILD_PARALLEL") == "1":
+    # don't enable this hack by default, because not really sure of the
+    # ramifications -- however, it's really useful for development
+    #
+    # .. the real answer to this is cmake o_O
+
+    # monkey-patch for parallel compilation
+    # -> https://stackoverflow.com/questions/11013851/speeding-up-build-process-with-distutils/13176803#13176803
+    def parallelCCompile(
+        self,
+        sources,
+        output_dir=None,
+        macros=None,
+        include_dirs=None,
+        debug=0,
+        extra_preargs=None,
+        extra_postargs=None,
+        depends=None,
+    ):
+        # those lines are copied from distutils.ccompiler.CCompiler directly
+        macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
+            output_dir, macros, include_dirs, sources, depends, extra_postargs
+        )
+        cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+        # parallel code
+        import multiprocessing
+        import multiprocessing.pool
+
+        N = multiprocessing.cpu_count()
+
+        def _single_compile(obj):
+            try:
+                src, ext = build[obj]
+            except KeyError:
+                return
+            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+        # convert to list, imap is evaluated on-demand
+        list(multiprocessing.pool.ThreadPool(N).imap(_single_compile, objects))
+        return objects
+
+    import distutils.ccompiler
+
+    distutils.ccompiler.CCompiler.compile = parallelCCompile
+
