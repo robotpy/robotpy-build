@@ -24,13 +24,13 @@ def has_flag(compiler, flagname):
     return True
 
 
-def cpp_flag(compiler):
+def cpp_flag(compiler, pfx):
     """Return the -std=c++[11/14/17] compiler flag.
     The newer version is prefered over c++11 (when it is available).
     """
 
     platform = get_platform()
-    flags = ["-std=c++17", "-std=c++14", "-std=c++11"]
+    flags = [f"{pfx}std=c++17", f"{pfx}std=c++14", f"{pfx}std=c++11"]
 
     for flag in flags:
         if has_flag(compiler, flag):
@@ -63,11 +63,11 @@ class BuildExt(build_ext):
             opts.append("-s")  # strip
             opts.append("-g0")  # remove debug symbols
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            opts.append(cpp_flag(self.compiler))
+            opts.append(cpp_flag(self.compiler, "-"))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
         elif ct == "msvc":
-            opts.append(cpp_flag(self.compiler))
+            opts.append(cpp_flag(self.compiler, "/"))
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
         for ext in self.extensions:
             ext.extra_compile_args = opts
