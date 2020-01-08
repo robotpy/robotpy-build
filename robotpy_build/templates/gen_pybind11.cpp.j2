@@ -70,7 +70,7 @@
       {{ fn.data.cpp_code }}
     {%- elif trampoline_qualname -%}
       .def(py::init([]({{ fn.parameters | join(', ', attribute='x_decl') }}) {
-        return new {{ trampoline_qualname }}(
+        return std::make_unique<{{ trampoline_qualname }}>(
           {{- fn.parameters | join(', ', attribute='x_callname') -}}
         );
       })
@@ -127,6 +127,18 @@
     .def_property("{{ prop.x_name }}",
       [](const {{ qualname }}& inst) { return inst.{{ prop.name}}; },
       []({{ qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; })
+  {%- elif prop.reference -%}
+    .def_property
+    {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
+        _readonly
+    {%- endif -%}
+    ("{{ prop.x_name }}", {{ ' ' }}
+        [](const {{ qualname }}& inst) -> {{ prop.type }} { return inst.{{ prop.name}}; }
+        {%- if not (prop.constant or prop.constexpr or prop.x_readonly) %},
+        []({{ qualname }}& inst, {{ prop.type }} v) {inst.{{ prop.name}} = v; })
+        {%- endif -%}
+    )
+
   {%- else -%}
     .def_
       {%- if prop.constant or prop.constexpr or prop.x_readonly -%}

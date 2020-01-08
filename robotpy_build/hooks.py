@@ -530,9 +530,9 @@ class Hooks:
                     v["x_name"] = v["name"] if access == "public" else "_" + v["name"]
 
                 if propdata.access == PropAccess.AUTOMATIC:
-                    # Properties that aren't fundamental are readonly unless
+                    # Properties that aren't fundamental or a reference are readonly unless
                     # overridden by the hook configuration
-                    x_readonly = not v["fundamental"]
+                    x_readonly = not v["fundamental"] and not v["reference"]
                 elif propdata.access == PropAccess.READONLY:
                     x_readonly = True
                 else:
