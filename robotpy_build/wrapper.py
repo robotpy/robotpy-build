@@ -192,7 +192,7 @@ class Wrapper:
         if libnames:
             libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
 
-            libnames = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
+            libnames = [f"{self.platform.libprefix}{lib}{libext_i}" for lib in libnames for libext_i in libext.split("|")]
 
             os.makedirs(libdir)
             to = {

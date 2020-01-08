@@ -15,7 +15,7 @@ _platforms = {
     "linux-x86_64": WPILibMavenPlatform("linux", "x86-64", "lib", ".so"),
     # TODO: linuxraspbian
     "win32": WPILibMavenPlatform("windows", "x86", "", ".dll"),
-    "win-amd64": WPILibMavenPlatform("windows", "x86-64", "", ".dll"),
+    "win-amd64": WPILibMavenPlatform("windows", "x86-64", "", ".dll|.lib"),
     # TODO: need to filter this value
     "macosx-10.9-x86_64": WPILibMavenPlatform("osx", "x86-64", "lib", ".dylib"),
 }
