@@ -12,6 +12,7 @@ from os.path import (
     relpath,
     sep,
 )
+import posixpath
 import sys
 import shutil
 import toposort
@@ -195,9 +196,9 @@ class Wrapper:
 
             os.makedirs(libdir)
             to = {
-                join(self.platform.os, self.platform.arch, "shared", libname): join(
-                    libdir, libname
-                )
+                posixpath.join(
+                    self.platform.os, self.platform.arch, "shared", libname
+                ): join(libdir, libname)
                 for libname in libnames
             }
 
