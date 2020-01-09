@@ -191,7 +191,9 @@ class Wrapper:
 
         if libnames:
             libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
-            linkext = self.cfg.linkexts.get(self.platform.linkext, self.platform.linkext)
+            linkext = libext
+            if self.cfg.link_required:
+                linkext = self.cfg.linkexts.get(self.platform.linkext, self.platform.linkext)
 
             libnames_full = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
             if libext != linkext:

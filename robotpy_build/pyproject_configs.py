@@ -72,6 +72,9 @@ class WrapperConfig(BaseModel):
     # Compile time extensions map
     linkexts: Dict[str, str] = {}
 
+    # Whether a linking file is required (should only be used for halsim)
+    link_required: bool = True
+
     #
     # Wrapper generation settings
     #
