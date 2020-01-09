@@ -1,12 +1,15 @@
 from distutils.util import get_platform as _get_platform
-from collections import namedtuple
+from typing import NamedTuple
 
 
 # wpilib platforms at https://github.com/wpilibsuite/native-utils/blob/master/src/main/java/edu/wpi/first/nativeutils/WPINativeUtilsExtension.java
 
-WPILibMavenPlatform = namedtuple(
-    "WPILibMavenPlatform", ["os", "arch", "libprefix", "libext"]
-)
+class WPILibMavenPlatform(NamedTuple):
+    os: str
+    arch: str
+    libprefix: str
+    libext: str
+
 
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
