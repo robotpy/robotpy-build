@@ -191,28 +191,28 @@ class Wrapper:
 
         if libnames:
             libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
-            linkext = self.cfg.libexts.get(self.platform.linkext, self.platform.linkext)
+            linkext = self.cfg.linkexts.get(self.platform.linkext, self.platform.linkext)
 
-            libnames = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
+            libnames_full = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
             if libext != linkext:
-                extract_names = libnames[:]
+                extract_names = libnames_full[:]
                 extract_names += [
                     f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
                 ]
             else:
-                extract_names = libnames
+                extract_names = libnames_full
 
             os.makedirs(libdir)
             to = {
                 posixpath.join(
                     self.platform.os, self.platform.arch, "shared", libname
                 ): join(libdir, libname)
-                for libname in libnames
+                for libname in extract_names
             }
 
             self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
 
-        self._write_init_py(initpy, libnames)
+        self._write_init_py(initpy, libnames_full)
         self._write_pkgcfg_py(pkgcfgpy)
 
     def _write_init_py(self, fname, libnames):
