@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-
-if sys.version_info < (3, 5):
-    sys.stderr.write("ERROR: RobotPy requires Python 3.5+\n")
-    exit(1)
-
-import os
 from os.path import dirname, exists, join
 import subprocess
 from setuptools import find_packages, setup
-import glob
 
 setup_dir = dirname(__file__)
 git_dir = join(setup_dir, ".git")
@@ -70,6 +63,7 @@ setup(
         "toml",
         "toposort",
         "pyyaml >= 5.1",
+        "dataclasses; python_version < '3.7'"
     ],
     requires_python=">=3.6",
     classifiers=[
