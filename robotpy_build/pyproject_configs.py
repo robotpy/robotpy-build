@@ -66,7 +66,11 @@ class WrapperConfig(BaseModel):
     version: str
 
     # Library extensions map
+    # .. I don't remember why this is here
     libexts: Dict[str, str] = {}
+
+    # Compile time extensions map
+    linkexts: Dict[str, str] = {}
 
     #
     # Wrapper generation settings
