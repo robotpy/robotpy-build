@@ -120,6 +120,12 @@ class Wrapper:
         else:
             return self.cfg.libs
 
+    def get_dlopen_library_names(self):
+        if self.cfg.dlopenlibs is None:
+            return []
+        else:
+            return self.cfg.dlopenlibs
+
     def get_type_casters(self, casters):
         for header, types in self.cfg.type_casters.items():
             for typ in types:
@@ -145,7 +151,7 @@ class Wrapper:
         return libs
 
     def _all_library_names(self):
-        libs = self.get_library_names()
+        libs = list(set(self.get_library_names()) | set(self.get_dlopen_library_names()))
         for dep in self.cfg.depends:
             libs.extend(self.pkgcfg.get_pkg(dep).get_library_names())
         return list(reversed(libs))
@@ -188,19 +194,21 @@ class Wrapper:
         self._extract_zip_to("headers", incdir, cache)
 
         libnames = self.get_library_names()
+        dlopen_libnames = self.get_dlopen_library_names()
 
-        if libnames:
+        libnames = [lib for lib in libnames if lib not in dlopen_libnames]
+
+        if libnames or dlopen_libnames:
             libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
             linkext = self.cfg.linkexts.get(self.platform.linkext, self.platform.linkext)
 
             libnames_full = [f"{self.platform.libprefix}{lib}{libext}" for lib in libnames]
+            libnames_full += [f"{self.platform.libprefix}{lib}{libext}" for lib in dlopen_libnames]
+            
+            extract_names = libnames_full[:]
+            
             if libext != linkext:
-                extract_names = libnames_full[:]
-                extract_names += [
-                    f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
-                ]
-            else:
-                extract_names = libnames_full
+                extract_names += [f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames]
 
             os.makedirs(libdir)
             to = {
