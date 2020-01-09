@@ -1,32 +1,38 @@
 from distutils.util import get_platform as _get_platform
-from typing import NamedTuple
+from dataclasses import dataclass
 
 
 # wpilib platforms at https://github.com/wpilibsuite/native-utils/blob/master/src/main/java/edu/wpi/first/nativeutils/WPINativeUtilsExtension.java
-class WPILibMavenPlatform(NamedTuple):
-    os: str
+@dataclass
+class WPILibMavenPlatform:
     arch: str
-    libprefix: str
+    os: str = "linux"
+    libprefix: str = "lib"
 
     #: runtime linkage
-    libext: str
+    libext: str = ".so"
 
     #: compile time linkage
-    linkext: str
+    linkext: str = None
 
+    def __post_init__(self):
+        # linkext defaults to libext
+        if self.linkext is None:
+            self.linkext = self.libext
+
+
+X86_64 = "x86-64"
 
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
     # TODO: this isn't always true
-    "linux-armv7l": WPILibMavenPlatform("linux", "athena", "lib", ".so", ".so"),
-    "linux-x86_64": WPILibMavenPlatform("linux", "x86-64", "lib", ".so", ".so"),
+    "linux-armv7l": WPILibMavenPlatform("athena"),
+    "linux-x86_64": WPILibMavenPlatform(X86_64),
     # TODO: linuxraspbian
-    "win32": WPILibMavenPlatform("windows", "x86", "", ".dll", ".lib"),
-    "win-amd64": WPILibMavenPlatform("windows", "x86-64", "", ".dll", ".lib"),
+    "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib"),
+    "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib"),
     # TODO: need to filter this value
-    "macosx-10.9-x86_64": WPILibMavenPlatform(
-        "osx", "x86-64", "lib", ".dylib", ".dylib"
-    ),
+    "macosx-10.9-x86_64": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
 }
 
 
