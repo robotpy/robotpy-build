@@ -219,9 +219,14 @@ void init_{{ mod_fn }}(py::module &m) {
   {% endfor %}
 {% endfor %}
 
+{# subpackages #}
+{% for pkg, vname in subpackages.items() %}
+  auto {{ vname }} = m.def_submodule("{{ pkg }}");
+{% endfor %}
+
 {# define global enums in case they are used as default args #}  
 {% for enum in header.enums %}
-  {{ genenum("m", enum) }}
+  {{ genenum(enum.x_module_var, enum) }}
 {% endfor %}
 
 {# class declarations #}
@@ -246,7 +251,7 @@ void init_{{ mod_fn }}(py::module &m) {
     {%- if cls.parent -%}
       {{ cls.parent.x_varname }}
     {%- else -%}
-      m
+      {{ cls.x_module_var }}
     {%- endif -%}
     , "{{ cls.x_name }}");
   
@@ -287,8 +292,7 @@ void init_{{ mod_fn }}(py::module &m) {
 {# global methods #}
 {% if header.functions %}
   {% for fn in header.functions if not fn.data.ignore -%}
-    {% if loop.first %}m{% endif %}
-    {{ genmethod(None, fn, None) }}
+    {{ fn.x_module_var }}{{ genmethod(None, fn, None) }};
   {% endfor %};
 {% endif %}
 }

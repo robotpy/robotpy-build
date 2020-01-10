@@ -64,12 +64,22 @@ class Hooks:
         self.types = set()
         self.class_hierarchy = {}
 
+        self.subpackages = {}
+
     def report_missing(self, name: str, reporter: MissingReporter):
         self.gendata.report_missing(name, reporter)
 
     def _add_type_caster(self, typename: str):
         # defer until the end since there's lots of duplication
         self.types.add(typename)
+
+    def _add_subpackage(self, v, data):
+        if data.subpackage:
+            var = "pkg_" + data.subpackage.replace(".", "_")
+            self.subpackages[data.subpackage] = var
+            v["x_module_var"] = var
+        else:
+            v["x_module_var"] = "m"
 
     def _get_type_caster_includes(self):
         includes = set()
@@ -151,6 +161,8 @@ class Hooks:
             en["x_namespace"] = en["namespace"]
             enum_data = self.gendata.get_enum_data(en.get("name"))
             en["data"] = enum_data
+
+            self._add_subpackage(en, enum_data)
             self._enum_hook(en, enum_data)
 
         for v in header.variables:
@@ -160,6 +172,7 @@ class Hooks:
 
         data["type_caster_includes"] = self._get_type_caster_includes()
         data["class_hierarchy"] = self.class_hierarchy
+        data["subpackages"] = self.subpackages
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -398,6 +411,7 @@ class Hooks:
             fn["data"] = data
             return
 
+        self._add_subpackage(fn, data)
         self._function_hook(fn, data)
 
     def class_hook(self, cls, data):
@@ -419,6 +433,8 @@ class Hooks:
         if class_data.ignore:
             return
 
+        self._add_subpackage(cls, class_data)
+
         # fix enum paths
         for e in cls["enums"]["public"]:
             e["x_namespace"] = e["namespace"] + "::" + cls_name + "::"
@@ -426,6 +442,7 @@ class Hooks:
                 e.get("name"), cls_key, class_data
             )
             e["data"] = enum_data
+
             self._enum_hook(e, enum_data)
 
         # update inheritance

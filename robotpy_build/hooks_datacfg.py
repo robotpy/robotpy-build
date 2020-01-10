@@ -88,6 +88,9 @@ class FunctionData(Model):
     # Mechanism to override individual parameters
     param_override: Dict[str, ParamData] = {}
 
+    #: If specified, put the function in a sub.pack.age
+    subpackage: Optional[str] = None
+
     no_release_gil: bool = False
 
     buffers: List[BufferData] = []
@@ -136,6 +139,10 @@ class EnumData(Model):
     rename: Optional[str] = None
     value_prefix: Optional[str] = None
 
+    #: If specified, put the enum in a sub.pack.age (ignored for
+    #: enums that are part of classes)
+    subpackage: Optional[str] = None
+
 
 class ClassData(Model):
 
@@ -164,6 +171,10 @@ class ClassData(Model):
     #: One way you can tell we messed this up is if there's a double-free
     #: error and the stack trace involves a unique_ptr destructor
     shared_ptr: bool = True
+
+    #: If specified, put the class in a sub.pack.age. Ignored
+    #: for functions attached to a class.
+    subpackage: Optional[str] = None
 
     #: Extra 'using' directives to insert into the trampoline and the
     #: wrapping scope
