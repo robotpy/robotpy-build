@@ -56,6 +56,10 @@ class WrapperConfig(BaseModel):
     # set to name. If empty list, libs will not be downloaded.
     libs: Optional[List[str]] = None
 
+    # Names of contained shared link only libraries (in loading order). If None,
+    # set to name. If empty list, link only libs will not be downloaded.
+    dlopenlibs: Optional[List[str]] = None
+
     # Name of artifact to download, if different than name
     artname: str = ""
 
