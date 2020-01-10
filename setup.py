@@ -57,13 +57,13 @@ setup(
     install_requires=[
         "setuptools",
         "setuptools_scm",
-        "header2whatever",
-        "sphinxify",
+        "header2whatever >= 0.3.1",
+        "sphinxify >= 0.5.1",
         "pydantic",
         "toml",
         "toposort",
         "pyyaml >= 5.1",
-        "dataclasses; python_version < '3.7'"
+        "dataclasses; python_version < '3.7'",
     ],
     requires_python=">=3.6",
     classifiers=[
