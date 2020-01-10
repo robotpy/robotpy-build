@@ -135,7 +135,7 @@
     ("{{ prop.x_name }}", {{ ' ' }}
         [](const {{ qualname }}& inst) -> {{ prop.type }} { return inst.{{ prop.name}}; }
         {%- if not (prop.constant or prop.constexpr or prop.x_readonly) %},
-        []({{ qualname }}& inst, {{ prop.type }} v) {inst.{{ prop.name}} = v; })
+        []({{ qualname }}& inst, {{ prop.type }} v) {inst.{{ prop.name}} = v; }
         {%- endif -%}
     )
 
