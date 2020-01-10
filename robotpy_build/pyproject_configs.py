@@ -84,9 +84,11 @@ class WrapperConfig(BaseModel):
     # the project.
     sources: List[str] = []
 
-    # List of dictionaries: each dictionary key is the function
-    # name for the initialization function, the value is the
-    # header that is being wrapped.
+    # List of dictionaries: each dictionary key is the function name for
+    # the initialization function, the value is the header that is
+    # being wrapped. The header is first looked look relative to the
+    # package, then relative to each include directory (including
+    # downloaded and extracted packages).
     generate: Optional[List[Dict[str, str]]] = None
 
     # Path to a data.yml to use during code generation, or a directory

@@ -393,8 +393,18 @@ class Wrapper:
         else:
             only_generate = None
 
+        generation_search_path = [self.root,] + self.get_include_dirs()
+
         for gen in self.cfg.generate:
             for name, header in gen.items():
+
+                header = normpath(header)
+                for path in generation_search_path:
+                    header_path = join(path, header)
+                    if exists(header_path):
+                        break
+                else:
+                    raise ValueError("could not find " + header)
 
                 if report_only:
                     templates = []
@@ -430,7 +440,7 @@ class Wrapper:
                 # for each thing, create a h2w configuration dictionary
                 cfgd = {
                     # generation code depends on this being just one header!
-                    "headers": [join(self.incdir, normpath(header))],
+                    "headers": [header_path],
                     "templates": templates,
                     "class_templates": class_templates,
                     "preprocess": True,
