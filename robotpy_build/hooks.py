@@ -182,6 +182,12 @@ class Hooks:
         if not data.rename and not x_name[:2].isupper():
             x_name = x_name[0].lower() + x_name[1:]
 
+        # if cpp_code is specified, don't release the gil unless the user
+        # specifically asks for it
+        if data.no_release_gil is None:
+            if data.cpp_code:
+                data.no_release_gil = True
+
         x_in_params = []
         x_out_params = []
         x_rets = []

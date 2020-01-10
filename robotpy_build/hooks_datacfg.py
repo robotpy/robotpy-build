@@ -91,7 +91,7 @@ class FunctionData(Model):
     #: If specified, put the function in a sub.pack.age
     subpackage: Optional[str] = None
 
-    no_release_gil: bool = False
+    no_release_gil: Optional[bool] = None
 
     buffers: List[BufferData] = []
 
