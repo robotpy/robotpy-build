@@ -65,17 +65,17 @@
 {%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
   {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
   {%- if fn.constructor -%}
-    {%- set ns.arg_params = fn.parameters -%}
+    {%- set ns.arg_params = fn.x_all_params -%}
     {%- if fn.data.cpp_code -%}
       {{ fn.data.cpp_code }}
     {%- elif trampoline_qualname -%}
-      .def(py::init([]({{ fn.parameters | join(', ', attribute='x_decl') }}) {
+      .def(py::init([]({{ ns.arg_params | join(', ', attribute='x_decl') }}) {
         return std::make_unique<{{ trampoline_qualname }}>(
-          {{- fn.parameters | join(', ', attribute='x_callname') -}}
+          {{- ns.arg_params | join(', ', attribute='x_callname') -}}
         );
       })
     {%- else -%}
-      .def(py::init<{{ fn.parameters | join(', ', attribute='x_type_full') }}>()
+      .def(py::init<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- endif -%}
   {%- else -%}
     .{{ fndef(cls_qualname, fn) }}("{{ fn.x_name }}",{{ ' ' }}

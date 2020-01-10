@@ -190,6 +190,7 @@ class Hooks:
 
         x_in_params = []
         x_out_params = []
+        x_all_params = []
         x_rets = []
         x_temps = []
         x_keepalives = []
@@ -311,11 +312,13 @@ class Hooks:
 
             if p.get("ignore"):
                 pass
-            elif ptype == "out":
-                x_out_params.append(p)
-                x_temps.append(p)
-            elif ptype == "in":
-                x_in_params.append(p)
+            else:
+                x_all_params.append(p)
+                if ptype == "out":
+                    x_out_params.append(p)
+                    x_temps.append(p)
+                elif ptype == "in":
+                    x_in_params.append(p)
 
             self._add_type_caster(p["x_type"])
 
@@ -398,6 +401,7 @@ class Hooks:
                 data=data,
                 # transforms
                 x_name=x_name,
+                x_all_params=x_all_params,
                 x_in_params=x_in_params,
                 x_out_params=x_out_params,
                 x_rets=x_rets,
