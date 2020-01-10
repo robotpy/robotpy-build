@@ -186,6 +186,7 @@ class Hooks:
         x_out_params = []
         x_rets = []
         x_temps = []
+        x_keepalives = []
 
         x_genlambda = False
         x_lambda_pre = []
@@ -212,7 +213,12 @@ class Hooks:
 
         self._add_type_caster(fn["returns"])
 
+        is_constructor = fn.get("constructor")
+
         for i, p in enumerate(fn["parameters"]):
+
+            if is_constructor and p["reference"]:
+                x_keepalives.append((1, i + 2))
 
             if p["raw_type"] in _int32_types:
                 p["fundamental"] = True
@@ -372,6 +378,9 @@ class Hooks:
             doc_quoted = doc.splitlines(keepends=True)
             doc_quoted = ['"%s"' % (dq.replace("\n", "\\n"),) for dq in doc_quoted]
 
+        if data.keepalive is not None:
+            x_keepalives = data.keepalive
+
         # if "hook" in data:
         #     eval(data["hook"])(fn, data)
 
@@ -386,6 +395,7 @@ class Hooks:
                 x_in_params=x_in_params,
                 x_out_params=x_out_params,
                 x_rets=x_rets,
+                x_keepalives=x_keepalives,
                 x_return_value_policy=x_return_value_policy,
                 # lambda generation
                 x_genlambda=x_genlambda,

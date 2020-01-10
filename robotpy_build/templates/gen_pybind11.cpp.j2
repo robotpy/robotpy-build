@@ -104,6 +104,10 @@
     , release_gil()
   {%- endif -%}
 
+  {%- for nurse, patient in fn.x_keepalives %}
+    , py::keep_alive<{{ nurse }}, {{ patient }}>()
+  {%- endfor -%}
+
   {{- fn.x_return_value_policy -}}
 
   {%- if fn.x_doc %},

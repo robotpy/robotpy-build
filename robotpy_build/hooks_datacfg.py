@@ -4,7 +4,7 @@
 #
 
 import enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Tuple, Optional
 
 from pydantic import BaseModel, validator
 
@@ -96,6 +96,10 @@ class FunctionData(Model):
     buffers: List[BufferData] = []
 
     overloads: Dict[str, "FunctionData"] = {}
+
+    #: Adds py::keep_alive<x,y> to the function. Overrides automatic
+    #: keepalive support, which retains references passed to constructors
+    keepalive: Optional[List[Tuple[int, int]]] = None
 
     return_value_policy: ReturnValuePolicy = ReturnValuePolicy.AUTOMATIC
 
