@@ -197,6 +197,7 @@ class Wrapper:
         dlopen_libnames = self.get_dlopen_library_names()
 
         libnames = [lib for lib in libnames if lib not in dlopen_libnames]
+        libnames_full = []
 
         if libnames or dlopen_libnames:
             libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
