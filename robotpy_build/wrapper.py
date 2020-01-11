@@ -11,12 +11,13 @@ from os.path import (
     normpath,
     relpath,
     sep,
+    splitext,
 )
 import posixpath
 import sys
 import shutil
 import toposort
-import typing
+from typing import Optional, List
 import yaml
 
 from header2whatever.config import Config
@@ -25,7 +26,7 @@ from header2whatever.parse import ConfigProcessor
 from setuptools import Extension
 
 from .devcfg import get_dev_config
-from .pyproject_configs import WrapperConfig
+from .pyproject_configs import WrapperConfig, MavenLibDownload
 from .generator_data import MissingReporter
 from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
@@ -41,16 +42,36 @@ class Wrapper:
     # -> should we change this based on what flags the compiler supports?
     _cpp_version = "__cplusplus 201703L"
 
-    def __init__(self, name, wrapcfg: WrapperConfig, setup):
+    def __init__(self, package_name, cfg: WrapperConfig, setup):
 
-        # must match PkgCfg.name
-        self.name = wrapcfg.name
-        # must match PkgCfg.import_name
-        self.import_name = name
+        self.package_name = package_name
+        self.cfg = cfg
 
         self.setup_root = setup.root
-        self.root = join(setup.root, *self.import_name.split("."))
-        self.cfg = wrapcfg
+        self.root = join(setup.root, *package_name.split("."))
+
+        # must match PkgCfg.name
+        self.name = cfg.name
+
+        # Compute the extension name, even if we don't create one
+        extname = cfg.extension
+        if not extname:
+            extname = f"_{cfg.name}"
+
+        # must match PkgCfg.libinit_import
+        if cfg.libinit:
+            libinit_py = cfg.libinit
+            if libinit_py == "__init__.py":
+                self.libinit_import = package_name
+            else:
+                pkg = splitext(self.cfg.libinit)[0]
+                self.libinit_import = f"{package_name}.{pkg}"
+        else:
+            libinit_py = f"_init{extname}.py"
+            self.libinit_import = f"{package_name}._init{extname}"
+
+        self.libinit_import_py = join(self.root, libinit_py)
+
         self.platform = setup.platform
         self.pkgcfg = setup.pkgcfg
 
@@ -59,20 +80,20 @@ class Wrapper:
 
         self._all_deps = None
 
-        if not self.cfg.artname:
-            self.cfg.artname = self.cfg.name
-
         self.extension = None
         if self.cfg.sources or self.cfg.generate:
-            define_macros = [("RPYBUILD_MODULE_NAME", self.name)]
+            define_macros = [("RPYBUILD_MODULE_NAME", extname)]
             define_macros += [tuple(m.split(" ", 1)) for m in self.cfg.pp_defines]
 
             # extensions just hold data about what to actually build, we can
             # actually modify extensions all the way up until the build
             # really happens
-            extname = f"{self.import_name}.{self.name}"
+            extname_full = f"{self.package_name}.{extname}"
             self.extension = Extension(
-                extname, self.cfg.sources, define_macros=define_macros, language="c++",
+                extname_full,
+                self.cfg.sources,
+                define_macros=define_macros,
+                language="c++",
             )
 
         if self.cfg.generate and not self.cfg.generation_data:
@@ -81,7 +102,7 @@ class Wrapper:
             )
 
         # Setup an entry point (written during build_clib)
-        entry_point = f"{self.cfg.name} = {name}.pkgcfg"
+        entry_point = f"{self.cfg.name} = {self.package_name}.pkgcfg"
 
         setup_kwargs = setup.setup_kwargs
         ep = setup_kwargs.setdefault("entry_points", {})
@@ -92,39 +113,47 @@ class Wrapper:
 
         self.dev_config = get_dev_config(self.name)
 
-    def _dl_url(self, thing):
+    def _dl_url(self, classifier):
         # TODO: support development against locally installed things?
-        base = self.cfg.baseurl
-        art = self.cfg.artname
-        ver = self.cfg.version
-        return f"{base}/{art}/{ver}/{art}-{ver}-{thing}.zip"
+        dl = self.cfg.maven_lib_download
+        repo_url = dl.repo_url
+        grp = dl.group_id.replace(".", "/")
+        art = dl.artifact_id
+        ver = dl.version
+
+        return f"{repo_url}/{grp}/{art}/{ver}/{art}-{ver}-{classifier}.zip"
 
     def _extract_zip_to(self, thing, dst, cache):
         download_and_extract_zip(self._dl_url(thing), to=dst, cache=cache)
 
     # pkgcfg interface
-    def get_include_dirs(self):
+    def get_include_dirs(self) -> Optional[List[str]]:
         includes = [self.incdir, self.rpy_incdir]
         for h in self.cfg.extra_includes:
             includes.append(join(self.setup_root, normpath(h)))
         return includes
 
-    def get_library_dirs(self):
+    def get_library_dirs(self) -> Optional[List[str]]:
         if self.get_library_names():
             return [join(self.root, "lib")]
         return []
 
-    def get_library_names(self):
-        if self.cfg.libs is None:
-            return [self.cfg.name]
+    def get_library_names(self) -> Optional[List[str]]:
+        mcfg = self.cfg.maven_lib_download
+        if mcfg:
+            if mcfg.libs is None:
+                return [mcfg.artifact_id]
+            else:
+                return mcfg.libs
         else:
-            return self.cfg.libs
-
-    def get_dlopen_library_names(self):
-        if self.cfg.dlopenlibs is None:
             return []
+
+    def get_dlopen_library_names(self) -> Optional[List[str]]:
+        mcfg = self.cfg.maven_lib_download
+        if mcfg and mcfg.dlopenlibs:
+            return mcfg.dlopenlibs
         else:
-            return self.cfg.dlopenlibs
+            return []
 
     def get_type_casters(self, casters):
         for header, types in self.cfg.type_casters.items():
@@ -175,24 +204,37 @@ class Wrapper:
 
     def on_build_dl(self, cache):
 
-        libdir = join(self.root, "lib")
-        incdir = join(self.root, "include")
-        initpy = join(self.root, "__init__.py")
         pkgcfgpy = join(self.root, "pkgcfg.py")
 
-        # Remove downloaded/generated artifacts first
-        shutil.rmtree(libdir, ignore_errors=True)
-        shutil.rmtree(incdir, ignore_errors=True)
-
         try:
-            os.unlink(initpy)
+            os.unlink(self.libinit_import_py)
         except OSError:
             pass
+
         try:
             os.unlink(pkgcfgpy)
         except OSError:
             pass
 
+        dlcfg = self.cfg.maven_lib_download
+        if dlcfg:
+            libnames_full = self._clean_and_download(dlcfg, cache)
+        else:
+            libnames_full = []
+
+        self._write_libinit_py(libnames_full)
+        self._write_pkgcfg_py(pkgcfgpy)
+
+    def _clean_and_download(self, dlcfg: MavenLibDownload, cache: str) -> List[str]:
+
+        libdir = join(self.root, "lib")
+        incdir = join(self.root, "include")
+
+        # Remove downloaded/generated artifacts first
+        shutil.rmtree(libdir, ignore_errors=True)
+        shutil.rmtree(incdir, ignore_errors=True)
+
+        # grab headers
         self._extract_zip_to("headers", incdir, cache)
 
         libnames = self.get_library_names()
@@ -202,10 +244,8 @@ class Wrapper:
         libnames_full = []
 
         if libnames or dlopen_libnames:
-            libext = self.cfg.libexts.get(self.platform.libext, self.platform.libext)
-            linkext = self.cfg.linkexts.get(
-                self.platform.linkext, self.platform.linkext
-            )
+            libext = dlcfg.libexts.get(self.platform.libext, self.platform.libext)
+            linkext = dlcfg.linkexts.get(self.platform.linkext, self.platform.linkext)
 
             libnames_full = [
                 f"{self.platform.libprefix}{lib}{libext}" for lib in libnames
@@ -231,22 +271,23 @@ class Wrapper:
 
             self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
 
-        self._write_init_py(initpy, libnames_full)
-        self._write_pkgcfg_py(pkgcfgpy)
+        return libnames_full
 
-    def _write_init_py(self, fname, libnames):
+    def _write_libinit_py(self, libnames):
+
+        # This file exists to ensure that any shared library dependencies
+        # are loaded for the compiled extension
+
         init = inspect.cleandoc(
             """
-
-        # fmt: off
+        
         # This file is automatically generated, DO NOT EDIT
+        # fmt: off
 
         from os.path import abspath, join, dirname
         _root = abspath(dirname(__file__))
 
         ##IMPORTS##
-
-        from ctypes import cdll
 
         """
         )
@@ -254,14 +295,15 @@ class Wrapper:
         init += "\n"
 
         if libnames:
+            init += "from ctypes import cdll\n\n"
             for libname in libnames:
                 init += f'_lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
 
         imports = []
         for dep in self.cfg.depends:
             pkg = self.pkgcfg.get_pkg(dep)
-            if pkg.import_name:
-                imports.append(pkg.import_name)
+            if pkg.libinit_import:
+                imports.append(pkg.libinit_import)
 
         if imports:
             imports = "# runtime dependencies\nimport " + "\nimport ".join(imports)
@@ -270,7 +312,7 @@ class Wrapper:
 
         init = init.replace("##IMPORTS##", imports)
 
-        with open(join(self.root, "__init__.py"), "w") as fp:
+        with open(self.libinit_import_py, "w") as fp:
             fp.write(init)
 
     def _write_pkgcfg_py(self, fname):
@@ -289,7 +331,7 @@ class Wrapper:
         from os.path import abspath, join, dirname
         _root = abspath(dirname(__file__))
 
-        import_name = "{self.import_name}"
+        libinit_import = "{self.libinit_import}"
         depends = {repr(self.cfg.depends)}
 
         def get_include_dirs():
@@ -306,8 +348,8 @@ class Wrapper:
         extraincludes = ""
         if self.cfg.extra_includes:
             # these are relative to the root of the project, need
-            # to resolve the path relative to the pkgcfg directory
-            pth = join(*self.import_name.split("."))
+            # to resolve the path relative to the package
+            pth = join(*self.package_name.split("."))
 
             for h in self.cfg.extra_includes:
                 h = '", "'.join(relpath(normpath(h), pth).split(sep))
@@ -336,11 +378,13 @@ class Wrapper:
         return HooksDataYaml(**data)
 
     def on_build_gen(
-        self, cxx_gen_dir, missing_reporter: typing.Optional[MissingReporter] = None
+        self, cxx_gen_dir, missing_reporter: Optional[MissingReporter] = None
     ):
 
         if not self.cfg.generate:
             return
+
+        cxx_gen_dir = join(cxx_gen_dir, self.name)
 
         if missing_reporter:
             report_only = True
@@ -393,7 +437,7 @@ class Wrapper:
         else:
             only_generate = None
 
-        generation_search_path = [self.root,] + self.get_include_dirs()
+        generation_search_path = [self.root,] + self._all_includes(False)
 
         for gen in self.cfg.generate:
             for name, header in gen.items():
@@ -404,6 +448,7 @@ class Wrapper:
                     if exists(header_path):
                         break
                 else:
+                    print(generation_search_path)
                     raise ValueError("could not find " + header)
 
                 if report_only:
@@ -461,7 +506,8 @@ class Wrapper:
 
         if only_generate:
             unused = ", ".join(sorted(only_generate))
-            raise ValueError(f"only_generate specified unused headers! {unused}")
+            # raise ValueError(f"only_generate specified unused headers! {unused}")
+            # TODO: make this a warning
 
         if not report_only:
             for name, contents in missing_reporter.as_yaml():
@@ -480,9 +526,11 @@ class Wrapper:
 
         # update the build extension so that build_ext works
         self.extension.sources = sources
-        self.extension.include_dirs = (
-            self._all_includes(True) + gen_includes + root_includes
-        )
+        # use normpath to get rid of .. otherwise gcc is weird
+        self.extension.include_dirs = [
+            normpath(p)
+            for p in (self._all_includes(True) + gen_includes + root_includes)
+        ]
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
 

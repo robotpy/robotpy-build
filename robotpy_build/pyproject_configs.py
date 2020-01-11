@@ -5,31 +5,44 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 
-class ExtensionConfig(BaseModel):
+class MavenLibDownload(BaseModel):
     """
-        Compiled extension specified in pyproject.toml
-
-        [tool.robotpy-build.ext."package-name"]
+        The information required here can be found in the vendor JSON file
     """
 
     class Config:
         extra = "forbid"
 
-    # Module name: must match the name given to the PYBIND11_MODULE() macro
-    name: str
+    #: Maven artifact ID
+    artifact_id: str
 
-    # List of robotpy-build library dependencies
-    # .. would be nice to auto-infer this from the python install dependencies
-    depends: List[str] = []
+    #: Maven group ID
+    group_id: str
 
-    # Source files to compile. Path is relative to the root of
-    # the project.
-    sources: List[str]
+    #: Maven repository URL
+    repo_url: str
+
+    #: Version of artifact to download
+    version: str
+
+    #: Names of contained shared libraries (in loading order). If None,
+    #: set to artifact_id.
+    libs: Optional[List[str]] = None
+
+    #: Names of contained shared link only libraries (in loading order). If None,
+    #: set to name. If empty list, link only libs will not be downloaded.
+    dlopenlibs: Optional[List[str]] = None
+
+    #: Library extensions map
+    libexts: Dict[str, str] = {}
+
+    #: Compile time extensions map
+    linkexts: Dict[str, str] = {}
 
 
 class WrapperConfig(BaseModel):
     """
-        Wrapper configurations specified in pyproject.toml
+        Buildable package configurations specified in pyproject.toml
 
         [tool.robotpy-build.wrappers."package-name"]
     """
@@ -37,48 +50,27 @@ class WrapperConfig(BaseModel):
     class Config:
         extra = "forbid"
 
-    # List of extra include directories to export, relative to the
-    # project root
-    extra_includes: List[str] = []
+    #: Name that other projects can use in their dependency list
+    name: str
+
+    #: Name of extension to build. If None, set to _{name}
+    extension: Optional[str] = None
+
+    #: Name of generated file that ensures the shared libraries and any
+    #: dependencies are loaded. Defaults to _init{extension}.py
+    libinit: Optional[str] = None
 
     # List of robotpy-build library dependencies
     # .. would be nice to auto-infer this from the python install dependencies
     depends: List[str] = []
 
-    #
-    # Download settings
-    #
+    #: If this project depends on external libraries stored in a maven repo
+    #: specify it here
+    maven_lib_download: Optional[MavenLibDownload] = None
 
-    # Project name
-    name: str
-
-    # Names of contained shared libraries (in loading order). If None,
-    # set to name. If empty list, libs will not be downloaded.
-    libs: Optional[List[str]] = None
-
-    # Names of contained shared link only libraries (in loading order). If None,
-    # set to name. If empty list, link only libs will not be downloaded.
-    dlopenlibs: Optional[List[str]] = None
-
-    # Name of artifact to download, if different than name
-    artname: str = ""
-
-    # URL to download
-    baseurl: str
-
-    # Version of artifact to download
-    version: str
-
-    # Library extensions map
-    # .. I don't remember why this is here
-    libexts: Dict[str, str] = {}
-
-    # Compile time extensions map
-    linkexts: Dict[str, str] = {}
-
-    #
-    # Wrapper generation settings
-    #
+    # List of extra include directories to export, relative to the
+    # project root
+    extra_includes: List[str] = []
 
     # Source files to compile. Path is relative to the root of
     # the project.
@@ -153,9 +145,6 @@ class RobotpyBuildConfig(BaseModel):
 
     # [tool.robotpy-build.metadata]
     metadata: DistutilsMetadata
-
-    # [tool.robotpy-build.ext."XXX"]
-    ext: Dict[str, ExtensionConfig] = {}
 
     # [tool.robotpy-build.wrappers."XXX"]
     wrappers: Dict[str, WrapperConfig] = {}

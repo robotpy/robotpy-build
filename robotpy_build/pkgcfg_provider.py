@@ -13,7 +13,7 @@ class PkgCfg:
         self.name = entry_point.name
 
         # could deduce this, but this is probably fine
-        self.import_name = getattr(self.module, "import_name", None)
+        self.libinit_import = getattr(self.module, "libinit_import", None)
         self.depends = getattr(self.module, "depends", [])
 
     def get_include_dirs(self) -> Optional[List[str]]:
@@ -80,10 +80,13 @@ class PkgCfgProvider:
 
         def _get(name: str):
             pkg = self.get_pkg(name)
+            if pkg in deps:
+                return pkg
+            deps.add(pkg)
             for dep in pkg.depends:
-                if dep not in deps:
-                    deps.add(_get(dep))
+                _get(dep)
             return pkg
 
-        _get(name)
+        pkg = _get(name)
+        deps.remove(pkg)
         return deps
