@@ -113,6 +113,13 @@ class ImportCreator:
         return parser
 
     def run(self, args):
+        #Runtime Dependency Check
+        try:
+            import black
+        except:
+            print("Error, The following module is required to run this tool: black")
+            exit(1)
+
         # TODO: could probably generate this from parsed code, but seems hard
         ctx = {}
         exec(f"from {args.compiled} import *", {}, ctx)
