@@ -299,4 +299,8 @@ void init_{{ mod_fn }}(py::module &m) {
     {{ fn.x_module_var }}{{ genmethod(None, fn, None) }};
   {% endfor %};
 {% endif %}
+{% if data.inline_code %}
+
+  {{ data.inline_code }}
+{% endif %}
 }

@@ -475,9 +475,14 @@ class Wrapper:
         else:
             gen_includes = []
 
+        # Add the root to the includes (but only privately)
+        root_includes = [self.root]
+
         # update the build extension so that build_ext works
         self.extension.sources = sources
-        self.extension.include_dirs = self._all_includes(True) + gen_includes
+        self.extension.include_dirs = (
+            self._all_includes(True) + gen_includes + root_includes
+        )
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
 

@@ -217,6 +217,7 @@ class HooksDataYaml(Model):
 
     strip_prefixes: List[str] = []
     extra_includes: List[str] = []
+    inline_code: Optional[str] = None
 
     attributes: Dict[str, PropData] = {}
     classes: Dict[str, ClassData] = {}
