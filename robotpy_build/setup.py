@@ -6,6 +6,7 @@ from setuptools_scm import get_version
 import toml
 
 
+from .command.build_py import BuildPy
 from .command.build_dl import BuildDl
 from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
@@ -76,6 +77,7 @@ class Setup:
         self._collect_wrappers()
 
         self.setup_kwargs["cmdclass"] = {
+            "build_py": BuildPy,
             "build_dl": BuildDl,
             "build_gen": BuildGen,
             "build_ext": BuildExt,

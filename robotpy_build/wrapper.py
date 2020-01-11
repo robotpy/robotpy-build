@@ -1,3 +1,4 @@
+import glob
 import json
 import inspect
 import os
@@ -78,6 +79,9 @@ class Wrapper:
         # Used by pkgcfg
         self.depends = self.cfg.depends
 
+        # Used by build_py
+        self.generated_files = []
+
         self._all_deps = None
 
         self.extension = None
@@ -125,6 +129,10 @@ class Wrapper:
 
     def _extract_zip_to(self, thing, dst, cache):
         download_and_extract_zip(self._dl_url(thing), to=dst, cache=cache)
+
+    def _add_generated_file(self, fullpath):
+        if not isdir(fullpath):
+            self.generated_files.append(relpath(fullpath, self.root))
 
     # pkgcfg interface
     def get_include_dirs(self) -> Optional[List[str]]:
@@ -271,6 +279,12 @@ class Wrapper:
 
             self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
 
+        for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
+            self._add_generated_file(f)
+
+        for f in glob.glob(join(glob.escape(libdir), "**"), recursive=True):
+            self._add_generated_file(f)
+
         return libnames_full
 
     def _write_libinit_py(self, libnames):
@@ -314,6 +328,8 @@ class Wrapper:
 
         with open(self.libinit_import_py, "w") as fp:
             fp.write(init)
+
+        self._add_generated_file(self.libinit_import_py)
 
     def _write_pkgcfg_py(self, fname):
 
@@ -367,6 +383,8 @@ class Wrapper:
 
         with open(fname, "w") as fp:
             fp.write(pkgcfg)
+
+        self._add_generated_file(fname)
 
     def _load_generation_data(self, datafile):
         with open(datafile) as fp:
@@ -533,6 +551,9 @@ class Wrapper:
         ]
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
+
+        for f in glob.glob(join(glob.escape(hppoutdir), "*.hpp")):
+            self._add_generated_file(f)
 
     def _write_wrapper_hpp(self, outdir, classdeps):
 
