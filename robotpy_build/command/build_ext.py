@@ -129,4 +129,3 @@ if os.environ.get("RPYBUILD_PARALLEL") == "1":
     import distutils.ccompiler
 
     distutils.ccompiler.CCompiler.compile = parallelCCompile
-
