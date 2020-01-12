@@ -56,7 +56,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "setuptools",
+        "setuptools >= 43.0",
         "setuptools_scm",
         "header2whatever >= 0.3.1",
         "sphinxify >= 0.5.1",
