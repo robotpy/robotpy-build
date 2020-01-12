@@ -29,7 +29,7 @@ jobs:
         python-version: 3.8
     - run: pip install wheel
     - name: Build packages
-      run: python setup.py bdist_wheel
+      run: python setup.py sdist bdist_wheel
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
