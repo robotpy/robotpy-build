@@ -48,6 +48,7 @@ setup(
     version=__version__,
     description="Build tool for RobotPy projects",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Dustin Spicuzza",
     author_email="robotpy@googlegroups.com",
     url="https://github.com/robotpy/robotpy-build",
