@@ -3,6 +3,7 @@ import glob
 import inspect
 from os.path import basename, dirname, exists, join, relpath, splitext
 import subprocess
+import sys
 
 from .setup import Setup
 from .generator_data import MissingReporter
@@ -12,6 +13,35 @@ def get_setup() -> Setup:
     s = Setup()
     s.prepare()
     return s
+
+
+class BuildDep:
+    @classmethod
+    def add_subparser(cls, parent_parser, subparsers):
+        parser = subparsers.add_parser(
+            "build-dep", help="Install build dependencies", parents=[parent_parser],
+        )
+        parser.add_argument("--install", help="Actually do it", action="store_true")
+        return parser
+
+    def run(self, args):
+        s = get_setup()
+        requirements = s.pyproject.get("build-system", {}).get("requires", [])
+        requirements.extend(s.setup_kwargs.get("install_requires", ""))
+
+        pipargs = [
+            sys.executable,
+            "-m",
+            "pip",
+            "--disable-pip-version-check",
+            "install",
+        ]
+        pipargs.extend(requirements)
+        print(" ".join(pipargs))
+
+        if args.install:
+            p = subprocess.run(pipargs)
+            return p.returncode
 
 
 class GenCreator:
@@ -152,7 +182,7 @@ def main():
     subparsers = parser.add_subparsers(dest="cmd")
     subparsers.required = True
 
-    for cls in (GenCreator, HeaderScanner, ImportCreator):
+    for cls in (BuildDep, GenCreator, HeaderScanner, ImportCreator):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
 
     args = parser.parse_args()
