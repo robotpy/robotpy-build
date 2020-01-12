@@ -64,7 +64,7 @@ class Setup:
         #       ... but we want them to be added to the wheel
         self.setup_kwargs["packages"] = find_packages()
 
-        self.setup_kwargs["long_description"] = self._generate_long_description()
+        self._generate_long_description()
 
         # get_version expects the directory to exist
         os.makedirs(self.base_package, exist_ok=True)
@@ -87,9 +87,15 @@ class Setup:
 
     def _generate_long_description(self):
         readme_rst = join(self.root, "README.rst")
+        readme_md = join(self.root, "README.md")
         if exists(readme_rst):
             with open(readme_rst) as fp:
-                return fp.read()
+                self.setup_kwargs["long_description"] = fp.read()
+
+        elif exists(readme_md):
+            self.setup_kwargs["long_description_content_type"] = "text/markdown"
+            with open(readme_md) as fp:
+                self.setup_kwargs["long_description"] = fp.read()
 
     def _collect_wrappers(self):
 
