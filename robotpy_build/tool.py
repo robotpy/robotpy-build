@@ -28,6 +28,7 @@ class BuildDep:
         s = get_setup()
         requirements = s.pyproject.get("build-system", {}).get("requires", [])
         requirements.extend(s.setup_kwargs.get("install_requires", ""))
+        requirements.append("wheel")
 
         pipargs = [
             sys.executable,
