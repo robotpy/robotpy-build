@@ -5,6 +5,18 @@ from setuptools import Extension
 from setuptools_scm import get_version
 import toml
 
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
+    class bdist_wheel(_bdist_wheel):
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            self.root_is_pure = False
+
+
+except ImportError:
+    bdist_wheel = None
+
 
 from .command.build_py import BuildPy
 from .command.build_dl import BuildDl
@@ -81,6 +93,7 @@ class Setup:
             "build_dl": BuildDl,
             "build_gen": BuildGen,
             "build_ext": BuildExt,
+            "bdist_wheel": bdist_wheel,
         }
         for cls in self.setup_kwargs["cmdclass"].values():
             cls.wrappers = self.wrappers
