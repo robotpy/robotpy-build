@@ -73,6 +73,9 @@ class FunctionData(Model):
     # If True, don't wrap this
     ignore: bool = False
 
+    # Generate this in an `#ifdef`
+    ifdef: Optional[str] = None
+
     # Use this code instead of the generated code
     cpp_code: Optional[str] = None
 
