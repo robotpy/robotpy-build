@@ -93,8 +93,9 @@ class Setup:
             "build_dl": BuildDl,
             "build_gen": BuildGen,
             "build_ext": BuildExt,
-            "bdist_wheel": bdist_wheel,
         }
+        if bdist_wheel:
+            self.setup_kwargs["cmdclass"]["bdist_wheel"] = bdist_wheel
         for cls in self.setup_kwargs["cmdclass"].values():
             cls.wrappers = self.wrappers
 
