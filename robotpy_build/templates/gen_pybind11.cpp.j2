@@ -64,6 +64,9 @@
 
 {%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
   {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
+  {%- if fn.data.ifdef -%}
+  #ifdef {{ fn.data.ifdef }}
+  {% endif %}
   {%- if fn.constructor -%}
     {%- set ns.arg_params = fn.x_all_params -%}
     {%- if fn.data.cpp_code -%}
@@ -116,6 +119,9 @@
     {%- endfor -%}
   {%- endif -%}
   )
+  {%- if fn.data.ifdef -%}
+  #endif
+  {% endif %}
 {%- endmacro -%}
 
 {%- macro genprop(qualname, prop) -%}
