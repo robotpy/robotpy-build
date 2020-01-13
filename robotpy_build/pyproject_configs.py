@@ -119,7 +119,7 @@ class DistutilsMetadata(BaseModel):
     # long_description
     # zip_safe
     # include_package_data
-    # requires_python
+    # python_requires
     # packages
     # version
     # cmdclass

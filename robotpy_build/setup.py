@@ -70,7 +70,7 @@ class Setup:
         self.setup_kwargs = self.project_dict.get("metadata", {})
         self.setup_kwargs["zip_safe"] = False
         self.setup_kwargs["include_package_data"] = True
-        self.setup_kwargs["requires_python"] = ">=3.6"
+        self.setup_kwargs["python_requires"] = ">=3.6"
 
         # TODO: autogen packages don't exist at sdist time
         #       ... but we want them to be added to the wheel
