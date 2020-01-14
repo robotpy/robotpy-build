@@ -1,6 +1,7 @@
 from distutils.util import get_platform as _get_platform
 from dataclasses import dataclass, field
 from typing import List, Tuple, Union
+from re import match
 
 
 # wpilib platforms at https://github.com/wpilibsuite/native-utils/blob/master/src/main/java/edu/wpi/first/nativeutils/WPINativeUtilsExtension.java
@@ -51,10 +52,9 @@ def get_platform() -> WPILibMavenPlatform:
 
     pyplatform = _get_platform()
 
-    # Check for 64 bit macOS (version agnostic)
-    if 'osx' in pyplatform and '64' in pyplatform:
-        # Note: Apple has renamed their OS to macOS.
-        pyplatform  = 'osx'
+    # Check for 64 bit x86 macOS (version agnostic)
+    if match(r'macosx.*x86_64', pyplatform):
+        pyplatform = 'osx'
 
     try:
         return _platforms[pyplatform]
