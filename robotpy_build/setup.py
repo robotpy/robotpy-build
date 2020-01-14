@@ -99,7 +99,7 @@ class Setup:
             self.setup_kwargs["cmdclass"]["bdist_wheel"] = bdist_wheel
         for cls in self.setup_kwargs["cmdclass"].values():
             cls.wrappers = self.wrappers
-            cls.macos_lib_locations = self.project_dict.get("macos_lib_locations", None)
+            cls.macos_lib_locations = self.project_dict.get("macos_lib_locations", {})
 
         # We already know some of our packages, so collect those in addition
         # to using find_packages()

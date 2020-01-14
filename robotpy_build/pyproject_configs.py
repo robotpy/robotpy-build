@@ -161,4 +161,4 @@ class RobotpyBuildConfig(BaseModel):
     wrappers: Dict[str, WrapperConfig] = {}
 
     # [tool.robotpy-build.macos_lib_locations]
-    macos_lib_locations: Dict[str, str] = {}
+    macos_lib_locations: Optional[Dict[str, str]] = {}
