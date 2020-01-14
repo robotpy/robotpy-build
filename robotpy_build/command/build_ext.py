@@ -62,13 +62,11 @@ class BuildExt(build_ext):
         if ct == "unix":
             opts.append("-s")  # strip
             opts.append("-g0")  # remove debug symbols
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             opts.append(cpp_flag(self.compiler, "-"))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
         elif ct == "msvc":
             opts.append(cpp_flag(self.compiler, "/", ":"))
-            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
         for ext in self.extensions:
             ext.extra_compile_args = opts
             ext.extra_link_args = link_opts
