@@ -29,7 +29,6 @@ def cpp_flag(compiler, pfx, sep="="):
     The newer version is prefered over c++11 (when it is available).
     """
 
-    platform = get_platform()
     flags = [f"{pfx}std{sep}c++17", f"{pfx}std{sep}c++14", f"{pfx}std{sep}c++11"]
 
     for flag in flags:

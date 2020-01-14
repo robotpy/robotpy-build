@@ -86,7 +86,9 @@ class Wrapper:
 
         self.extension = None
         if self.cfg.sources or self.cfg.generate:
-            define_macros = [("RPYBUILD_MODULE_NAME", extname)]
+            define_macros = [("RPYBUILD_MODULE_NAME", extname)] + [
+                tuple(d.split(" ")) for d in self.platform.defines
+            ]
             define_macros += [tuple(m.split(" ", 1)) for m in self.cfg.pp_defines]
 
             # extensions just hold data about what to actually build, we can
@@ -442,7 +444,7 @@ class Wrapper:
             data = HooksDataYaml()
 
         sources = self.cfg.sources[:]
-        pp_defines = [self._cpp_version] + self.cfg.pp_defines
+        pp_defines = [self._cpp_version] + self.platform.defines + self.cfg.pp_defines
         casters = self._all_casters()
 
         # These are written to file to make it easier for dev mode to work

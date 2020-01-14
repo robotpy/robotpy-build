@@ -1,5 +1,6 @@
 from distutils.util import get_platform as _get_platform
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List, Tuple, Union
 
 
 # wpilib platforms at https://github.com/wpilibsuite/native-utils/blob/master/src/main/java/edu/wpi/first/nativeutils/WPINativeUtilsExtension.java
@@ -15,10 +16,13 @@ class WPILibMavenPlatform:
     #: compile time linkage
     linkext: str = None
 
+    defines: List[str] = field(default_factory=list)
+
     def __post_init__(self):
         # linkext defaults to libext
         if self.linkext is None:
             self.linkext = self.libext
+        self.defines = [f"{d} 1" for d in self.defines]
 
 
 X86_64 = "x86-64"
@@ -26,7 +30,8 @@ X86_64 = "x86-64"
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
     # TODO: this isn't always true
-    "linux-armv7l": WPILibMavenPlatform("athena"),
+    # -> __FRC_ROBORIO__ is injected by the WPILib built compiler
+    "linux-armv7l": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
     # TODO: linuxraspbian
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib"),
