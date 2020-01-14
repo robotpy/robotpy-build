@@ -22,7 +22,7 @@ jobs:
     - name: Black
       run: |
         pip install black
-        black --check --diff --exclude robotpy_build/pybind11/ .
+        black --check --diff .
 
   publish:
     runs-on: ubuntu-latest
