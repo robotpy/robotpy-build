@@ -143,18 +143,12 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
 
     """
 
-    # import code
-    # code.interact(local=dict(globals(), **locals()))
-
-    auto_detected_dependencies = find_libs(build_path)
-
-    # list_files(build_path)
-
-    # print(auto_detected_dependencies)
+    auto_detected_dependencies = find_all_libs(build_path)
+    print(auto_detected_dependencies)
 
     if dependencies is None:
         dependencies = get_build_dependencies(build_path)
-        # print(dependencies)
+        print(dependencies)
 
     for dependency in dependencies:
         library_file_path = dependency[0]
@@ -167,11 +161,14 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
 
             path_to_desired_file = path_map.get(df_search_name, None)
             if path_to_desired_file is None:
-                abs_path_to_df = auto_detected_dependencies.get(df_search_name, None)
+                abs_path_to_df = auto_detected_dependencies.get(
+                    path.basename(df_search_name),
+                    None
+                )
 
                 if abs_path_to_df is None:
                     if supress_errors: continue
-                    raise KeyError('Path to `' + path_to_desired_file + '` not found')
+                    raise KeyError('Path to `' + desired_file + '` not found')
 
                 path_to_desired_file = path.relpath(
                     abs_path_to_df, 
@@ -184,7 +181,7 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
 
             if path_to_desired_file is None:
                 if supress_errors: continue
-                raise KeyError('Path to `' + path_to_desired_file + '` not found')
+                raise KeyError('Path to `' + desired_file + '` not found')
 
             if len(path_to_desired_file) == 0:
                 if supress_errors: continue
