@@ -36,8 +36,7 @@ _platforms = {
     # TODO: linuxraspbian
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib"),
     "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib"),
-    # TODO: need to filter this value
-    "macosx-10.9-x86_64": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
+    "osx": WPILibMavenPlatform(X86_64, "osx", libext=".dylib")
 }
 
 
@@ -51,6 +50,12 @@ def get_platform() -> WPILibMavenPlatform:
     #       be useful to note for the future.
 
     pyplatform = _get_platform()
+
+    # Check for 64 bit macOS (version agnostic)
+    if 'osx' in pyplatform and '64' in pyplatform:
+        # Note: Apple has renamed their OS to macOS.
+        pyplatform  = 'osx'
+
     try:
         return _platforms[pyplatform]
     except KeyError:
