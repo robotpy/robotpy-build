@@ -75,6 +75,8 @@ class FunctionData(Model):
 
     # Generate this in an `#ifdef`
     ifdef: Optional[str] = None
+    # Generate this in an `#ifndef`
+    ifndef: Optional[str] = None
 
     # Use this code instead of the generated code
     cpp_code: Optional[str] = None

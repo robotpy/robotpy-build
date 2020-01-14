@@ -64,8 +64,13 @@
 
 {%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
   {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
-  {%- if fn.data.ifdef -%}
+  {%+ if fn.data.ifdef %}
+
   #ifdef {{ fn.data.ifdef }}
+  {% endif %}
+  {%+ if fn.data.ifndef %}
+
+  #ifndef {{ fn.data.ifndef }}
   {% endif %}
   {%- if fn.constructor -%}
     {%- set ns.arg_params = fn.x_all_params -%}
@@ -119,8 +124,11 @@
     {%- endfor -%}
   {%- endif -%}
   )
-  {%- if fn.data.ifdef -%}
-  #endif
+  {%+ if fn.data.ifdef %}
+  #endif // {{ fn.data.ifdef }}
+  {% endif %}
+  {%+ if fn.data.ifndef %}
+  #endif // {{ fn.data.ifndef }}
   {% endif %}
 {%- endmacro -%}
 
