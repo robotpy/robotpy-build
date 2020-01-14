@@ -3,6 +3,17 @@ from delocate.libsana import tree_libs
 from delocate.tools import set_install_name as _set_install_name
 
 from os import path
+import glob
+
+def list_files(startpath):
+    import os
+    for root, dirs, files in os.walk(startpath):
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print('{}{}/'.format(indent, os.path.basename(root)))
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            print('{}{}'.format(subindent, f))
 
 def get_build_dependencies(build_path: str) -> list:
     """Finds the dependecies of all library files under build_path (recursive).
@@ -33,6 +44,25 @@ def get_build_dependencies(build_path: str) -> list:
             elem[1] = [elem[1]]
     
     return our_build_deps
+
+def find_all_libs(build_path: str) -> dict:
+    """ Finds all .dylib files in package
+    """
+    return { 
+        path.basename(lib) : lib for lib in 
+            glob.glob(
+                path.join(
+                    build_path,
+                    '**/*.dylib'
+                ),
+                recursive=True
+            )
+        }
+
+def find_libs(build_path: str, libs_folder: str = 'lib') -> dict:
+    """Find .dylib files in lib folder in package
+    """
+    return find_all_libs( path.join( build_path, libs_folder ) )
 
 
 def get_build_path(ext_fullname: str, build_lib: str) -> str:
@@ -113,9 +143,18 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
 
     """
 
+    # import code
+    # code.interact(local=dict(globals(), **locals()))
+
+    auto_detected_dependencies = find_libs(build_path)
+
+    # list_files(build_path)
+
+    # print(auto_detected_dependencies)
+
     if dependencies is None:
         dependencies = get_build_dependencies(build_path)
-        print(dependencies)
+        # print(dependencies)
 
     for dependency in dependencies:
         library_file_path = dependency[0]
@@ -124,10 +163,24 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
         rel_path = path.relpath(build_path, library_file_path) #Relative path to site-packages (essentially)
 
         for desired_file in desired_files:
-            path_to_desired_file = path_map.get(
-                path.basename(desired_file) if approximate else desired_file,
-                None
-            )
+            df_search_name = path.basename(desired_file) if approximate else desired_file
+
+            path_to_desired_file = path_map.get(df_search_name, None)
+            if path_to_desired_file is None:
+                abs_path_to_df = auto_detected_dependencies.get(df_search_name, None)
+
+                if abs_path_to_df is None:
+                    if supress_errors: continue
+                    raise KeyError('Path to `' + path_to_desired_file + '` not found')
+
+                path_to_desired_file = path.relpath(
+                    abs_path_to_df, 
+                    path.join(
+                        build_path,
+                        '..'
+                    )
+                )
+
 
             if path_to_desired_file is None:
                 if supress_errors: continue
