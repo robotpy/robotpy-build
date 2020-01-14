@@ -30,3 +30,6 @@ Usage
 -----
 
 TODO: This tool is still very much under development
+
+See [docs/wrapping.md](docs/wrapping.md) for details on writing your
+own wrapped project.
