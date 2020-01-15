@@ -97,9 +97,9 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
 {% endfor %}
 
-    {# virtual methods #}
+    {# virtual methods (disabled for buffer overrides for now) #}
     {% for fn in cls.methods.public + cls.methods.protected
-           if not fn.data.ignore and (fn.virtual or fn.override) and not fn.final %}
+           if not fn.data.ignore and (fn.virtual or fn.override) and not fn.final and not fn.data.buffers %}
 #ifndef RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
     {{ fn.rtnType }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_decl') }}){%
         if fn.const %} const{% endif
