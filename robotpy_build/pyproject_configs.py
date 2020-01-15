@@ -39,6 +39,14 @@ class MavenLibDownload(BaseModel):
     #: Compile time extensions map
     linkexts: Dict[str, str] = {}
 
+    #: When set, download sources instead of downloading libraries. When
+    #: using this, you need to manually add the sources to the configuration
+    #: to be compiled.
+    use_sources: bool = False
+
+    #: If use_sources is set, this is the list of sources to compile
+    sources: Optional[List[str]] = None
+
 
 class WrapperConfig(BaseModel):
     """
@@ -50,7 +58,7 @@ class WrapperConfig(BaseModel):
     class Config:
         extra = "forbid"
 
-    #: Name that other projects can use in their dependency list
+    #: Name that other projects can use in their dependency list.
     name: str
 
     #: Name of extension to build. If None, set to _{name}

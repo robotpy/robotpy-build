@@ -62,6 +62,10 @@ class Setup:
         return self.project.base_package
 
     @property
+    def base_package_path(self):
+        return join(self.root, *self.base_package.split("."))
+
+    @property
     def git_dir(self):
         return join(self.root, ".git")
 
@@ -79,9 +83,10 @@ class Setup:
         self._generate_long_description()
 
         # get_version expects the directory to exist
-        os.makedirs(self.base_package, exist_ok=True)
+        base_package_path = self.base_package_path
+        os.makedirs(base_package_path, exist_ok=True)
         self.setup_kwargs["version"] = get_version(
-            write_to=join(self.base_package, "version.py"), fallback_version="master"
+            write_to=join(base_package_path, "version.py"), fallback_version="master"
         )
 
         self.pkgcfg = PkgCfgProvider()

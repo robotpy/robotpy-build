@@ -79,7 +79,7 @@ class Wrapper:
         # Used by pkgcfg
         self.depends = self.cfg.depends
 
-        # Used by build_py
+        # Files that are generated AND need to be in the final wheel. Used by build_py
         self.generated_files = []
 
         self._all_deps = None
@@ -151,7 +151,9 @@ class Wrapper:
     def get_library_names(self) -> Optional[List[str]]:
         mcfg = self.cfg.maven_lib_download
         if mcfg:
-            if mcfg.libs is None:
+            if mcfg.use_sources:
+                return []
+            elif mcfg.libs is None:
                 return [mcfg.artifact_id]
             else:
                 return mcfg.libs
@@ -212,9 +214,10 @@ class Wrapper:
             casters[k] = v
         return casters
 
-    def on_build_dl(self, cache):
+    def on_build_dl(self, cache: str, srcdir: str):
 
         pkgcfgpy = join(self.root, "pkgcfg.py")
+        srcdir = join(srcdir, self.name)
 
         try:
             os.unlink(self.libinit_import_py)
@@ -226,16 +229,17 @@ class Wrapper:
         except OSError:
             pass
 
+        libnames_full = []
         dlcfg = self.cfg.maven_lib_download
         if dlcfg:
-            libnames_full = self._clean_and_download(dlcfg, cache)
-        else:
-            libnames_full = []
+            libnames_full = self._clean_and_download(dlcfg, cache, srcdir)
 
         self._write_libinit_py(libnames_full)
         self._write_pkgcfg_py(pkgcfgpy)
 
-    def _clean_and_download(self, dlcfg: MavenLibDownload, cache: str) -> List[str]:
+    def _clean_and_download(
+        self, dlcfg: MavenLibDownload, cache: str, srcdir: str
+    ) -> List[str]:
 
         libdir = join(self.root, "lib")
         incdir = join(self.root, "include")
@@ -243,9 +247,19 @@ class Wrapper:
         # Remove downloaded/generated artifacts first
         shutil.rmtree(libdir, ignore_errors=True)
         shutil.rmtree(incdir, ignore_errors=True)
+        shutil.rmtree(srcdir, ignore_errors=True)
 
         # grab headers
         self._extract_zip_to("headers", incdir, cache)
+
+        if dlcfg.use_sources:
+            self._extract_zip_to("source", srcdir, cache)
+            if dlcfg.sources:
+                sources = [join(srcdir, normpath(s)) for s in dlcfg.sources]
+                self.extension.sources.extend(sources)
+            return []
+        elif dlcfg.sources is not None:
+            raise ValueError("sources must be None if use_sources is False!")
 
         libnames = self.get_library_names()
         dlopen_libnames = self.get_dlopen_library_names()
