@@ -47,6 +47,9 @@ class MavenLibDownload(BaseModel):
     #: If use_sources is set, this is the list of sources to compile
     sources: Optional[List[str]] = None
 
+    #: Configure the sources classifier
+    sources_classifier: str = "sources"
+
 
 class WrapperConfig(BaseModel):
     """

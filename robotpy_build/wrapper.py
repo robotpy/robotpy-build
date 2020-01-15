@@ -253,7 +253,7 @@ class Wrapper:
         self._extract_zip_to("headers", incdir, cache)
 
         if dlcfg.use_sources:
-            self._extract_zip_to("source", srcdir, cache)
+            self._extract_zip_to(dlcfg.sources_classifier, srcdir, cache)
             if dlcfg.sources:
                 sources = [join(srcdir, normpath(s)) for s in dlcfg.sources]
                 self.extension.sources.extend(sources)
