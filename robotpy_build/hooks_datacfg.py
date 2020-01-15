@@ -158,6 +158,9 @@ class ClassData(Model):
     ignore: bool = False
     ignored_bases: List[str] = []
 
+    # Specify fully qualified names for the bases
+    base_qualnames: Dict[str, str] = {}
+
     attributes: Dict[str, PropData] = {}
     enums: Dict[str, EnumData] = {}
     methods: Dict[str, FunctionData] = {}

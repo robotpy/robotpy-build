@@ -467,7 +467,10 @@ class Hooks:
 
         # update inheritance
         for base in cls["inherits"]:
-            if "::" not in base["class"]:
+            bqual = class_data.base_qualnames.get(base["class"])
+            if bqual:
+                base["x_qualname"] = bqual
+            elif "::" not in base["class"]:
                 base["x_qualname"] = f'{cls["namespace"]}::{base["class"]}'
             else:
                 base["x_qualname"] = base["class"]
