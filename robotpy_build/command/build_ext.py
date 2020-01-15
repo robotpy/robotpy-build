@@ -77,7 +77,7 @@ class BuildExt(build_ext):
         # Fix Libraries on macOS
         # Uses @loader_path, is compatible with macOS >= 10.4
         platform = get_platform()
-        if get_platform().os == 'osx':
+        if platform.os == 'osx':
             from ..relink_libs import redirect_links, get_build_path
             redirect_links(
                 get_build_path(
