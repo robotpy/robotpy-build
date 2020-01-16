@@ -176,6 +176,41 @@ class ImportCreator:
         )
 
 
+class LibraryRelinker:
+    @classmethod
+    def add_subparser(cls, parent_parser, subparsers):
+        parser = subparsers.add_parser(
+            "relink-libraries",
+            help="Relink libraries to new paths",
+            parents=[parent_parser],
+        )
+        parser.add_argument("libraries", help="Folder with libraries - Ex: ./libs")
+        parser.add_argument("dependents", help="Folder with dependents - Ex: ../../venv/libs/site-packages")
+        return parser
+
+    def run(self, args):
+        #Essentially a macos check
+        try:
+            import delocate
+        except:
+            print("relink-libraries is only designed to work on macOS.")
+            print("If you are on macOS, then:")
+            print("Error, The following module is required to run this tool: delocate")
+            exit(1)
+
+        from . import relink_libs
+        from os.path import abspath
+
+        dependencies = relink_libs.get_build_dependencies(args.dependents)
+        libs = relink_libs.find_all_libs(args.libraries)
+        for key in libs:
+            libs[key] = '@' + abspath(libs[key]) + '@'
+
+        print('Format | dependent : old path to lib -> new path to lib')
+        # We are only using abs paths so build_path doesn't matter
+        relink_libs.redirect_links('.', libs, dependencies, auto_detect=False, supress_errors=True)
+
+
 def main():
 
     parser = argparse.ArgumentParser(prog="robotpy-build")
@@ -183,7 +218,7 @@ def main():
     subparsers = parser.add_subparsers(dest="cmd")
     subparsers.required = True
 
-    for cls in (BuildDep, GenCreator, HeaderScanner, ImportCreator):
+    for cls in (BuildDep, GenCreator, HeaderScanner, ImportCreator, LibraryRelinker):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
 
     args = parser.parse_args()
