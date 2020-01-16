@@ -107,7 +107,7 @@ def set_install_name(file: str, old_install_name: str, new_install_name: str):
 
 
 
-def redirect_links(build_path: str, path_map: dict, dependencies: list = None, approximate: bool = True, supress_errors = False):
+def redirect_links(build_path: str, path_map: dict, dependencies: list = None, approximate: bool = True, auto_detect: bool = True, supress_errors = False):
     """Redirects links to libraries
 
     :param build_path: Build Path (into package) -> Ex. '.../build/wpiutil'
@@ -135,6 +135,12 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
 
     :type approximate: bool, optional
 
+    :param auto_detect:
+        If True, attempt to automatic find library files.
+        Defaults to True
+    
+    :type auto_detect: bool, optional
+
     :param suppress_errors:
         Optional, Defaults to False
     :type suppress_errors: bool
@@ -143,7 +149,7 @@ def redirect_links(build_path: str, path_map: dict, dependencies: list = None, a
 
     """
 
-    auto_detected_dependencies = find_all_libs(build_path)
+    auto_detected_dependencies = find_all_libs(build_path) if auto_detect else {}
     print(auto_detected_dependencies)
 
     if dependencies is None:
