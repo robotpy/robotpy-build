@@ -10,7 +10,7 @@ For now, look at https://github.com/robotpy/pyntcore as an example.
 Modify pyproject.toml
 ---------------------
 
-### Existing
+### Prerequisite
 
 Libraries downloaded when building are defined by `libs`.
 ```toml
@@ -46,7 +46,7 @@ Absolute paths can also be sepcified. Absolute paths must be bookended by an
 `@`. For example, `"@/Users/FakeUser/Desktop/libfake.dylib@"` resolves as is
 to `"/Users/FakeUser/Desktop/libfake.dylib/"`.
 
-Note: Do not treat a relative path as an absolute path. In most cases, this
+Note: Do not treat a relative path as an absolute path. In most cases, it
 will fail.
 
 Automatic Library Detection
@@ -58,10 +58,11 @@ an internal library is defined, it will override the automatically found path.
 
 Building in Developer Mode
 --------------------------
+### Path Resolution
 
 When building in developer mode (`python setup.py develop` or `pip install -e`),
 automatic library detection will fail. Paths to all libraries need to be defined.
-Furthmore, resolution of relative paths may also fail. For guaranteed path
+Furthermore, resolution of relative paths may also fail. For guaranteed path
 resolution, use absolute paths when building in developer mode.
 
 Note: All packages depending on a library provided by your package will also
