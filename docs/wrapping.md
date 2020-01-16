@@ -59,6 +59,40 @@ Customizing the wrapper generation
 
 The wrapper YAML file schema is defined in [hooks_datacfg.py](../robotpy-build/hooks_datacfg.py).
 
+### Common errors
+
+> error: invalid use of incomplete type
+
+pybind11 requires you to use complete types when binding an object. Typically
+this means that somewhere in the header there was a forward declaration:
+
+    class Foo;
+
+Foo is defined in some header, but not the header you're scanning. To fix it,
+tell the generator to include the header:
+
+    extra_includes:
+    - path/to/Foo.h
+
+> 'error: 'SomeEnum' has not been declared'
+
+Often this is referring to a parameter type or a default argument. You can use
+the 'param_override' setting for that function to fix it.
+
+
+> unresolved external symbol PyInit__XXX
+
+You forgot to include the pybind11 entrypoint in your sources. Here's how you
+do it:
+
+    #include <rpygen_wrapper.hpp>
+
+    RPYBUILD_PYBIND11_MODULE(m) {
+        initWrapper(m);
+    }
+
+You can of course put other content in here if needed.
+
 Building
 --------
 
