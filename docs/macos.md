@@ -68,3 +68,28 @@ resolution, use absolute paths when building in developer mode.
 Note: All packages depending on a library provided by your package will also
 need their paths updated.
 
+### Relink Tool
+
+If your package is built in developer mode, then other package may fail to find/link to your package's libraries. You will need to relink the libraries of dependent packages.
+
+To relink the libraries of dependent packages, rather than rebuild those packages, you can use the relink-libraries tool.
+
+```bash
+python -m robotpy_build relink-libraries "libraries" "dependents"
+```
+
+`"libraries"` is the path to the folder containing `*.dylib` files.
+
+`"dependents"` is the path to the folder containing files that need to be fixed (have their dependecies relinked).
+
+For example,
+```bash
+python -m robotpy_build relink-libraries ./robotpy-wpiutil ./pyntcore
+```
+1. finds all libraries (`*.dylib`) in `./robotpy-wpiutil`
+2. finds all dependencies for all (`*.so` and `*.dylib`) files in `./pyntcore`
+3. Relinks dependencies to libraries
+
+Note: This tool finds libraries and dependencies recursively. You do not need to specify very-specific paths (the above example does not either). However, the shallower the path, the longer the runtime.
+
+Subnote: If your library/dependency path contain multiple venvs, undesired libraries may be relinked.
