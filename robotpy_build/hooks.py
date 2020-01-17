@@ -498,7 +498,7 @@ class Hooks:
 
         self.class_hierarchy[cls_qualname] = [
             base["x_qualname"] for base in cls["x_inherits"]
-        ]
+        ] + class_data.force_depends
 
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic

@@ -168,6 +168,10 @@ class ClassData(Model):
     is_polymorphic: bool = False
     force_no_trampoline: bool = False
 
+    #: If there are circular dependencies, this will help you resolve them
+    #: manually. TODO: make it so we don't need this
+    force_depends: List[str] = []
+
     #: If the object shouldn't be deleted by pybind11, use this. Disables
     #: implicit constructors.
     nodelete: bool = False
