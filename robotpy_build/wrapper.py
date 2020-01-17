@@ -49,6 +49,7 @@ class Wrapper:
         self.cfg = cfg
 
         self.setup_root = setup.root
+        self.pypi_package = setup.pypi_package
         self.root = join(setup.root, *package_name.split("."))
 
         # must match PkgCfg.name
@@ -148,6 +149,11 @@ class Wrapper:
             return [join(self.root, "lib")]
         return []
 
+    def get_library_dirs_rel(self) -> Optional[List[str]]:
+        if self.get_library_names():
+            return ["lib"]
+        return []
+
     def get_library_names(self) -> Optional[List[str]]:
         mcfg = self.cfg.maven_lib_download
         if mcfg:
@@ -159,6 +165,28 @@ class Wrapper:
                 return mcfg.libs
         else:
             return []
+
+    def get_library_full_names(self) -> Optional[List[str]]:
+        dlcfg = self.cfg.maven_lib_download
+        if not dlcfg:
+            return []
+
+        libnames = self.get_library_names()
+        dlopen_libnames = self.get_dlopen_library_names()
+
+        libnames = [lib for lib in libnames if lib not in dlopen_libnames]
+        libnames_full = []
+
+        if libnames or dlopen_libnames:
+            libext = dlcfg.libexts.get(self.platform.libext, self.platform.libext)
+
+            libnames_full = [
+                f"{self.platform.libprefix}{lib}{libext}" for lib in libnames
+            ]
+            libnames_full += [
+                f"{self.platform.libprefix}{lib}{libext}" for lib in dlopen_libnames
+            ]
+        return libnames_full
 
     def get_dlopen_library_names(self) -> Optional[List[str]]:
         mcfg = self.cfg.maven_lib_download
@@ -235,7 +263,7 @@ class Wrapper:
             libnames_full = self._clean_and_download(dlcfg, cache, srcdir)
 
         self._write_libinit_py(libnames_full)
-        self._write_pkgcfg_py(pkgcfgpy)
+        self._write_pkgcfg_py(pkgcfgpy, libnames_full)
 
     def _clean_and_download(
         self, dlcfg: MavenLibDownload, cache: str, srcdir: str
@@ -265,18 +293,11 @@ class Wrapper:
         dlopen_libnames = self.get_dlopen_library_names()
 
         libnames = [lib for lib in libnames if lib not in dlopen_libnames]
-        libnames_full = []
+        libnames_full = self.get_library_full_names()
 
-        if libnames or dlopen_libnames:
+        if libnames_full:
             libext = dlcfg.libexts.get(self.platform.libext, self.platform.libext)
             linkext = dlcfg.linkexts.get(self.platform.linkext, self.platform.linkext)
-
-            libnames_full = [
-                f"{self.platform.libprefix}{lib}{libext}" for lib in libnames
-            ]
-            libnames_full += [
-                f"{self.platform.libprefix}{lib}{libext}" for lib in dlopen_libnames
-            ]
 
             extract_names = libnames_full[:]
 
@@ -347,12 +368,14 @@ class Wrapper:
 
         self._add_generated_file(self.libinit_import_py)
 
-    def _write_pkgcfg_py(self, fname):
+    def _write_pkgcfg_py(self, fname, libnames_full):
 
         library_dirs = "[]"
+        library_dirs_rel = []
         library_names = self.get_library_names()
         if library_names:
             library_dirs = '[join(_root, "lib")]'
+            library_dirs_rel = ["lib"]
 
         # write pkgcfg.py
         pkgcfg = inspect.cleandoc(
@@ -365,15 +388,22 @@ class Wrapper:
 
         libinit_import = "{self.libinit_import}"
         depends = {repr(self.cfg.depends)}
+        pypi_package = {repr(self.pypi_package)}
 
         def get_include_dirs():
             return [join(_root, "include"), join(_root, "rpy-include")##EXTRAINCLUDES##]
 
         def get_library_dirs():
             return {library_dirs}
+
+        def get_library_dirs_rel():
+            return {repr(library_dirs_rel)}
         
         def get_library_names():
             return {repr(library_names)}
+
+        def get_library_full_names():
+            return {repr(libnames_full)}
         """
         )
 

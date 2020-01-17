@@ -69,6 +69,10 @@ class Setup:
     def git_dir(self):
         return join(self.root, ".git")
 
+    @property
+    def pypi_package(self) -> str:
+        return self.setup_kwargs["name"]
+
     def prepare(self):
 
         self.setup_kwargs = self.project_dict.get("metadata", {})

@@ -15,6 +15,8 @@ class PkgCfg:
         # could deduce this, but this is probably fine
         self.libinit_import = getattr(self.module, "libinit_import", None)
         self.depends = getattr(self.module, "depends", [])
+        self.pypi_package = getattr(self.module, "pypi_package", None)
+        self.package_name = getattr(self.module, "package_name", None)
 
     def get_include_dirs(self) -> Optional[List[str]]:
         """
@@ -32,11 +34,27 @@ class PkgCfg:
         if fn:
             return fn()
 
+    def get_library_dirs_rel(self) -> Optional[List[str]]:
+        """
+            Directories where libraries reside, relative to package
+        """
+        fn = getattr(self.module, "get_library_dirs_rel", None)
+        if fn:
+            return fn()
+
     def get_library_names(self) -> Optional[List[str]]:
         """
-            Names of libraries provided
+            Names of libraries provided (for linking)
         """
         fn = getattr(self.module, "get_library_names", None)
+        if fn:
+            return fn()
+
+    def get_library_full_names(self) -> Optional[List[str]]:
+        """
+            Full names of libraries provided (needed for OSX support)
+        """
+        fn = getattr(self.module, "get_library_full_names", None)
         if fn:
             return fn()
 
