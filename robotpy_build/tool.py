@@ -19,7 +19,7 @@ class BuildDep:
     @classmethod
     def add_subparser(cls, parent_parser, subparsers):
         parser = subparsers.add_parser(
-            "build-dep", help="Install build dependencies", parents=[parent_parser],
+            "build-dep", help="Install build dependencies", parents=[parent_parser]
         )
         parser.add_argument("--install", help="Actually do it", action="store_true")
         return parser
@@ -185,11 +185,17 @@ class LibraryRelinker:
             parents=[parent_parser],
         )
         parser.add_argument("libraries", help="Folder with libraries - Ex: ./libs")
-        parser.add_argument("dependents", help="Folder with dependents - Ex: ../../venv/libs/site-packages")
+        parser.add_argument(
+            "dependents",
+            help="Folder with dependents - Ex: ../../venv/libs/site-packages",
+        )
         return parser
 
     def run(self, args):
-        #Essentially a macos check
+        raise NotImplementedError(
+            "tool needs to be fixed -- just reinstall the offending package instead"
+        )
+        # Essentially a macos check
         try:
             import delocate
         except:
@@ -204,11 +210,13 @@ class LibraryRelinker:
         dependencies = relink_libs.get_build_dependencies(args.dependents)
         libs = relink_libs.find_all_libs(args.libraries)
         for key in libs:
-            libs[key] = '@' + abspath(libs[key]) + '@'
+            libs[key] = "@" + abspath(libs[key]) + "@"
 
-        print('Format | dependent : old path to lib -> new path to lib')
+        print("Format | dependent : old path to lib -> new path to lib")
         # We are only using abs paths so build_path doesn't matter
-        relink_libs.redirect_links('.', libs, dependencies, auto_detect=False, supress_errors=True)
+        relink_libs.redirect_links(
+            ".", libs, dependencies, auto_detect=False, supress_errors=True
+        )
 
 
 def main():

@@ -103,6 +103,9 @@ class Wrapper:
                 language="c++",
             )
 
+            # Add self to extension so that build_ext can query it on OSX
+            self.extension.rpybuild_wrapper = self
+
         if self.cfg.generate and not self.cfg.generation_data:
             raise ValueError(
                 "generation_data must be specified when generate is specified"
@@ -501,7 +504,7 @@ class Wrapper:
         else:
             only_generate = None
 
-        generation_search_path = [self.root,] + self._all_includes(False)
+        generation_search_path = [self.root] + self._all_includes(False)
 
         for gen in self.cfg.generate:
             for name, header in gen.items():

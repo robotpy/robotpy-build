@@ -1,6 +1,9 @@
 from distutils.core import Command
 import os.path
 
+from ..platforms import get_platform
+from .util import get_install_root
+
 
 class BuildDl(Command):
 
@@ -28,3 +31,14 @@ class BuildDl(Command):
     def run(self):
         for wrapper in self.wrappers:
             wrapper.on_build_dl(self.build_cache, self.src_unpack_to)
+
+        # On OSX, fix library loader paths for embedded libraries
+        # -> this happens here so that the libs are modified before build_py
+        #    copies them. Extensions are fixed after build
+        platform = get_platform()
+        if platform.os == "osx":
+            from ..relink_libs import relink_libs
+
+            install_root = get_install_root(self)
+            for wrapper in self.wrappers:
+                relink_libs(install_root, wrapper, self.rpybuild_pkgcfg)

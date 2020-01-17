@@ -22,6 +22,7 @@ from .command.build_py import BuildPy
 from .command.build_dl import BuildDl
 from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
+from .command.develop import Develop
 
 from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
@@ -98,12 +99,13 @@ class Setup:
             "build_dl": BuildDl,
             "build_gen": BuildGen,
             "build_ext": BuildExt,
+            "develop": Develop,
         }
         if bdist_wheel:
             self.setup_kwargs["cmdclass"]["bdist_wheel"] = bdist_wheel
         for cls in self.setup_kwargs["cmdclass"].values():
             cls.wrappers = self.wrappers
-            cls.macos_lib_locations = self.project_dict.get("macos_lib_locations", {})
+            cls.rpybuild_pkgcfg = self.pkgcfg
 
         # We already know some of our packages, so collect those in addition
         # to using find_packages()

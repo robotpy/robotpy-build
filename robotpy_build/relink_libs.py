@@ -1,90 +1,41 @@
+"""
+    On OSX, the loader does not look at the current process to load
+    dylibs -- it insists on finding them itself, so we have to fixup
+    our binaries such that they resolve correctly.
+    
+    Two cases we need to deal with
+    - Local development/installation
+    - Building a wheel for pypi
+    
+    In development, we assume things are installed exactly where they will be
+    at runtime.
+      -> @loader_path/{relpath(final_location, dep_path)}
+    
+    For pypi wheels, we assume that installation is in site-packages, and
+    so are the libraries that this lib depends on.
+      -> @loader_path/{relpath(final_siterel, dep_siterel)}
+    
+    Notice these are the same IF you only build wheels in a virtualenv
+    that only has its dependencies installed in site-packages
+    
+
+    .. warning:: This will only work for the environment it's compiled in!
+                 This basically means don't compile wheels in your development 
+                 environment, use a clean environment instead
+
+"""
+
+
 from delocate.delocating import filter_system_libs
-from delocate.libsana import tree_libs
-from delocate.tools import set_install_name as _set_install_name
+from delocate.tools import get_install_names, set_install_name as _set_install_name
 
 from os import path
 import glob
 
-def list_files(startpath):
-    import os
-    for root, dirs, files in os.walk(startpath):
-        level = root.replace(startpath, '').count(os.sep)
-        indent = ' ' * 4 * (level)
-        print('{}{}/'.format(indent, os.path.basename(root)))
-        subindent = ' ' * 4 * (level + 1)
-        for f in files:
-            print('{}{}'.format(subindent, f))
+from typing import Dict, List, Tuple
 
-def get_build_dependencies(build_path: str) -> list:
-    """Finds the dependecies of all library files under build_path (recursive).
+from .pkgcfg_provider import PkgCfg, PkgCfgProvider
 
-    :param build_path: Path to the package in the build directory (".../build/package/")
-    :type build_path: str
-
-    :return: dependencies in the form: [ ('file' : [files it wants]) ]
-    :rtype: list
-    """
-
-    # import code
-    # code.interact(local=dict(globals(), **locals()))
-
-    #Build Tree of all dependencies
-    build_deps = tree_libs(build_path)
-
-    #Discard System Dependencies
-    our_build_deps = []
-    for key in build_deps:
-        if filter_system_libs(key):
-            for k, v in build_deps[key].items():
-                our_build_deps.append( [k,v] )
-
-    #Make sure 'files it wants' is a list
-    for elem in our_build_deps:
-        if isinstance( elem[1], str ):
-            elem[1] = [elem[1]]
-    
-    return our_build_deps
-
-def find_all_libs(build_path: str) -> dict:
-    """ Finds all .dylib files in package
-    """
-    return { 
-        path.basename(lib) : lib for lib in 
-            glob.glob(
-                path.join(
-                    build_path,
-                    '**/*.dylib'
-                ),
-                recursive=True
-            )
-        }
-
-def find_libs(build_path: str, libs_folder: str = 'lib') -> dict:
-    """Find .dylib files in lib folder in package
-    """
-    return find_all_libs( path.join( build_path, libs_folder ) )
-
-
-def get_build_path(ext_fullname: str, build_lib: str) -> str:
-    """Finds the path to the build directory
-
-    :param ext_fullname: Ex. 'wpiutil._wpiutil'
-    :type ext_fullname: str
-
-    :param build_lib: Ex. '.../build'
-    :type build_lib: str
-
-    :return: Build Path -> Ex. '.../build/wpiutil'
-    :rtype: str
-    """
-    # Ex. ext_fullname = 'wpiutil._wpiutil
-    # Ex. build_lib = '.../build'
-
-    modpath = ext_fullname.split('.')
-    package = '.'.join(modpath[:-1])
-    build_path = path.join(build_lib, package) # Ex. ".../build/wpiutil"
-
-    return build_path 
 
 def set_install_name(file: str, old_install_name: str, new_install_name: str):
     """Change the install name for a library
@@ -103,110 +54,113 @@ def set_install_name(file: str, old_install_name: str, new_install_name: str):
     # This function exists in case we want to change the implementation.
 
     _set_install_name(file, old_install_name, new_install_name)
-    print(file, ':', old_install_name, '->', new_install_name)
+    print("Relink:", file, ":", old_install_name, "->", new_install_name)
 
 
+# Common data structure used here
+# - key is basename of library file
+# - Value tuple has two pieces:
+#   - 0: Where the library file really is right now
+#   - 1: Where the library file will be when installed
+LibsDict = Dict[str, Tuple[str, str]]
 
-def redirect_links(build_path: str, path_map: dict, dependencies: list = None, approximate: bool = True, auto_detect: bool = True, supress_errors = False):
-    """Redirects links to libraries
 
-    :param build_path: Build Path (into package) -> Ex. '.../build/wpiutil'
-    :type build_path: str
+def _resolve_libs(libpaths: List[str], libname_full: str, libs: LibsDict):
+    for libpath in libpaths:
+        p = path.join(libpath, libname_full)
+        if path.exists(p):
+            libs[libname_full] = (p, p)
+            return
 
-    :param path_map:
-        A mapping of library names to library paths (relative paths)
-        If a path is bookended by '@', then it is treated as an absolute path.
-        Ex. 'lib/libwpiutil.dylib' -> '.../wpilib/../wpilib/lib/libwpiutil.dylib'
-        Ex. '@lib/libwpiutil.dylib@' -> 'lib/libwpiutil.dylib'
-    :type path_map: dict
 
-    :param dependencies:
-        dependencies in the form: [ ('file' : [files it wants]) ],
-        If None, it will generate them from build_path,
-        Defaults to None
-    :type dependencies: list, optional
+def _resolve_libs_in_self(dep: PkgCfg, install_root: str, libs: LibsDict):
+    pkgroot = path.join(install_root, *dep.package_name.split("."))
+    for libname_full in dep.get_library_full_names():
+        for ld, ldr in zip(dep.get_library_dirs(), dep.get_library_dirs_rel()):
+            p = path.join(ld, libname_full)
+            if path.exists(p):
+                # stores where it will exist
+                libs[libname_full] = (p, path.join(pkgroot, ldr, libname_full))
+                break
 
-    :param approximate:
-        If True, it will match the basename (Ex. 'libwpiutil.dylib') of library
-        paths instead of full library paths. This allows for this function to
-        be called multiple times on the same library (aslong as the basename
-        doesn't change).
-        Defaults to True
 
-    :type approximate: bool, optional
+def _resolve_dependencies(
+    install_root: str, pkg: PkgCfg, pkgcfg: PkgCfgProvider, libs: LibsDict
+):
+    # first, gather all possible libraries by retrieving this package and
+    # it's dependents. We're not concerned about redirecting non-robotpy-build
+    # libraries, since we can't control where those are located
+    deps = pkgcfg.get_all_deps(pkg.name)
 
-    :param auto_detect:
-        If True, attempt to automatic find library files.
-        Defaults to True
-    
-    :type auto_detect: bool, optional
+    pypi_package = pkg.pypi_package
 
-    :param suppress_errors:
-        Optional, Defaults to False
-    :type suppress_errors: bool
+    for dep in deps:
+        # dependencies are in their installed location
+        # .. except when they're in the same wheel
+        if pypi_package and dep.pypi_package == pypi_package:
+            _resolve_libs_in_self(dep, install_root, libs)
+        else:
+            libdirs = dep.get_library_dirs()
+            for libname_full in dep.get_library_full_names():
+                _resolve_libs(libdirs, libname_full, libs)
 
-    :raises: not if you're good
 
+def _fix_libs(to_fix: LibsDict, libs: LibsDict):
+
+    for (current_libpath, install_libpath) in to_fix.values():
+        for lib in get_install_names(current_libpath):
+            libb = path.basename(lib)
+            libdata = libs.get(libb)
+            if libdata:
+                desired_path = path.relpath(libdata[1], path.dirname(install_libpath))
+                desired_path = "@loader_path/" + desired_path
+                set_install_name(current_libpath, lib, desired_path)
+            elif filter_system_libs(lib):
+                raise ValueError(
+                    "unresolved lib %s: maybe a dependency is missing?" % lib
+                )
+
+
+def relink_libs(install_root: str, pkg: PkgCfg, pkgcfg: PkgCfgProvider):
     """
+        Given a package, relink it's external libraries
 
-    auto_detected_dependencies = find_all_libs(build_path) if auto_detect else {}
-    print(auto_detected_dependencies)
-
-    if dependencies is None:
-        dependencies = get_build_dependencies(build_path)
-        print(dependencies)
-
-    for dependency in dependencies:
-        library_file_path = dependency[0]
-        desired_files = dependency[1]
-        
-        rel_path = path.relpath(build_path, library_file_path) #Relative path to site-packages (essentially)
-
-        for desired_file in desired_files:
-            df_search_name = path.basename(desired_file) if approximate else desired_file
-
-            path_to_desired_file = path_map.get(df_search_name, None)
-            if path_to_desired_file is None:
-                abs_path_to_df = auto_detected_dependencies.get(
-                    path.basename(df_search_name),
-                    None
-                )
-
-                if abs_path_to_df is None:
-                    if supress_errors: continue
-                    raise KeyError('Path to `' + desired_file + '` not found')
-
-                path_to_desired_file = path.relpath(
-                    abs_path_to_df, 
-                    path.join(
-                        build_path,
-                        '..'
-                    )
-                )
+        :param install_root: Where this package will be (is) installed
+        :param pkg: Object that implements pkgcfg for this wrapper
+        :param pkgcfg: robotpy-build pkgcfg resolver
+    """
+    libs = {}
+    _resolve_dependencies(install_root, pkg, pkgcfg, libs)
+    to_fix = {}
+    _resolve_libs_in_self(pkg, install_root, to_fix)
+    libs.update(to_fix)
+    _fix_libs(to_fix, libs)
 
 
-            if path_to_desired_file is None:
-                if supress_errors: continue
-                raise KeyError('Path to `' + desired_file + '` not found')
+def relink_extension(
+    install_root: str,
+    extension_path: str,
+    extension_rel: str,
+    pkg: PkgCfg,
+    pkgcfg: PkgCfgProvider,
+):
+    """
+        Given an extension, relink it
 
-            if len(path_to_desired_file) == 0:
-                if supress_errors: continue
-                raise ValueError('Invalid Path of 0 length')
+        :param install_root: Where this package will be (is) installed
+        :param extension_path: full path to extension library
+        :param extension_rel: Relative path to library where it will be (is) installed
+        :param pkg: Object that implements pkgcfg for this wrapper
+        :param pkgcfg: robotpy-build pkgcfg resolver
+    """
+    libs = {}
+    _resolve_dependencies(install_root, pkg, pkgcfg, libs)
+    _resolve_libs_in_self(pkg, install_root, libs)
 
-            # Treat as absolute path if bookended by '@'
-            if path_to_desired_file[0] == '@' and path_to_desired_file[-1] == '@':
-                if len(path_to_desired_file) < 3:
-                    if supress_errors: continue
-                    raise ValueError('Invalid Absolute Path of 0 length')
-                path_to_desired_file = path_to_desired_file[ 1: -1]
-                set_install_name(
-                    library_file_path,
-                    desired_file,
-                    path_to_desired_file
-                )
-            else:
-                set_install_name(
-                    library_file_path,
-                    desired_file,
-                    path.join('@loader_path', rel_path, path_to_desired_file)
-                )
+    to_fix = {
+        path.basename(extension_path): (
+            extension_path,
+            path.join(install_root, extension_rel),
+        )
+    }
+    _fix_libs(to_fix, libs)

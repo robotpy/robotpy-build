@@ -1,10 +1,11 @@
 import os
-from os.path import join
+from os.path import dirname, join
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import setuptools
 import tempfile
 
+from .util import get_install_root
 from ..platforms import get_platform
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
@@ -73,19 +74,24 @@ class BuildExt(build_ext):
         # self._gather_global_includes()
 
         build_ext.build_extensions(self)
-        
+
         # Fix Libraries on macOS
         # Uses @loader_path, is compatible with macOS >= 10.4
         platform = get_platform()
-        if platform.os == 'osx':
-            from ..relink_libs import redirect_links, get_build_path
-            redirect_links(
-                get_build_path(
-                    self.extensions[0].name,
-                    self.build_lib
-                ),
-                self.macos_lib_locations
-            )
+        if platform.os == "osx":
+
+            from ..relink_libs import relink_extension
+
+            install_root = get_install_root(self)
+
+            for ext in self.extensions:
+                relink_extension(
+                    install_root,
+                    self.get_ext_fullpath(ext.name),
+                    self.get_ext_filename(ext.name),
+                    ext.rpybuild_wrapper,
+                    self.rpybuild_pkgcfg,
+                )
 
     def run(self):
 
