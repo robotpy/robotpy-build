@@ -76,10 +76,6 @@ class Setup:
         self.setup_kwargs["include_package_data"] = True
         self.setup_kwargs["python_requires"] = ">=3.6"
 
-        # TODO: autogen packages don't exist at sdist time
-        #       ... but we want them to be added to the wheel
-        self.setup_kwargs["packages"] = find_packages()
-
         self._generate_long_description()
 
         # get_version expects the directory to exist
@@ -103,6 +99,12 @@ class Setup:
             self.setup_kwargs["cmdclass"]["bdist_wheel"] = bdist_wheel
         for cls in self.setup_kwargs["cmdclass"].values():
             cls.wrappers = self.wrappers
+
+        # We already know some of our packages, so collect those in addition
+        # to using find_packages()
+        packages = {w.package_name for w in self.wrappers}
+        packages.update(find_packages())
+        self.setup_kwargs["packages"] = list(packages)
 
     def _generate_long_description(self):
         readme_rst = join(self.root, "README.rst")
