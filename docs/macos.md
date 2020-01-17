@@ -70,9 +70,12 @@ need their paths updated.
 
 ### Relink Tool
 
-If your package is built in developer mode, then other package may fail to find/link to your package's libraries. You will need to relink the libraries of dependent packages.
+If your package is built in developer mode, then other package may fail to
+find/link to your package's libraries. You will need to relink the libraries of
+dependent packages.
 
-To relink the libraries of dependent packages, rather than rebuild those packages, you can use the relink-libraries tool.
+To relink the libraries of dependent packages, rather than rebuild those
+packages, you can use the relink-libraries tool.
 
 ```bash
 python -m robotpy_build relink-libraries "libraries" "dependents"
@@ -80,7 +83,8 @@ python -m robotpy_build relink-libraries "libraries" "dependents"
 
 `"libraries"` is the path to the folder containing `*.dylib` files.
 
-`"dependents"` is the path to the folder containing files that need to be fixed (have their dependecies relinked).
+`"dependents"` is the path to the folder containing files that need to be fixed
+(have their dependecies relinked).
 
 For example,
 ```bash
@@ -90,6 +94,34 @@ python -m robotpy_build relink-libraries ./robotpy-wpiutil ./pyntcore
 2. finds all dependencies for all (`*.so` and `*.dylib`) files in `./pyntcore`
 3. Relinks dependencies to libraries
 
-Note: This tool finds libraries and dependencies recursively. You do not need to specify very-specific paths (the above example does not either). However, the shallower the path, the longer the runtime.
+Note: This tool finds libraries and dependencies recursively. You do not need
+to specify very-specific paths (the above example does not either). However,
+the shallower the path, the longer the runtime.
 
-Subnote: If your library/dependency path contain multiple venvs, undesired libraries may be relinked.
+Subnote: If your library/dependency path contain multiple venvs, undesired
+libraries may be relinked.
+
+### Easy Workflow
+
+Understandably, you may not want to spend time relinking sepcific libraries as
+you are working. This is a suggested workflow to minimize manual relinking
+efforts.
+
+Setup your workspace as (example):
+
+```
+workspace/
+├── venv/               <- Your virtualenv
+├── robotpy-build/
+├── robotpy-wpiutil/
+└── robotpy-pyntcore/   <- Ex. A package you are developing
+```
+
+Then, to relink libraries after a rebuild, run:
+```bash
+workspace/ $ python -m robotpy_build relink-libraries . .
+```
+
+This will fix all dependencies.
+
+Note: The runtime of this workflow is higher than specifying more specific paths.
