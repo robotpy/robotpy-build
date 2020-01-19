@@ -106,11 +106,11 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     %} override {
     {# TODO: probably will break for things like out parameters, etc #}
     {% if fn.pure_virtual -%}
-        PYBIND11_OVERLOAD_PURE_NAME
+        RPYBUILD_OVERLOAD_PURE_NAME({{ cls.name }},
     {%- else -%}
-        PYBIND11_OVERLOAD_NAME
+        PYBIND11_OVERLOAD_NAME(
     {%- endif -%}
-        ({{ fn.rtnType }}, CxxBase, "{{ fn.x_name }}", {{ fn.name }},{{ fn.parameters | join(', ', attribute='name') }});
+        {{ fn.rtnType }}, CxxBase, "{{ fn.x_name }}", {{ fn.name }},{{ fn.parameters | join(', ', attribute='name') }});
     }
 #endif
 
