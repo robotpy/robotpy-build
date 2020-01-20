@@ -362,7 +362,8 @@ class Hooks:
         # Temporary values to store out parameters in
         if x_temps:
             for out in reversed(x_temps):
-                x_lambda_pre.insert(0, "%(x_type)s %(name)s = 0" % out)
+                odef = out.get("default", "0")
+                x_lambda_pre.insert(0, f"{out['x_type']} {out['name']} = {odef}")
 
         # Rename functions
         if data.rename:
@@ -540,9 +541,7 @@ class Hooks:
                         continue
 
                     try:
-                        self._function_hook(
-                            fn, method_data, internal=internal,
-                        )
+                        self._function_hook(fn, method_data, internal=internal)
                     except Exception as e:
                         raise HookError(f"{cls_key}::{fn['name']}") from e
 
