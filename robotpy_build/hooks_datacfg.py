@@ -229,6 +229,8 @@ class HooksDataYaml(Model):
 
     strip_prefixes: List[str] = []
     extra_includes: List[str] = []
+    # sticks these includes first, for really broken headers
+    extra_includes_first: List[str] = []
     inline_code: Optional[str] = None
 
     attributes: Dict[str, PropData] = {}
