@@ -15,8 +15,10 @@ from os.path import (
     splitext,
 )
 import posixpath
+import subprocess
 import sys
 import shutil
+import tempfile
 import toposort
 from typing import Optional, List
 import yaml
@@ -302,22 +304,61 @@ class Wrapper:
             libext = dlcfg.libexts.get(self.platform.libext, self.platform.libext)
             linkext = dlcfg.linkexts.get(self.platform.linkext, self.platform.linkext)
 
-            extract_names = libnames_full[:]
+            os.makedirs(libdir)
 
-            if libext != linkext:
-                extract_names += [
-                    f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
+            if dlcfg.static_lib and self.platform.os == "linux":
+                extract_names = [
+                    f"{self.platform.libprefix}{lib}.a" for lib in libnames
                 ]
 
-            os.makedirs(libdir)
-            to = {
-                posixpath.join(
-                    self.platform.os, self.platform.arch, "shared", libname
-                ): join(libdir, libname)
-                for libname in extract_names
-            }
+                with tempfile.TemporaryDirectory() as d:
 
-            self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
+                    to = {
+                        posixpath.join(
+                            self.platform.os, self.platform.arch, "static", libname
+                        ): join(d, libname)
+                        for libname in extract_names
+                    }
+
+                    self._extract_zip_to(
+                        f"{self.platform.os}{self.platform.arch}static", to, cache
+                    )
+
+                    for lib in libnames:
+                        subprocess.run(
+                            ["ar", "-x", f"{self.platform.libprefix}{lib}.a"], cwd=d
+                        )
+
+                        args = [
+                            "g++",
+                            "-shared",
+                            "-o",
+                            join(
+                                libdir,
+                                f"{self.platform.libprefix}{lib}{self.platform.libext}",
+                            ),
+                        ] + glob.glob(join(d, "*.o"))
+
+                        subprocess.run(args, cwd=d)
+
+            else:
+
+                extract_names = libnames_full[:]
+                if libext != linkext:
+                    extract_names += [
+                        f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
+                    ]
+
+                to = {
+                    posixpath.join(
+                        self.platform.os, self.platform.arch, "shared", libname
+                    ): join(libdir, libname)
+                    for libname in extract_names
+                }
+
+                self._extract_zip_to(
+                    f"{self.platform.os}{self.platform.arch}", to, cache
+                )
 
         for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
             self._add_generated_file(f)

@@ -50,6 +50,10 @@ class MavenLibDownload(BaseModel):
     #: Configure the sources classifier
     sources_classifier: str = "sources"
 
+    #: When set, download a static library and convert it (Linux only)
+    # .. TODO: get rid of this
+    static_lib: bool = False
+
 
 class WrapperConfig(BaseModel):
     """
