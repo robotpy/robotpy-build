@@ -1,3 +1,4 @@
+from keyword import iskeyword
 import sphinxify
 import typing
 import yaml
@@ -106,6 +107,9 @@ class Hooks:
                 if name.startswith(pfx):
                     name = name[len(pfx) :]
                     break
+
+        if iskeyword(name):
+            return f"{name}_"
 
         return name
 
