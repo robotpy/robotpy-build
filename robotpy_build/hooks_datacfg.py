@@ -143,6 +143,11 @@ class PropData(Model):
     access: PropAccess = PropAccess.AUTOMATIC
 
 
+class EnumValue(Model):
+    ignore: bool = False
+    rename: Optional[str] = None
+
+
 class EnumData(Model):
     ignore: bool = False
     rename: Optional[str] = None
@@ -151,6 +156,8 @@ class EnumData(Model):
     #: If specified, put the enum in a sub.pack.age (ignored for
     #: enums that are part of classes)
     subpackage: Optional[str] = None
+
+    values: Dict[str, EnumValue] = {}
 
 
 class ClassData(Model):

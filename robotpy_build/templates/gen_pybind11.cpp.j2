@@ -172,7 +172,7 @@
 {%- macro genenum(scope, enum) %}
 {%- if 'name' in enum -%}
 py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}")
-  {% for val in enum['values'] %}
+  {% for val in enum['values'] if not val.data.ignore %}
     .value("{{ val.x_name }}", {{ enum.x_namespace }}{{ enum.name }}::{{ val.name }})
   {% endfor -%}
   ;

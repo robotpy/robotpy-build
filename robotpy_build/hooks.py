@@ -6,6 +6,7 @@ from .hooks_datacfg import (
     HooksDataYaml,
     BufferType,
     ClassData,
+    EnumValue,
     FunctionData,
     PropData,
     PropAccess,
@@ -93,13 +94,15 @@ class Hooks:
                 includes.add(header)
         return sorted(includes)
 
-    def _set_name(self, name, data):
+    def _set_name(self, name, data, strip_prefixes=None):
         if data.rename:
             return data.rename
 
-        sp = self.rawdata.strip_prefixes
-        if sp:
-            for pfx in sp:
+        if strip_prefixes is None:
+            strip_prefixes = self.rawdata.strip_prefixes
+
+        if strip_prefixes:
+            for pfx in strip_prefixes:
                 if name.startswith(pfx):
                     name = name[len(pfx) :]
                     break
@@ -144,13 +147,18 @@ class Hooks:
 
             en["x_name"] = self._set_name(ename, enum_data)
 
+        if value_prefix:
+            strip_prefixes = [value_prefix + "_", value_prefix]
+        else:
+            strip_prefixes = []
+
         for v in en["values"]:
             name = v["name"]
-            if value_prefix and name.startswith(value_prefix):
-                name = name[len(value_prefix) :]
-                if name[0] == "_":
-                    name = name[1:]
-            v["x_name"] = name
+            v_data = enum_data.values.get(name)
+            if v_data is None:
+                v_data = EnumValue()
+            v["x_name"] = self._set_name(name, v_data, strip_prefixes)
+            v["data"] = v_data
 
     def header_hook(self, header, data):
         """Called for each header"""
