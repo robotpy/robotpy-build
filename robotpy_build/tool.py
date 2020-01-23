@@ -7,11 +7,17 @@ import sys
 
 from .setup import Setup
 from .generator_data import MissingReporter
+from .command.util import get_build_temp_path
 
 
 def get_setup() -> Setup:
     s = Setup()
     s.prepare()
+
+    temp_path = join(get_build_temp_path(), "dlstatic")
+    for static_lib in s.static_libs:
+        static_lib.set_root(temp_path)
+
     return s
 
 

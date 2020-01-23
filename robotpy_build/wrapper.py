@@ -527,7 +527,9 @@ class Wrapper:
                     if exists(header_path):
                         break
                 else:
-                    print(generation_search_path)
+                    import pprint
+
+                    pprint.pprint(generation_search_path)
                     raise ValueError("could not find " + header)
 
                 if report_only:

@@ -25,6 +25,11 @@ class StaticLib:
         self.incdir = None
         self.libdir = None
 
+    def set_root(self, root):
+        self.root = root
+        self.libdir = join(self.root, self.name, "lib")
+        self.incdir = join(self.root, self.name, "include")
+
     def get_include_dirs(self) -> Optional[List[str]]:
         return [self.incdir]
 
@@ -67,10 +72,7 @@ class StaticLib:
 
         dlcfg = self.cfg.maven_lib_download
 
-        self.root = libdir
-
-        self.libdir = join(self.root, self.name, "lib")
-        self.incdir = join(self.root, self.name, "include")
+        self.set_root(libdir)
 
         shutil.rmtree(self.libdir, ignore_errors=True)
         shutil.rmtree(self.incdir, ignore_errors=True)
@@ -91,4 +93,3 @@ class StaticLib:
         download_maven(
             dlcfg, f"{self.platform.os}{self.platform.arch}static", to, cache
         )
-

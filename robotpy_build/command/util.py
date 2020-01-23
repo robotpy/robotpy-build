@@ -7,3 +7,13 @@ def get_install_root(cmd):
         install_root = inst_command.install_platlib
 
     return install_root
+
+
+def get_build_temp_path():
+
+    import distutils.dist
+    import distutils.command.build
+
+    b = distutils.command.build.build(distutils.dist.Distribution())
+    b.finalize_options()
+    return b.build_temp
