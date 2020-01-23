@@ -542,16 +542,20 @@ class Hooks:
                     fn["data"] = FunctionData(ignore=True)
                     continue
 
-                if access != "private":
-                    internal = access != "public"
+                # this has to be done even on private functions, because
+                # we do overload detection here
+                signature = self._get_function_signature(fn)
+                method_data = self.gendata.get_function_data(
+                    fn, signature, cls_key, class_data
+                )
 
-                    signature = self._get_function_signature(fn)
-                    method_data = self.gendata.get_function_data(
-                        fn, signature, cls_key, class_data
-                    )
+                if access != "private":
+
                     if method_data.ignore:
                         fn["data"] = method_data
                         continue
+
+                    internal = access != "public"
 
                     try:
                         self._function_hook(fn, method_data, internal=internal)
