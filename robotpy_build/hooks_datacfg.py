@@ -174,6 +174,7 @@ class ClassData(Model):
 
     is_polymorphic: bool = False
     force_no_trampoline: bool = False
+    force_no_default_constructor: bool = False
 
     #: If there are circular dependencies, this will help you resolve them
     #: manually. TODO: make it so we don't need this

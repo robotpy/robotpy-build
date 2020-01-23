@@ -289,7 +289,7 @@ void init_{{ mod_fn }}(py::module &m) {
 {% for cls in header.classes if not cls.data.ignore %}
   {{ cls.x_varname }}
   {# default constructor if not defined #}
-  {% if not cls.x_has_constructor and not cls.data.nodelete %}
+  {% if not cls.x_has_constructor and not cls.data.nodelete and not cls.data.force_no_default_constructor %}
     .def(py::init<>(), release_gil())
   {% endif -%}
   {%- for fn in cls.methods.public if not fn.data.ignore %}
