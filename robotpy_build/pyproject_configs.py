@@ -50,9 +50,14 @@ class MavenLibDownload(BaseModel):
     #: Configure the sources classifier
     sources_classifier: str = "sources"
 
-    #: When set, download a static library and convert it (Linux only)
-    # .. TODO: get rid of this
-    static_lib: bool = False
+
+class StaticLibConfig(BaseModel):
+    class Config:
+        extra = "forbid"
+
+    #: If this project depends on external libraries stored in a maven repo
+    #: specify it here
+    maven_lib_download: MavenLibDownload
 
 
 class WrapperConfig(BaseModel):
@@ -163,3 +168,6 @@ class RobotpyBuildConfig(BaseModel):
 
     # [tool.robotpy-build.wrappers."XXX"]
     wrappers: Dict[str, WrapperConfig] = {}
+
+    # [tool.robotpy-build.static_libs."XXX"]
+    static_libs: Dict[str, StaticLibConfig] = {}

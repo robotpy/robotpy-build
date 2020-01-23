@@ -17,6 +17,9 @@ class WPILibMavenPlatform:
     #: compile time linkage
     linkext: str = None
 
+    #: static linkage
+    staticext: str = ".a"
+
     defines: List[str] = field(default_factory=list)
 
     def __post_init__(self):
@@ -35,8 +38,8 @@ _platforms = {
     "linux-armv7l": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
     # TODO: linuxraspbian
-    "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib"),
-    "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib"),
+    "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
+    "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib", ".lib"),
     "osx": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
 }
 

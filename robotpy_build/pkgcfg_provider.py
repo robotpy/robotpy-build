@@ -17,6 +17,7 @@ class PkgCfg:
         self.depends = getattr(self.module, "depends", [])
         self.pypi_package = getattr(self.module, "pypi_package", None)
         self.package_name = getattr(self.module, "package_name", None)
+        self.static_lib = getattr(self.module, "static_lib", False)
 
     def get_include_dirs(self) -> Optional[List[str]]:
         """
@@ -47,6 +48,14 @@ class PkgCfg:
             Names of libraries provided (for linking)
         """
         fn = getattr(self.module, "get_library_names", None)
+        if fn:
+            return fn()
+
+    def get_extra_objects(self) -> Optional[List[str]]:
+        """
+            Names of extra objects to link in
+        """
+        fn = getattr(self.module, "get_extra_objects", None)
         if fn:
             return fn()
 

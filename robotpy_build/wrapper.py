@@ -33,7 +33,7 @@ from .pyproject_configs import WrapperConfig, MavenLibDownload
 from .generator_data import MissingReporter
 from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
-from .download import download_and_extract_zip
+from .download import download_maven
 
 
 class Wrapper:
@@ -125,18 +125,8 @@ class Wrapper:
 
         self.dev_config = get_dev_config(self.name)
 
-    def _dl_url(self, classifier):
-        # TODO: support development against locally installed things?
-        dl = self.cfg.maven_lib_download
-        repo_url = dl.repo_url
-        grp = dl.group_id.replace(".", "/")
-        art = dl.artifact_id
-        ver = dl.version
-
-        return f"{repo_url}/{grp}/{art}/{ver}/{art}-{ver}-{classifier}.zip"
-
-    def _extract_zip_to(self, thing, dst, cache):
-        download_and_extract_zip(self._dl_url(thing), to=dst, cache=cache)
+    def _extract_zip_to(self, classifier, dst, cache):
+        download_maven(self.cfg.dlcfg, classifier, dst, cache)
 
     def _add_generated_file(self, fullpath):
         if not isdir(fullpath):
@@ -221,7 +211,9 @@ class Wrapper:
     def _all_library_dirs(self):
         libs = self.get_library_dirs()
         for dep in self.cfg.depends:
-            libs.extend(self.pkgcfg.get_pkg(dep).get_library_dirs())
+            libdirs = self.pkgcfg.get_pkg(dep).get_library_dirs()
+            if libdirs:
+                libs.extend(libdirs)
         return libs
 
     def _all_library_names(self):
@@ -229,7 +221,19 @@ class Wrapper:
             set(self.get_library_names()) | set(self.get_dlopen_library_names())
         )
         for dep in self.cfg.depends:
-            libs.extend(self.pkgcfg.get_pkg(dep).get_library_names())
+            pkg = self.pkgcfg.get_pkg(dep)
+            libnames = pkg.get_library_names()
+            if libnames:
+                libs.extend(libnames)
+        return list(reversed(libs))
+
+    def _all_extra_objects(self):
+        libs = []
+        for dep in self.cfg.depends:
+            pkg = self.pkgcfg.get_pkg(dep)
+            libnames = pkg.get_extra_objects()
+            if libnames:
+                libs.extend(libnames)
         return list(reversed(libs))
 
     def _all_casters(self):
@@ -306,59 +310,20 @@ class Wrapper:
 
             os.makedirs(libdir)
 
-            if dlcfg.static_lib and self.platform.os == "linux":
-                extract_names = [
-                    f"{self.platform.libprefix}{lib}.a" for lib in libnames
+            extract_names = libnames_full[:]
+            if libext != linkext:
+                extract_names += [
+                    f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
                 ]
 
-                with tempfile.TemporaryDirectory() as d:
+            to = {
+                posixpath.join(
+                    self.platform.os, self.platform.arch, "shared", libname
+                ): join(libdir, libname)
+                for libname in extract_names
+            }
 
-                    to = {
-                        posixpath.join(
-                            self.platform.os, self.platform.arch, "static", libname
-                        ): join(d, libname)
-                        for libname in extract_names
-                    }
-
-                    self._extract_zip_to(
-                        f"{self.platform.os}{self.platform.arch}static", to, cache
-                    )
-
-                    for lib in libnames:
-                        subprocess.run(
-                            ["ar", "-x", f"{self.platform.libprefix}{lib}.a"], cwd=d
-                        )
-
-                        args = [
-                            "g++",
-                            "-shared",
-                            "-o",
-                            join(
-                                libdir,
-                                f"{self.platform.libprefix}{lib}{self.platform.libext}",
-                            ),
-                        ] + glob.glob(join(d, "*.o"))
-
-                        subprocess.run(args, cwd=d)
-
-            else:
-
-                extract_names = libnames_full[:]
-                if libext != linkext:
-                    extract_names += [
-                        f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
-                    ]
-
-                to = {
-                    posixpath.join(
-                        self.platform.os, self.platform.arch, "shared", libname
-                    ): join(libdir, libname)
-                    for libname in extract_names
-                }
-
-                self._extract_zip_to(
-                    f"{self.platform.os}{self.platform.arch}", to, cache
-                )
+            self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
 
         for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
             self._add_generated_file(f)
@@ -421,6 +386,12 @@ class Wrapper:
             library_dirs = '[join(_root, "lib")]'
             library_dirs_rel = ["lib"]
 
+        deps = []
+        for dep in self.cfg.depends:
+            pkg = self.pkgcfg.get_pkg(dep)
+            if not pkg.static_lib:
+                deps.append(dep)
+
         # write pkgcfg.py
         pkgcfg = inspect.cleandoc(
             f"""
@@ -431,7 +402,7 @@ class Wrapper:
         _root = abspath(dirname(__file__))
 
         libinit_import = "{self.libinit_import}"
-        depends = {repr(self.cfg.depends)}
+        depends = {repr(deps)}
         pypi_package = {repr(self.pypi_package)}
 
         def get_include_dirs():
@@ -641,6 +612,7 @@ class Wrapper:
         ]
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
+        self.extension.extra_objects = self._all_extra_objects()
 
         for f in glob.glob(join(glob.escape(hppoutdir), "*.hpp")):
             self._add_generated_file(f)

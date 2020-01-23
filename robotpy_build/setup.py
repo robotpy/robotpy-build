@@ -27,6 +27,7 @@ from .command.develop import Develop
 from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
 from .platforms import get_platform
+from .static_libs import StaticLib
 from .wrapper import Wrapper
 
 
@@ -39,6 +40,7 @@ class Setup:
     def __init__(self):
         self.root = abspath(os.getcwd())
         self.wrappers = []
+        self.static_libs = []
 
         project_fname = join(self.root, "pyproject.toml")
 
@@ -92,6 +94,7 @@ class Setup:
 
         self.pkgcfg = PkgCfgProvider()
 
+        self._collect_static_libs()
         self._collect_wrappers()
 
         self.setup_kwargs["cmdclass"] = {
@@ -105,6 +108,7 @@ class Setup:
             self.setup_kwargs["cmdclass"]["bdist_wheel"] = bdist_wheel
         for cls in self.setup_kwargs["cmdclass"].values():
             cls.wrappers = self.wrappers
+            cls.static_libs = self.static_libs
             cls.rpybuild_pkgcfg = self.pkgcfg
 
         # We already know some of our packages, so collect those in addition
@@ -139,6 +143,12 @@ class Setup:
 
         if ext_modules:
             self.setup_kwargs["ext_modules"] = ext_modules
+
+    def _collect_static_libs(self):
+        for name, cfg in self.project.static_libs.items():
+            s = StaticLib(name, cfg, self)
+            self.static_libs.append(s)
+            self.pkgcfg.add_pkg(s)
 
     def run(self):
         # assemble all the pieces and make it work

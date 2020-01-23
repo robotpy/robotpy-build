@@ -62,3 +62,14 @@ def download_and_extract_zip(url, to=None, cache=None):
                 with z.open(src, "r") as zfp:
                     with open(dst, "wb") as fp:
                         shutil.copyfileobj(zfp, fp)
+
+
+def download_maven(dlcfg, classifier, to, cache):
+    # TODO: support development against locally installed things?
+    repo_url = dlcfg.repo_url
+    grp = dlcfg.group_id.replace(".", "/")
+    art = dlcfg.artifact_id
+    ver = dlcfg.version
+
+    url = f"{repo_url}/{grp}/{art}/{ver}/{art}-{ver}-{classifier}.zip"
+    return download_and_extract_zip(url, to, cache)
