@@ -126,7 +126,7 @@ class Wrapper:
         self.dev_config = get_dev_config(self.name)
 
     def _extract_zip_to(self, classifier, dst, cache):
-        download_maven(self.cfg.dlcfg, classifier, dst, cache)
+        download_maven(self.cfg.maven_lib_download, classifier, dst, cache)
 
     def _add_generated_file(self, fullpath):
         if not isdir(fullpath):
