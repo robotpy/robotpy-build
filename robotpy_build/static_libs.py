@@ -44,7 +44,7 @@ class StaticLib:
         if self.platform.os != "windows":
             return
 
-        return self._get_libnames()
+        return self._get_libnames(useext=False)
 
     def get_library_full_names(self) -> Optional[List[str]]:
         pass
@@ -58,15 +58,16 @@ class StaticLib:
     def get_type_casters(self, casters: Dict[str, str]) -> None:
         pass
 
-    def _get_libnames(self):
+    def _get_libnames(self, useext=True):
         mcfg = self.cfg.maven_lib_download
         if mcfg.libs is None:
             libs = [mcfg.artifact_id]
         else:
             libs = mcfg.libs
-        return [
-            f"{self.platform.libprefix}{lib}{self.platform.staticext}" for lib in libs
-        ]
+        ext = ""
+        if useext:
+            ext = self.platform.staticext
+        return [f"{self.platform.libprefix}{lib}{ext}" for lib in libs]
 
     def on_build_dl(self, cache: str, libdir: str):
 
