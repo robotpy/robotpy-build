@@ -496,6 +496,7 @@ class Hooks:
             base
             for base in cls["inherits"]
             if not ignored_bases.pop(base["class"], None)
+            and base["access"] != "private"
         ]
         if ignored_bases:
             bases = ", ".join(base["class"] for base in cls["inherits"])
