@@ -72,6 +72,7 @@ class GeneratorData:
         signature: str,
         cls_key: Optional[str] = None,
         cls_data: Optional[ClassData] = None,
+        is_private: bool = False,
     ) -> FunctionData:
         name = fn["name"]
         if cls_data:
@@ -83,7 +84,7 @@ class GeneratorData:
 
         report_base = report_base.setdefault(name, {"overloads": {}, "first": fn})
         missing = data is _missing
-        report_base["missing"] = missing
+        report_base["missing"] = missing and not is_private
 
         if missing:
             data = FunctionData()
@@ -97,7 +98,7 @@ class GeneratorData:
                 data.update(overload.dict(exclude_unset=True))
                 data = FunctionData(**data)
 
-        report_base["overloads"][signature] = not missing
+        report_base["overloads"][signature] = is_private or not missing
 
         # TODO: doesn't belong here
         is_overloaded = len(report_base["overloads"]) > 1
