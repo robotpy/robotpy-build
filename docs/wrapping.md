@@ -131,3 +131,17 @@ Then do:
 
     RPYBUILD_GEN_FILTER=filter.yml python setup.py develop
 
+Platform-specific dependencies
+------------------------------
+
+You can define 'override' sections that will be grafted onto the configuration
+if they match a particular platform. For example, to change the dependencies
+for a wrapper section on Windows:
+
+    [tool.robotpy-build.wrappers."myproject".override.os_windows]
+    depends = ["windows-thing"]
+
+See `overrides.py` for more information about how overrides are applied.
+
+Run `robotpy-build platform-info` for platform specific keys and available
+override keys.

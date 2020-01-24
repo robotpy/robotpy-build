@@ -63,3 +63,12 @@ def get_platform() -> WPILibMavenPlatform:
         return _platforms[pyplatform]
     except KeyError:
         raise KeyError(f"platform {pyplatform} is not supported by robotpy-build!")
+
+
+def get_platform_override_keys(platform: WPILibMavenPlatform):
+    # Used in places where overrides exist
+    return [
+        f"arch_{platform.arch}",
+        f"os_{platform.os}",
+        f"platform_{platform.os}_{platform.arch}",
+    ]

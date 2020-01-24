@@ -24,9 +24,10 @@ from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
 from .command.develop import Develop
 
+from .overrides import apply_overrides
 from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
-from .platforms import get_platform
+from .platforms import get_platform, get_platform_override_keys
 from .static_libs import StaticLib
 from .wrapper import Wrapper
 
@@ -42,6 +43,8 @@ class Setup:
         self.wrappers = []
         self.static_libs = []
 
+        self.platform = get_platform()
+
         project_fname = join(self.root, "pyproject.toml")
 
         try:
@@ -51,14 +54,19 @@ class Setup:
             raise ValueError("current directory is not a robotpy-build project") from e
 
         self.project_dict = self.pyproject.get("tool", {}).get("robotpy-build", {})
+
+        # Overrides are applied before pydantic does processing, so that
+        # we can easily override anything without needing to make the
+        # pydantic schemas messy with needless details
+        override_keys = get_platform_override_keys(self.platform)
+        apply_overrides(self.project_dict, override_keys)
+
         try:
             self.project = RobotpyBuildConfig(**self.project_dict)
         except Exception as e:
             raise ValueError(
                 f"robotpy-build configuration in pyproject.toml is incorrect"
             ) from e
-
-        self.platform = get_platform()
 
     @property
     def base_package(self):

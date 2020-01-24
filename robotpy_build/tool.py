@@ -2,12 +2,15 @@ import argparse
 import glob
 import inspect
 from os.path import basename, dirname, exists, join, relpath, splitext
+import pprint
 import subprocess
 import sys
 
 from .setup import Setup
 from .generator_data import MissingReporter
 from .command.util import get_build_temp_path
+
+from . import platforms
 
 
 def get_setup() -> Setup:
@@ -225,6 +228,26 @@ class LibraryRelinker:
         )
 
 
+class PlatformInfo:
+    @classmethod
+    def add_subparser(cls, parent_parser, subparsers):
+        parser = subparsers.add_parser(
+            "platform-info",
+            help="Displays platform-specific information",
+            parents=[parent_parser],
+        )
+        return parser
+
+    def run(self, args):
+        p = platforms.get_platform()
+        print("platform:")
+        pprint.pprint(p)
+        print()
+
+        print("override keys:")
+        pprint.pprint(platforms.get_platform_override_keys(p))
+
+
 def main():
 
     parser = argparse.ArgumentParser(prog="robotpy-build")
@@ -232,7 +255,14 @@ def main():
     subparsers = parser.add_subparsers(dest="cmd")
     subparsers.required = True
 
-    for cls in (BuildDep, GenCreator, HeaderScanner, ImportCreator, LibraryRelinker):
+    for cls in (
+        BuildDep,
+        GenCreator,
+        HeaderScanner,
+        ImportCreator,
+        LibraryRelinker,
+        PlatformInfo,
+    ):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
 
     args = parser.parse_args()
