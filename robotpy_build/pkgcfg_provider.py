@@ -1,6 +1,24 @@
+import importlib.util
+from os.path import join, dirname
 from pkg_resources import iter_entry_points
+import sys
 from typing import Dict, List, Optional, Set
 import warnings
+
+
+def _hacky_entrypoint_loader(module_name):
+    # load the root parent spec
+    pkgs = module_name.split(".")
+    spec = importlib.util.find_spec(pkgs[0])
+
+    # even namespace packages are installed in the path, so just guess
+    # ... and maybe it works?
+    fname = join(dirname(spec.origin), *pkgs[1:]) + ".py"
+    spec = importlib.util.spec_from_file_location(module_name, fname)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 class PkgCfg:
@@ -9,7 +27,14 @@ class PkgCfg:
     """
 
     def __init__(self, entry_point):
-        self.module = entry_point.load()
+        try:
+            self.module = entry_point.load()
+        except Exception as e:
+            try:
+                self.module = _hacky_entrypoint_loader(entry_point.module_name)
+            except Exception:
+                raise e
+
         self.name = entry_point.name
 
         # could deduce this, but this is probably fine
