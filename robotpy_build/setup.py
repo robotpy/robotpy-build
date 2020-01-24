@@ -142,6 +142,8 @@ class Setup:
         ext_modules = []
 
         for package_name, cfg in self.project.wrappers.items():
+            if cfg.ignore:
+                continue
             w = Wrapper(package_name, cfg, self)
             self.wrappers.append(w)
             self.pkgcfg.add_pkg(w)
@@ -154,6 +156,8 @@ class Setup:
 
     def _collect_static_libs(self):
         for name, cfg in self.project.static_libs.items():
+            if cfg.ignore:
+                continue
             s = StaticLib(name, cfg, self)
             self.static_libs.append(s)
             self.pkgcfg.add_pkg(s)

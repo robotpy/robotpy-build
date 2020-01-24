@@ -59,6 +59,9 @@ class StaticLibConfig(BaseModel):
     #: specify it here
     maven_lib_download: MavenLibDownload
 
+    #: If True, skip this library; typically used in conjection with an override
+    ignore: bool = False
+
 
 class WrapperConfig(BaseModel):
     """
@@ -119,6 +122,9 @@ class WrapperConfig(BaseModel):
 
     # Preprocessor definitions
     pp_defines: List[str] = []
+
+    #: If True, skip this wrapper; typically used in conjection with an override
+    ignore: bool = False
 
 
 class DistutilsMetadata(BaseModel):
