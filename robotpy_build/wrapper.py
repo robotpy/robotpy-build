@@ -191,6 +191,9 @@ class Wrapper:
         else:
             return []
 
+    def get_extra_objects(self) -> Optional[List[str]]:
+        pass
+
     def get_type_casters(self, casters):
         for header, types in self.cfg.type_casters.items():
             for typ in types:
