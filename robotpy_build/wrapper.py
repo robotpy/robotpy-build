@@ -56,6 +56,7 @@ class Wrapper:
 
         # must match PkgCfg.name
         self.name = cfg.name
+        self.static_lib = False
 
         # Compute the extension name, even if we don't create one
         extname = cfg.extension
