@@ -107,6 +107,7 @@ Second, define these environment variables:
 
     export RPYBUILD_PARALLEL=1
     export CC="ccache gcc"
+    export CXX="ccache g++"
     export GCC_COLORS=1
 
 The first one will make robotpy-build compile in parallel. The second tells
