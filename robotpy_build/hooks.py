@@ -506,7 +506,7 @@ class Hooks:
                 + f"{invalid_bases}; valid bases are {bases}"
             )
 
-        cls_qualname = cls["namespace"] + "::" + cls_name
+        cls_qualname = cls["namespace"] + "::" + (class_data.bind_type or cls_name)
         cls["x_qualname"] = cls_qualname
         cls["x_qualname_"] = cls_qualname.translate(self._qualname_trans)
 

@@ -187,6 +187,9 @@ class ClassData(Model):
     #: Set the python name of the class to this
     rename: Optional[str] = None
 
+    #: Bind to this type, for templates
+    bind_type: Optional[str] = None
+
     #: If the type was created as a shared_ptr (such as via std::make_shared)
     #: then pybind11 needs to be informed of this.
     #:

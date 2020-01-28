@@ -254,11 +254,11 @@ void init_{{ mod_fn }}(py::module &m) {
 
 {# class declarations #}
 {% for cls in header.classes if not cls.data.ignore %}
-  py::class_<{{ cls.name }}
+  py::class_<{{ cls.x_qualname }}
     {%- if cls.data.nodelete -%}
-      , std::unique_ptr<{{ cls.name }}, py::nodelete>
+      , std::unique_ptr<{{ cls.x_qualname }}, py::nodelete>
     {%- elif cls.data.shared_ptr -%}
-      , std::shared_ptr<{{ cls.name }}>
+      , std::shared_ptr<{{ cls.x_qualname }}>
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
       , {{ cls.x_trampoline_name }}
