@@ -1,5 +1,8 @@
 from distutils.core import Command
+from typing import List
 import os.path
+
+from ..wrapper import Wrapper
 
 
 class BuildGen(Command):
@@ -11,7 +14,7 @@ class BuildGen(Command):
         ("build-temp=", "t", "temporary build directory"),
         ("cxx-gen-dir=", "b", "Directory to write generated C++ files"),
     ]
-    wrappers = []
+    wrappers: List[Wrapper] = []
 
     def initialize_options(self):
         self.build_base = None

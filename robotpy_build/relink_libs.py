@@ -30,7 +30,6 @@ from delocate.delocating import filter_system_libs
 from delocate.tools import get_install_names, set_install_name as _set_install_name
 
 from os import path
-import glob
 
 from typing import Dict, List, Tuple
 
@@ -41,13 +40,8 @@ def set_install_name(file: str, old_install_name: str, new_install_name: str):
     """Change the install name for a library
 
     :param file: path to a executable/library file
-    :type file: str
-
     :param old_install_name: current path to dependency
-    :type old_install_name: str
-
     :param new_install_name: new path to dependency
-    :type old_install_name: str
     """
 
     # This function just calls delocate's set_install_name which uses install_name_tool.
@@ -129,9 +123,9 @@ def relink_libs(install_root: str, pkg: PkgCfg, pkgcfg: PkgCfgProvider):
         :param pkg: Object that implements pkgcfg for this wrapper
         :param pkgcfg: robotpy-build pkgcfg resolver
     """
-    libs = {}
+    libs: LibsDict = {}
     _resolve_dependencies(install_root, pkg, pkgcfg, libs)
-    to_fix = {}
+    to_fix: LibsDict = {}
     _resolve_libs_in_self(pkg, install_root, to_fix)
     libs.update(to_fix)
     _fix_libs(to_fix, libs)
@@ -153,7 +147,7 @@ def relink_extension(
         :param pkg: Object that implements pkgcfg for this wrapper
         :param pkgcfg: robotpy-build pkgcfg resolver
     """
-    libs = {}
+    libs: LibsDict = {}
     _resolve_dependencies(install_root, pkg, pkgcfg, libs)
     _resolve_libs_in_self(pkg, install_root, libs)
 

@@ -10,6 +10,7 @@ def _hacky_entrypoint_loader(module_name):
     # load the root parent spec
     pkgs = module_name.split(".")
     spec = importlib.util.find_spec(pkgs[0])
+    assert spec is not None and spec.origin is not None
 
     # even namespace packages are installed in the path, so just guess
     # ... and maybe it works?
@@ -51,6 +52,7 @@ class PkgCfg:
         fn = getattr(self.module, "get_include_dirs", None)
         if fn:
             return fn()
+        return None
 
     def get_library_dirs(self) -> Optional[List[str]]:
         """
@@ -59,6 +61,7 @@ class PkgCfg:
         fn = getattr(self.module, "get_library_dirs", None)
         if fn:
             return fn()
+        return None
 
     def get_library_dirs_rel(self) -> Optional[List[str]]:
         """
@@ -67,6 +70,7 @@ class PkgCfg:
         fn = getattr(self.module, "get_library_dirs_rel", None)
         if fn:
             return fn()
+        return None
 
     def get_library_names(self) -> Optional[List[str]]:
         """
@@ -75,6 +79,7 @@ class PkgCfg:
         fn = getattr(self.module, "get_library_names", None)
         if fn:
             return fn()
+        return None
 
     def get_extra_objects(self) -> Optional[List[str]]:
         """
@@ -83,6 +88,7 @@ class PkgCfg:
         fn = getattr(self.module, "get_extra_objects", None)
         if fn:
             return fn()
+        return None
 
     def get_library_full_names(self) -> Optional[List[str]]:
         """
@@ -91,6 +97,7 @@ class PkgCfg:
         fn = getattr(self.module, "get_library_full_names", None)
         if fn:
             return fn()
+        return None
 
     def get_type_casters(self, casters: Dict[str, str]) -> None:
         """
@@ -121,14 +128,14 @@ class PkgCfgProvider:
     def add_pkg(self, pkg: PkgCfg) -> None:
         self.pkgs[pkg.name] = pkg
 
-    def get_pkg(self, name: str) -> str:
+    def get_pkg(self, name: str) -> PkgCfg:
         try:
             return self.pkgs[name]
         except KeyError:
             raise KeyError("robotpy-build package '%s' not installed" % name)
 
     def get_all_deps(self, name: str) -> Set[PkgCfg]:
-        deps = set()
+        deps: Set[PkgCfg] = set()
 
         def _get(name: str):
             pkg = self.get_pkg(name)

@@ -21,11 +21,11 @@ class StaticLib:
 
         self.platform = setup.platform
 
-        self.root = None
-        self.incdir = None
-        self.libdir = None
+        self.root: Optional[os.PathLike] = None
+        self.incdir: Optional[str] = None
+        self.libdir: Optional[str] = None
 
-    def set_root(self, root):
+    def set_root(self, root: os.PathLike) -> None:
         self.root = root
         self.libdir = join(self.root, self.name, "lib")
         self.incdir = join(self.root, self.name, "include")

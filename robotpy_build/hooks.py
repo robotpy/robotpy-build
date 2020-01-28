@@ -63,10 +63,10 @@ class Hooks:
         self.rawdata = data
         self.casters = casters
 
-        self.types = set()
-        self.class_hierarchy = {}
+        self.types: typing.Set[str] = set()
+        self.class_hierarchy: typing.Dict[str, typing.List[str]] = {}
 
-        self.subpackages = {}
+        self.subpackages: typing.Dict[str, str] = {}
 
     def report_missing(self, name: str, reporter: MissingReporter):
         self.gendata.report_missing(name, reporter)
@@ -208,8 +208,8 @@ class Hooks:
         x_keepalives = []
 
         x_genlambda = False
-        x_lambda_pre = []
-        x_lambda_post = []
+        x_lambda_pre: typing.List[str] = []
+        x_lambda_post: typing.List[str] = []
 
         # Use this if one of the parameter types don't quite match
         param_override = data.param_override
@@ -261,10 +261,10 @@ class Hooks:
 
             ptype = "in"
 
-            bufinfo = buffer_params.pop(p["name"], None)
             buflen = buflen_params.pop(p["name"], None)
 
-            if bufinfo:
+            if p["name"] in buffer_params:
+                bufinfo = buffer_params.pop(p["name"])
                 x_genlambda = True
                 bname = f"__{bufinfo.src}"
                 p["constant"] = 1
@@ -386,7 +386,7 @@ class Hooks:
             x_name = "__init__"
 
         doc = ""
-        doc_quoted = ""
+        doc_quoted: typing.Optional[typing.List[str]] = None
 
         if data.doc is not None:
             doc = data.doc

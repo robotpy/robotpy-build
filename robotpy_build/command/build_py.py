@@ -1,9 +1,13 @@
+from typing import List
+
 from setuptools.command.build_py import build_py
+
+from ..wrapper import Wrapper
 
 
 class BuildPy(build_py):
 
-    wrappers = []
+    wrappers: List[Wrapper] = []
 
     def run(self):
 

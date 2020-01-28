@@ -20,7 +20,7 @@ import sys
 import shutil
 import tempfile
 import toposort
-from typing import Optional, List
+from typing import Dict, List, Optional, Set
 import yaml
 
 from header2whatever.config import Config
@@ -69,7 +69,7 @@ class Wrapper:
             if libinit_py == "__init__.py":
                 self.libinit_import = package_name
             else:
-                pkg = splitext(self.cfg.libinit)[0]
+                pkg = splitext(libinit_py)[0]
                 self.libinit_import = f"{package_name}.{pkg}"
         else:
             libinit_py = f"_init{extname}.py"
@@ -84,7 +84,7 @@ class Wrapper:
         self.depends = self.cfg.depends
 
         # Files that are generated AND need to be in the final wheel. Used by build_py
-        self.generated_files = []
+        self.generated_files: List[str] = []
 
         self._all_deps = None
 
@@ -194,7 +194,7 @@ class Wrapper:
     def get_extra_objects(self) -> Optional[List[str]]:
         pass
 
-    def get_type_casters(self, casters):
+    def get_type_casters(self, casters: Dict):
         for header, types in self.cfg.type_casters.items():
             for typ in types:
                 casters[typ] = header
@@ -656,7 +656,7 @@ class Wrapper:
                 types2name[clsname] = name
                 types2deps[clsname] = [_clean(base) for base in bases]
 
-        to_sort = {}
+        to_sort: Dict[str, Set[str]] = {}
         for clsname, bases in types2deps.items():
             clsname = types2name[clsname]
             deps = to_sort.setdefault(clsname, set())
