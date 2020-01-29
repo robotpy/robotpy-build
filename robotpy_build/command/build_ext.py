@@ -9,7 +9,7 @@ from .util import get_install_root
 from ..platforms import get_platform
 
 # TODO: only works for GCC
-debug = os.environ.get("RPYBUILD_DEBUG") == 1
+debug = os.environ.get("RPYBUILD_DEBUG") == "1"
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
