@@ -8,6 +8,9 @@ import tempfile
 from .util import get_install_root
 from ..platforms import get_platform
 
+# TODO: only works for GCC
+debug = os.environ.get("RPYBUILD_DEBUG") == 1
+
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
 def has_flag(compiler, flagname):
@@ -61,7 +64,11 @@ class BuildExt(build_ext):
 
         if ct == "unix":
             opts.append("-s")  # strip
-            opts.append("-g0")  # remove debug symbols
+            if debug:
+                opts.append("-ggdb3")
+                opts.append("-UNDEBUG")
+            else:
+                opts.append("-g0")  # remove debug symbols
             opts.append(cpp_flag(self.compiler, "-"))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
