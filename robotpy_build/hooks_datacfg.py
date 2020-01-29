@@ -17,6 +17,9 @@ class Model(BaseModel):
 class ParamData(Model):
     """Various ways to modify parameters"""
 
+    # Rename parameter
+    name: Optional[str] = None
+
     # C++ type emitted
     x_type: Optional[str] = None
 
