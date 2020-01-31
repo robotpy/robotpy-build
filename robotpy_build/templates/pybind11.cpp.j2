@@ -188,10 +188,11 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
 {% endmacro -%}
 
 {%- macro cls_using(cls) -%}
-  {% if cls.parent %}
-    using {{ cls.name }} = {{ cls.parent.name }}::{{ cls.name }};
-  {% elif cls.namespace %}
+  {% if cls.namespace and not cls.parent %}
     using namespace {{ cls.namespace }};
+  {% endif %}
+  {% if cls.parent %}
+  using {{ cls.name }} = {{ cls.parent.name }}::{{ cls.name }};
   {% endif %}
   {% for typealias in cls.data.typealias -%}
     using {{ typealias.split('::')[-1] }} = {{ typealias }};
@@ -201,12 +202,12 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
   {% endfor %}
 {% endmacro -%}
 
-{%- macro cls_decl(cls) -%}
-  py::class_<{{ cls.name }}
+{%- macro cls_decl(cls, varname, name) -%}
+  py::class_<{{ cls.x_qualname }}
     {%- if cls.data.nodelete -%}
-      , std::unique_ptr<{{ cls.name }}, py::nodelete>
+      , std::unique_ptr<{{ cls.x_qualname }}, py::nodelete>
     {%- elif cls.data.shared_ptr -%}
-      , std::shared_ptr<{{ cls.name }}>
+      , std::shared_ptr<{{ cls.x_qualname }}>
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
       , {{ cls.x_trampoline_name }}
@@ -217,14 +218,14 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
     {%- endif -%}
     
     >
-      {{ cls.x_varname }}(
+      {{ varname }}(
 
     {%- if cls.parent -%}
       {{ cls.parent.x_varname }}
     {%- else -%}
       {{ cls.x_module_var }}
     {%- endif -%}
-    , "{{ cls.x_name }}");
+    , {{ name }});
 {%- endmacro -%}
 
 {%- macro cls_methods(cls, varname) -%}
