@@ -1,0 +1,29 @@
+{#
+    C++ template support
+#}
+
+{% import "pybind11.cpp.j2" as pybind11 %}
+
+namespace rpygen {
+
+{% if cls.namespace %}
+using namespace {{ cls.namespace }};
+{% endif %}
+{% for header in headers %}
+{% for using in header.using.values() %}
+using {{ using.raw_type }};
+{% endfor %}
+{% endfor %}
+
+template <typename {{ cls.data.template_params | join(', typename ') }}>
+inline void bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) {
+
+    {{ pybind11.cls_using(cls) }}
+
+    {# TODO: embedded structs will fail here #}
+    {{ pybind11.cls_decl(cls, cls.x_varname, "clsName") }}
+
+    {{ pybind11.cls_methods(cls, cls.x_varname) }}
+}
+
+}; // namespace rpygen

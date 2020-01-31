@@ -186,6 +186,17 @@ class Hooks:
         data["class_hierarchy"] = self.class_hierarchy
         data["subpackages"] = self.subpackages
 
+        templates = {}
+        for k, tmpl_data in data["data"].templates.items():
+            qualname = tmpl_data.qualname
+            if "::" not in qualname:
+                qualname = f"::{qualname}"
+            tmpl_data = tmpl_data.dict()
+            tmpl_data["x_qualname_"] = qualname.translate(self._qualname_trans)
+            templates[k] = tmpl_data
+
+        data["templates"] = templates
+
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
 
@@ -479,16 +490,29 @@ class Hooks:
             self._enum_hook(e, enum_data)
 
         # update inheritance
+
+        pybase_params = set()
+
         for base in cls["inherits"]:
             bqual = class_data.base_qualnames.get(base["class"])
             if bqual:
                 base["x_qualname"] = bqual
-            elif "::" not in base["class"]:
-                base["x_qualname"] = f'{cls["namespace"]}::{base["class"]}'
+            elif "::" not in base["decl_name"]:
+                base["x_qualname"] = f'{cls["namespace"]}::{base["decl_name"]}'
             else:
-                base["x_qualname"] = base["class"]
+                base["x_qualname"] = base["decl_name"]
 
             base["x_qualname_"] = base["x_qualname"].translate(self._qualname_trans)
+
+            base_decl_params = base.get("decl_params")
+            if base_decl_params:
+                for decl_param in base_decl_params:
+                    pybase_params.add(decl_param["param"])
+                base["x_params"] = ", " + ", ".join(
+                    decl_param["param"] for decl_param in base_decl_params
+                )
+            else:
+                base["x_params"] = ""
 
         ignored_bases = {ib: True for ib in class_data.ignored_bases}
 
@@ -507,12 +531,36 @@ class Hooks:
             )
 
         cls_qualname = cls["namespace"] + "::" + cls_name
-        cls["x_qualname"] = cls_qualname
         cls["x_qualname_"] = cls_qualname.translate(self._qualname_trans)
-
         self.class_hierarchy[cls_qualname] = [
             base["x_qualname"] for base in cls["x_inherits"]
         ] + class_data.force_depends
+
+        template_params = ""
+        if class_data.template_params:
+            template_params = ", ".join(class_data.template_params)
+            cls_qualname = f"{cls_qualname}<{template_params}>"
+            base_template_params = [
+                p for p in class_data.template_params if p in pybase_params
+            ]
+        else:
+            base_template_params = None
+
+        if base_template_params:
+            cls["x_pybase_typenames"] = ", typename " + ", typename ".join(
+                base_template_params
+            )
+            cls["x_pybase_params"] = ", " + ", ".join(base_template_params)
+        else:
+            cls["x_pybase_typenames"] = ""
+            cls["x_pybase_params"] = ""
+
+        if "template" in cls and template_params == "":
+            raise ValueError(
+                f"{cls_name}: must specify template_params for templated class, or ignore it"
+            )
+
+        cls["x_qualname"] = cls_qualname
 
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
@@ -600,7 +648,12 @@ class Hooks:
 
         cls["x_has_trampoline"] = has_trampoline
         if cls["x_has_trampoline"]:
-            cls["x_trampoline_name"] = f"rpygen::Py{cls['x_qualname_']}<{cls_name}>"
+            tmpl = ""
+            if template_params:
+                tmpl = f", {template_params}"
+            cls[
+                "x_trampoline_name"
+            ] = f"rpygen::Py{cls['x_qualname_']}<{cls_qualname}{tmpl}>"
         cls["x_has_constructor"] = has_constructor
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)

@@ -23,6 +23,10 @@ using {{ using.raw_type }};
 #include <rpygen/{{ cls.x_qualname_ }}.hpp>
 {% endfor %}
 
+{% for tmpl_data in templates.values() %}
+#include <rpygen/{{ tmpl_data.x_qualname_ }}.hpp>
+{% endfor %}
+
 {% for inc in data.extra_includes %}
 #include <{{ inc }}>
 {% endfor %}
@@ -32,6 +36,7 @@ using {{ using.raw_type }};
 
   - namespace/typealiases
   - global enums
+  - templates (because CRTP)
   - class declarations
   - class enums
   - class methods
@@ -41,7 +46,7 @@ using {{ using.raw_type }};
 void init_{{ mod_fn }}(py::module &m) {
 
 {# namespaces/typealiases #}
-{% for cls in header.classes if not cls.data.ignore %}
+{% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
   {{ pybind11.cls_using(cls) }}
 {% endfor %}
 
@@ -52,12 +57,17 @@ void init_{{ mod_fn }}(py::module &m) {
 
 {# define global enums in case they are used as default args #}  
 {% for enum in header.enums %}
-  {{ genenum(enum.x_module_var, enum) }}
+  {{ pybind11.genenum(enum.x_module_var, enum) }}
+{% endfor %}
+
+{# templates #}
+{% for name, tmpl_data in templates.items() %}
+  rpygen::bind_{{ tmpl_data.x_qualname_ }}<{{ tmpl_data.params | join(', ') }}>(m, "{{ name }}");
 {% endfor %}
 
 {# class declarations #}
-{% for cls in header.classes if not cls.data.ignore %}
-  {{ pybind11.cls_decl(cls) }}
+{% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
+  {{ pybind11.cls_decl(cls, cls.x_varname, '"' + cls.x_name + '"') }}
   
   {# define class enums in case they are used as default args #}
   {% for enum in cls.enums.public -%}
@@ -67,7 +77,7 @@ void init_{{ mod_fn }}(py::module &m) {
 {% endfor %}
 
 {# class methods #}
-{% for cls in header.classes if not cls.data.ignore %}
+{% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
   {{ pybind11.cls_methods(cls, cls.x_varname) }}
 {% endfor %}
 
@@ -77,6 +87,7 @@ void init_{{ mod_fn }}(py::module &m) {
     {{ fn.x_module_var }}{{ pybind11.genmethod(None, fn, None) }};
   {% endfor %};
 {% endif %}
+
 {% if data.inline_code %}
 
   {{ data.inline_code }}

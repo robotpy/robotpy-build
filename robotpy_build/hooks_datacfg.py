@@ -210,6 +210,10 @@ class ClassData(Model):
     #: Extra constexpr to insert into the trampoline and wrapping scopes
     constants: List[str] = []
 
+    #: If this is a template class, a list of the parameters
+    #: if it can't be autodetected (currently can't autodetect)
+    template_params: Optional[List[str]] = None
+
     @validator("attributes", pre=True)
     def validate_attributes(cls, value):
         for k, v in value.items():
@@ -232,6 +236,17 @@ class ClassData(Model):
         return value
 
 
+class TemplateData(Model):
+
+    # Fully qualified name of template
+    qualname: str
+
+    # Template parameters to use
+    params: List[str]
+
+    # TODO: other parameters useful for concrete types
+
+
 class HooksDataYaml(Model):
     """
         Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
@@ -248,6 +263,9 @@ class HooksDataYaml(Model):
     classes: Dict[str, ClassData] = {}
     functions: Dict[str, FunctionData] = {}
     enums: Dict[str, EnumData] = {}
+
+    #: Instantiates a template. Key is the name to give to the Python type
+    templates: Dict[str, TemplateData] = {}
 
     @validator("attributes", pre=True)
     def validate_attributes(cls, value):

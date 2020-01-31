@@ -480,7 +480,7 @@ class Wrapper:
         hppoutdir = join(self.rpy_incdir, "rpygen")
         tmpl_dir = join(thisdir, "templates")
         cpp_tmpl = join(tmpl_dir, "cls.cpp.j2")
-        hpp_tmpl = join(tmpl_dir, "cls_trampoline.hpp.j2")
+        hpp_tmpl = join(tmpl_dir, "cls_rpy_include.hpp.j2")
         classdeps_tmpl = join(tmpl_dir, "clsdeps.json.j2")
 
         pp_includes = self._all_includes(False)
