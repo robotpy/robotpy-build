@@ -51,7 +51,7 @@ using PyBase{{ cls.x_qualname_ }} =
     Py{{ base.x_qualname_ }}<
 {% endfor %}
         CxxBase
-{% for base in cls.x_inherits %}
+{% for base in (cls.x_inherits | reverse) %}
     {{ base.x_params }}
     >
 {% endfor %}
