@@ -584,7 +584,7 @@ class Wrapper:
                 cfg.validate()
                 cfg.root = self.incdir
 
-                hooks = Hooks(data, casters)
+                hooks = Hooks(data, casters, report_only)
                 processor.process_config(cfg, data, hooks)
 
                 hooks.report_missing(data_fname, missing_reporter)
