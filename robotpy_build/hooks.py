@@ -58,10 +58,13 @@ class Hooks:
     _qualname_bad = ":<>="
     _qualname_trans = str.maketrans(_qualname_bad, "_" * len(_qualname_bad))
 
-    def __init__(self, data: HooksDataYaml, casters: typing.Dict[str, str]):
+    def __init__(
+        self, data: HooksDataYaml, casters: typing.Dict[str, str], report_only: bool
+    ):
         self.gendata = GeneratorData(data)
         self.rawdata = data
         self.casters = casters
+        self.report_only = report_only
 
         self.types = set()
         self.class_hierarchy = {}
@@ -555,7 +558,7 @@ class Hooks:
             cls["x_pybase_typenames"] = ""
             cls["x_pybase_params"] = ""
 
-        if "template" in cls and template_params == "":
+        if "template" in cls and template_params == "" and not self.report_only:
             raise ValueError(
                 f"{cls_name}: must specify template_params for templated class, or ignore it"
             )
