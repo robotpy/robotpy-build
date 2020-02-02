@@ -2,6 +2,7 @@ import argparse
 import glob
 import inspect
 from os.path import basename, dirname, exists, join, relpath, splitext
+from pathlib import PurePosixPath
 import pprint
 import subprocess
 import sys
@@ -128,14 +129,15 @@ class HeaderScanner:
                         thisdir = dirname(f)
                         if lastdir is None:
                             if thisdir:
-                                print("    #", thisdir)
+                                print("    #", PurePosixPath(thisdir))
                         elif lastdir != thisdir:
                             print()
                             if thisdir:
-                                print("    #", thisdir)
+                                print("    #", PurePosixPath(thisdir))
                         lastdir = thisdir
 
                         base = splitext(basename(f))[0]
+                        f = PurePosixPath(f)
                         print(f'    {{ {base} = "{f}" }},')
                 print("]")
 
