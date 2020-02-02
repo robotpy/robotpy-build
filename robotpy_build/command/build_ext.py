@@ -50,7 +50,7 @@ def get_opts(typ):
     if platform.os == "osx":
         darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.9"]
         c_opts["unix"] += darwin_opts
-        l_opts["unix"] += darwin_opts
+        l_opts["unix"] += darwin_opts + ["-headerpad_max_install_names"]
 
     return c_opts.get(typ, []), l_opts.get(typ, [])
 
