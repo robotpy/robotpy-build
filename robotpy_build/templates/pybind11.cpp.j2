@@ -72,7 +72,18 @@
 
   #ifndef {{ fn.data.ifndef }}
   {% endif %}
-  {%- if fn.constructor -%}
+  {%- if fn.operator -%}
+    {%- if fn.data.cpp_code -%}
+      {{ fn.data.cpp_code }}
+    {%- else -%}
+      {%- if ns.arg_params -%}
+        .def(py::self {{ fn.operator }} {{ ns.arg_params[0].raw_type }}()
+      {%- else -%}
+        .def({{ fn.operator}} py::self
+      {%- endif -%}
+    {%- endif -%}
+    {%- set ns.arg_params = [] -%}
+  {%- elif fn.constructor -%}
     {%- set ns.arg_params = fn.x_all_params -%}
     {%- if fn.data.cpp_code -%}
       {{ fn.data.cpp_code }}

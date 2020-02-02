@@ -41,6 +41,15 @@ _rvp_map = {
     ReturnValuePolicy.AUTOMATIC_REFERENCE: ", py::return_value_policy::automatic_reference",
 }
 
+# fmt: off
+_operators = {
+    # binary
+    "-", "+", "*", "/", "%", "&", "^", "==", "!=", "|", ">", ">=", "<", "<=",
+    # inplace
+    "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=",
+}
+# fmt: on
+
 
 class HookError(Exception):
     pass
@@ -65,6 +74,7 @@ class Hooks:
         self.rawdata = data
         self.casters = casters
         self.report_only = report_only
+        self.has_operators = False
 
         self.types = set()
         self.class_hierarchy = {}
@@ -188,6 +198,7 @@ class Hooks:
         data["type_caster_includes"] = self._get_type_caster_includes()
         data["class_hierarchy"] = self.class_hierarchy
         data["subpackages"] = self.subpackages
+        data["x_has_operators"] = self.has_operators
 
         templates = {}
         for k, tmpl_data in data["data"].templates.items():
@@ -580,9 +591,11 @@ class Hooks:
                 if fn["override"] or fn["virtual"]:
                     is_polymorphic = True
 
-                # Ignore operators, move constructors, copy constructors
+                operator = fn.get("operator")
+
+                # Ignore some operators, move constructors, copy constructors
                 if (
-                    fn.get("operator")
+                    (operator and operator not in _operators)
                     or fn.get("destructor")
                     or (
                         fn.get("constructor")
@@ -608,6 +621,11 @@ class Hooks:
                     if method_data.ignore:
                         fn["data"] = method_data
                         continue
+
+                    if operator:
+                        self.has_operators = True
+                        if method_data.no_release_gil is None:
+                            method_data.no_release_gil = True
 
                     internal = access != "public"
 

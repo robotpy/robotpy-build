@@ -13,6 +13,10 @@
 #include <{{ inc }}>
 {% endfor %}
 
+{% if x_has_operators %}
+#include <pybind11/operators.h>
+{% endif %}
+
 {% for using in header.using.values() if using.using_type != "typealias" %}
 using {{ using.raw_type }};
 {% endfor %}
