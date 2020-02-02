@@ -589,6 +589,7 @@ class Hooks:
                         and fn["parameters"]
                         and fn["parameters"][0]["class"] is cls
                     )
+                    or fn["deleted"]
                 ):
                     fn["data"] = FunctionData(ignore=True)
                     continue
