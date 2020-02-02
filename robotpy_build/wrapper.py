@@ -585,7 +585,10 @@ class Wrapper:
                 cfg.root = self.incdir
 
                 hooks = Hooks(data, casters, report_only)
-                processor.process_config(cfg, data, hooks)
+                try:
+                    processor.process_config(cfg, data, hooks)
+                except Exception as e:
+                    raise ValueError(f"processing {header}") from e
 
                 hooks.report_missing(data_fname, missing_reporter)
 
