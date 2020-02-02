@@ -214,6 +214,10 @@ class ClassData(Model):
     #: if it can't be autodetected (currently can't autodetect)
     template_params: Optional[List[str]] = None
 
+    #: If this is a template class, the specified C++ code is inserted
+    #: into the template definition
+    template_inline_code: str = ""
+
     @validator("attributes", pre=True)
     def validate_attributes(cls, value):
         for k, v in value.items():
