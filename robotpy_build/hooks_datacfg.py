@@ -76,6 +76,11 @@ class FunctionData(Model):
     # If True, don't wrap this
     ignore: bool = False
 
+    # If True, don't wrap this, but provide a pure virtual implementation
+    # -> in theory we could autodetect this, but sometimes ignore
+    #    is used for when CppHeaderParser totally blows it
+    ignore_pure: bool = False
+
     # Generate this in an `#ifdef`
     ifdef: Optional[str] = None
     # Generate this in an `#ifndef`

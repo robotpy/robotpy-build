@@ -100,12 +100,16 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
         if fn.const %} const{% endif
     %} override {
     {# TODO: probably will break for things like out parameters, etc #}
+    {% if fn.data.ignore_pure %}
+        throw std::runtime_error("not implemented");
+    {% else %}
     {% if fn.pure_virtual -%}
         RPYBUILD_OVERLOAD_PURE_NAME({{ cls.name }},
     {%- else -%}
         PYBIND11_OVERLOAD_NAME(
     {%- endif -%}
         {{ fn.rtnType }}, CxxBase, "{{ fn.x_name }}", {{ fn.name }},{{ fn.parameters | join(', ', attribute='name') }});
+    {%- endif %}
     }
 #endif
 

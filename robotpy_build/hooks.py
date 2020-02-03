@@ -440,6 +440,11 @@ class Hooks:
                         f"{fn['name']}: cannot specify template_impls for non-template functions"
                     )
 
+            if data.ignore_pure and not fn["pure_virtual"]:
+                raise ValueError(
+                    f"{fn['name']}: cannot specify ignore_pure for function that isn't pure"
+                )
+
         # if "hook" in data:
         #     eval(data["hook"])(fn, data)
 
