@@ -360,9 +360,18 @@ class Wrapper:
 
         if libnames:
             init += "from ctypes import cdll\n\n"
-            for libname in libnames:
-                init += f'_lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
 
+            for libname in libnames:
+                init += "try:\n"
+                init += f'    _lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
+                init += "except FileNotFoundError:\n"
+                init += "    import os.path\n"
+                init += f'    if not os.path.exists(join(_root, "lib", "{libname}")):\n'
+                init += f'        raise Exception("{libname} was not found on your system. Is this package correctly installed?")\n'
+                if self.platform.os == "windows":
+                    init += f'    raise Exception("{libname} could not be loaded. Do you have Visual Studio C++ Redistributible 2019 installed?")'
+                else:
+                    init += f'    raise Exception("{libname} could not be loaded. There is a missing dependency.")'
         imports = []
         for dep in self.cfg.depends:
             pkg = self.pkgcfg.get_pkg(dep)
