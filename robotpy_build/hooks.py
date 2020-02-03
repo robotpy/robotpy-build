@@ -599,10 +599,17 @@ class Hooks:
             cls["x_pybase_args"] = ""
             cls["x_pybase_params"] = ""
 
-        if "template" in cls and template_parameter_list == "" and not self.report_only:
-            raise ValueError(
-                f"{cls_name}: must specify template_params for templated class, or ignore it"
-            )
+        if not self.report_only:
+            if "template" in cls:
+                if template_parameter_list == "":
+                    raise ValueError(
+                        f"{cls_name}: must specify template_params for templated class, or ignore it"
+                    )
+            else:
+                if template_parameter_list != "":
+                    raise ValueError(
+                        f"{cls_name}: cannot specify template_params for non-template class"
+                    )
 
         cls["x_qualname"] = cls_qualname
 
