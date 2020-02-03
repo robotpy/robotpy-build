@@ -70,23 +70,19 @@ void init_{{ mod_fn }}(py::module &m) {
 {% endfor %}
 
 {# class declarations #}
-{% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
+{%- for cls in header.classes
+   if not cls.parent and not cls.data.ignore and cls.template is not defined %}
   {{ pybind11.cls_decl(cls, cls.x_varname, '"' + cls.x_name + '"') }}
-  
-  {# define class enums in case they are used as default args #}
-  {% for enum in cls.enums.public -%}
-    {{ pybind11.genenum(cls.x_varname, enum) }}
-  {% endfor -%}
-
 {% endfor %}
 
 {# class methods #}
-{% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
+{%- for cls in header.classes
+   if not cls.parent and not cls.data.ignore and cls.template is not defined %}
   {{ pybind11.cls_methods(cls, cls.x_varname) }}
 {% endfor %}
 
 {# global methods #}
-{% if header.functions %}
+{%- if header.functions %}
   {% for fn in header.functions if not fn.data.ignore -%}
     {{ fn.x_module_var }}{{ pybind11.genmethod(None, fn, None) }};
   {% endfor %};

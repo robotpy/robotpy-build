@@ -544,9 +544,17 @@ class Hooks:
                 + f"{invalid_bases}; valid bases are {bases}"
             )
 
-        cls_qualname = cls["namespace"] + "::" + cls_name
+        # No template stuff
+        simple_cls_qualname = f'{cls["namespace"]}::{cls_name}'
+
+        # Template stuff
+        if cls["parent"]:
+            cls_qualname = f'{cls["parent"]["x_qualname"]}::{cls_name}'
+        else:
+            cls_qualname = simple_cls_qualname
+
         cls["x_qualname_"] = cls_qualname.translate(self._qualname_trans)
-        self.class_hierarchy[cls_qualname] = [
+        self.class_hierarchy[simple_cls_qualname] = [
             base["x_qualname"] for base in cls["x_inherits"]
         ] + class_data.force_depends
 
@@ -698,7 +706,7 @@ class Hooks:
                 tmpl = f", {template_argument_list}"
             cls[
                 "x_trampoline_name"
-            ] = f"rpygen::Py{cls['x_qualname_']}<{cls_qualname}{tmpl}>"
+            ] = f"rpygen::Py{cls['x_qualname_']}<typename {cls_qualname}{tmpl}>"
         cls["x_has_constructor"] = has_constructor
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)
