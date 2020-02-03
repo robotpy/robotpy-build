@@ -111,6 +111,11 @@ class FunctionData(Model):
 
     return_value_policy: ReturnValuePolicy = ReturnValuePolicy.AUTOMATIC
 
+    #: If this is a function template, this is a list of instantiations
+    #: that you wish to provide. This is a list of lists, where the inner
+    #: list is the template parameters for that function
+    template_impls: Optional[List[List[str]]] = None
+
     @validator("overloads", pre=True)
     def validate_overloads(cls, value):
         for k, v in value.items():

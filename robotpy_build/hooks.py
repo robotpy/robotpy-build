@@ -428,6 +428,18 @@ class Hooks:
         if data.keepalive is not None:
             x_keepalives = data.keepalive
 
+        if not self.report_only:
+            if fn["template"]:
+                if data.template_impls is None:
+                    raise ValueError(
+                        f"{fn['name']}: must specify template impls for function template"
+                    )
+            else:
+                if data.template_impls is not None:
+                    raise ValueError(
+                        f"{fn['name']}: cannot specify template_impls for non-template functions"
+                    )
+
         # if "hook" in data:
         #     eval(data["hook"])(fn, data)
 

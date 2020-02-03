@@ -6,7 +6,7 @@
 {% if cls_qualname and fn.static %}def_static{% else %}def{% endif %}
 {% endmacro -%}
 
-{%- macro fnptr(cls_qualname, fn, trampoline_qualname) -%}
+{%- macro fnptr(cls_qualname, fn, trampoline_qualname, tmpl) -%}
   {%- if fn.data.cpp_code -%}
     {{ fn.data.cpp_code }}
   {%- elif not fn.x_genlambda -%}
@@ -18,7 +18,7 @@
     {%- else -%}
       {{ fn.namespace }}
     {%- endif -%}
-    {{ fn.name }}
+    {{ fn.name }}{{ tmpl }}
   {%- else -%}
     [](
       {%- if cls_qualname -%}
@@ -38,7 +38,7 @@
           {%- else -%}
             {{ fn.namespace }}
           {%- endif -%}
-          {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {{ fn.name }}{{ tmpl }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
           {% for stmt in fn.x_lambda_post %}
           {{ stmt }};
           {% endfor %}
@@ -62,7 +62,7 @@
   {%- if fn.const %} const{% endif -%}
 {%- endmacro -%}
 
-{%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
+{%- macro _genmethod(cls_qualname, fn, trampoline_qualname, tmpl) -%}
   {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
   {%+ if fn.data.ifdef %}
 
@@ -108,7 +108,7 @@
           static_cast<{{ gensig(ns.qualname, fn) }}>(
         {% endif -%}
       {%- endif -%}
-	      {{- fnptr(cls_qualname, fn, trampoline_qualname) -}}
+	      {{- fnptr(cls_qualname, fn, trampoline_qualname, tmpl) -}}
       {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
         {%- if fn.x_overloaded -%}){%- endif -%}
         {%- if trampoline_qualname -%}){%- endif -%}
@@ -142,6 +142,16 @@
   #endif // {{ fn.data.ifndef }}
   {% endif %}
 {%- endmacro -%}
+
+{%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
+  {%- if not fn.data.template_impls -%}
+    {{ _genmethod(cls_qualname, fn, trampoline_qualname, "") }}
+  {%- else -%}
+    {%- for tmpl in fn.data.template_impls -%}
+    {{ _genmethod(cls_qualname, fn, trampoline_qualname, "<" + (tmpl | join(", ")) + ">") }}
+    {% endfor -%}
+  {%- endif -%}
+{%- endmacro %}
 
 {%- macro genprop(qualname, prop) -%}
   {%- if prop.array_size is defined -%}
