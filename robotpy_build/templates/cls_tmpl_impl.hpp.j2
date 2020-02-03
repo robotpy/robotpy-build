@@ -9,10 +9,9 @@ namespace rpygen {
 {% if cls.namespace %}
 using namespace {{ cls.namespace }};
 {% endif %}
-{% for header in headers %}
-{% for using in header.using.values() %}
+
+{% for using in header.using.values() if using.using_type != "typealias" %}
 using {{ using.raw_type }};
-{% endfor %}
 {% endfor %}
 
 template <typename {{ cls.data.template_params | join(', typename ') }}>
