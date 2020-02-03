@@ -44,7 +44,7 @@ using {{ using.raw_type }};
     To avoid multiple inheritance here, we define a single base with bases that
     are all template bases.. 
 #}
-template <typename CxxBase{{ cls.x_pybase_typenames }}>
+template <typename CxxBase{{ cls.x_pybase_params }}>
 using PyBase{{ cls.x_qualname_ }} = 
 {% for base in cls.x_inherits %}
     Py{{ base.x_qualname_ }}<
@@ -57,15 +57,15 @@ using PyBase{{ cls.x_qualname_ }} =
 ;
 
 template <typename CxxBase
-{%- if cls.data.template_params -%}
-    , typename {{ cls.data.template_params | join(', typename ') }}
+{%- if cls.x_template_parameter_list -%}
+    , {{ cls.x_template_parameter_list }}
 {%- endif %}>
-struct Py{{ cls.x_qualname_ }} : PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_params }}> {
-    using PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_params }}>::PyBase{{ cls.x_qualname_ }};
+struct Py{{ cls.x_qualname_ }} : PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_args }}> {
+    using PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_args }}>::PyBase{{ cls.x_qualname_ }};
 {% else %}
 template <typename CxxBase
-{%- if cls.data.template_params -%}
-    , typename {{ cls.data.template_params | join(', typename ') }}
+{%- if cls.x_template_parameter_list -%}
+    , {{ cls.x_template_parameter_list }}
 {%- endif %}>
 struct Py{{ cls.x_qualname_ }} : CxxBase {
     using CxxBase::CxxBase;
@@ -76,7 +76,7 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
 #ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
     Py{{ cls.x_qualname_ }}({{ fn.parameters | join(', ', attribute='x_decl') }}) :
         {% if cls.x_inherits -%}
-             PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_params }}>
+             PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_args }}>
         {%- else -%}
             CxxBase
         {%- endif -%}

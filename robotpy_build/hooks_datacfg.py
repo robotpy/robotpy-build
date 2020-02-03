@@ -210,8 +210,11 @@ class ClassData(Model):
     #: Extra constexpr to insert into the trampoline and wrapping scopes
     constants: List[str] = []
 
-    #: If this is a template class, a list of the parameters
-    #: if it can't be autodetected (currently can't autodetect)
+    #: If this is a template class, a list of the parameters if it can't
+    #: be autodetected (currently can't autodetect). If there is no space
+    #: in the parameter, then it is assumed to be a 'typename', otherwise
+    #: the parameter is split by space and the first item is the type and
+    #: the second parameter is the name (useful for integral templates)
     template_params: Optional[List[str]] = None
 
     #: If this is a template class, the specified C++ code is inserted

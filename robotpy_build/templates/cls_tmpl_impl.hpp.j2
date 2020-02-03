@@ -14,7 +14,7 @@ using namespace {{ cls.namespace }};
 using {{ using.raw_type }};
 {% endfor %}
 
-template <typename {{ cls.data.template_params | join(', typename ') }}>
+template <{{ cls.x_template_parameter_list }}>
 inline void bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) {
 
     {{ pybind11.cls_using(cls) }}

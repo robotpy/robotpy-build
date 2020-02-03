@@ -550,26 +550,48 @@ class Hooks:
             base["x_qualname"] for base in cls["x_inherits"]
         ] + class_data.force_depends
 
-        template_params = ""
+        # <N, .. >
+        template_argument_list = ""
+        # <typename N, .. >
+        template_parameter_list = ""
+
         if class_data.template_params:
-            template_params = ", ".join(class_data.template_params)
-            cls_qualname = f"{cls_qualname}<{template_params}>"
-            base_template_params = [
-                p for p in class_data.template_params if p in pybase_params
-            ]
+            template_args = []
+            template_params = []
+
+            base_template_args = []
+            base_template_params = []
+
+            for param in class_data.template_params:
+                if " " in param:
+                    arg = param.split(" ", 1)[1]
+                else:
+                    arg = param
+                    param = f"typename {param}"
+
+                template_args.append(arg)
+                template_params.append(param)
+
+                if arg in pybase_params:
+                    base_template_args.append(arg)
+                    base_template_params.append(param)
+
+            template_argument_list = ", ".join(template_args)
+            template_parameter_list = ", ".join(template_params)
+
+            cls_qualname = f"{cls_qualname}<{template_argument_list}>"
         else:
             base_template_params = None
+            base_template_args = None
 
         if base_template_params:
-            cls["x_pybase_typenames"] = ", typename " + ", typename ".join(
-                base_template_params
-            )
-            cls["x_pybase_params"] = ", " + ", ".join(base_template_params)
+            cls["x_pybase_args"] = f", {', '.join(base_template_args)}"
+            cls["x_pybase_params"] = f", {', '.join(base_template_params)}"
         else:
-            cls["x_pybase_typenames"] = ""
+            cls["x_pybase_args"] = ""
             cls["x_pybase_params"] = ""
 
-        if "template" in cls and template_params == "" and not self.report_only:
+        if "template" in cls and template_parameter_list == "" and not self.report_only:
             raise ValueError(
                 f"{cls_name}: must specify template_params for templated class, or ignore it"
             )
@@ -669,10 +691,11 @@ class Hooks:
                 v["x_readonly"] = x_readonly
 
         cls["x_has_trampoline"] = has_trampoline
+        cls["x_template_parameter_list"] = template_parameter_list
         if cls["x_has_trampoline"]:
             tmpl = ""
-            if template_params:
-                tmpl = f", {template_params}"
+            if template_argument_list:
+                tmpl = f", {template_argument_list}"
             cls[
                 "x_trampoline_name"
             ] = f"rpygen::Py{cls['x_qualname_']}<{cls_qualname}{tmpl}>"
