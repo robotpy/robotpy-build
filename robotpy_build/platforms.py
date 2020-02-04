@@ -30,12 +30,12 @@ class WPILibMavenPlatform:
 
 
 X86_64 = "x86-64"
-ROBORIO = WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"])
-RASPBIAN = WPILibMavenPlatform("raspbian")
 OSX = WPILibMavenPlatform(X86_64, "osx", libext=".dylib")
 
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
+    "linux-athena": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
+    "linux-armv7l": WPILibMavenPlatform("raspbian"),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
     "linux-aarch64": WPILibMavenPlatform("aarch64bionic"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
@@ -63,13 +63,10 @@ def get_platform() -> WPILibMavenPlatform:
             import distro
 
             if distro.id() == "nilrt":
-                return ROBORIO
+                pyplatform = "linux-athena"
 
         except Exception:
             pass
-
-        # only two armv7 distros supported, assume raspbian
-        return RASPBIAN
 
     try:
         return _platforms[pyplatform]
