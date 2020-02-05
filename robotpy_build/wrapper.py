@@ -363,7 +363,9 @@ class Wrapper:
 
             for libname in libnames:
                 init += "try:\n"
-                init += f'    _lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
+                init += (
+                    f'    _lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
+                )
                 init += "except FileNotFoundError:\n"
                 init += f'    if not exists(join(_root, "lib", "{libname}")):\n'
                 init += f'        raise FileNotFoundError("{libname} was not found on your system. Is this package correctly installed?")\n'
