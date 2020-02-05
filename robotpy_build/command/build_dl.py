@@ -1,7 +1,10 @@
 from distutils.core import Command
+from typing import List
 import os.path
 
 from ..platforms import get_platform
+from ..static_libs import StaticLib
+from ..wrapper import Wrapper
 from .util import get_install_root
 
 
@@ -16,8 +19,8 @@ class BuildDl(Command):
         ("src-unpack-to=", None, "build directory to unpack sources to"),
         ("lib-unpack-to=", None, "build directory to unpack static libs to"),
     ]
-    wrappers = []
-    static_libs = []
+    wrappers: List[Wrapper] = []
+    static_libs: List[StaticLib] = []
 
     def initialize_options(self):
         self.build_base = None

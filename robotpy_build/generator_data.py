@@ -1,4 +1,3 @@
-import sys
 import yaml
 
 from .hooks_datacfg import (
@@ -9,10 +8,7 @@ from .hooks_datacfg import (
     FunctionData,
 )
 
-from typing import Optional
-
-
-_missing = object()
+from typing import Dict, Optional
 
 
 class GeneratorData:
@@ -27,14 +23,14 @@ class GeneratorData:
         self.data = data
 
         # report data
-        self.functions = {}
-        self.classes = {}
-        self.enums = {}
-        self.attributes = {}
+        self.functions: Dict[str, bool] = {}
+        self.classes: Dict[str, Dict] = {}
+        self.enums: Dict[str, bool] = {}
+        self.attributes: Dict[str, bool] = {}
 
     def get_class_data(self, name: str) -> ClassData:
-        data = self.data.classes.get(name, _missing)
-        missing = data is _missing
+        data = self.data.classes.get(name)
+        missing = data is None
         if missing:
             data = ClassData()
 
@@ -52,16 +48,16 @@ class GeneratorData:
         if name is None:
             # TODO
             return EnumData()
-        data = cls_data.enums.get(name, _missing)
-        if data is _missing:
+        data = cls_data.enums.get(name)
+        if data is None:
             self.classes[cls_key]["enums"][name] = False
             data = EnumData()
 
         return data
 
     def get_enum_data(self, name: str) -> EnumData:
-        data = self.data.enums.get(name, _missing)
-        if data is _missing:
+        data = self.data.enums.get(name)
+        if data is None:
             self.enums[name] = False
             data = EnumData()
         return data
@@ -75,22 +71,22 @@ class GeneratorData:
         is_private: bool = False,
     ) -> FunctionData:
         name = fn["name"]
-        if cls_data:
-            data = cls_data.methods.get(name, _missing)
+        if cls_data and cls_key:
+            data = cls_data.methods.get(name)
             report_base = self.classes[cls_key]["functions"]
         else:
-            data = self.data.functions.get(name, _missing)
+            data = self.data.functions.get(name)
             report_base = self.functions
 
         report_base = report_base.setdefault(name, {"overloads": {}, "first": fn})
-        missing = data is _missing
+        missing = data is None
         report_base["missing"] = missing and not is_private
 
         if missing:
             data = FunctionData()
         else:
-            overload = data.overloads.get(signature, _missing)
-            missing = overload is _missing
+            overload = data.overloads.get(signature)
+            missing = overload is None
             if not missing and overload:
                 # merge overload information
                 data = data.dict(exclude_unset=True)
@@ -111,16 +107,16 @@ class GeneratorData:
     def get_cls_prop_data(
         self, name: str, cls_key: str, cls_data: ClassData
     ) -> PropData:
-        data = cls_data.attributes.get(name, _missing)
-        if data is _missing:
+        data = cls_data.attributes.get(name)
+        if data is None:
             self.classes[cls_key]["attributes"][name] = False
             data = PropData()
 
         return data
 
     def get_prop_data(self, name) -> PropData:
-        data = self.data.attributes.get(name, _missing)
-        if data is _missing:
+        data = self.data.attributes.get(name)
+        if data is None:
             self.attributes[name] = False
             data = PropData()
 
@@ -162,7 +158,7 @@ class GeneratorData:
 
     def _process_missing(self, attrs, fns, enums, fn_key: str):
 
-        data = {}
+        data: Dict[str, Dict[str, Dict]] = {}
 
         # attributes
         if attrs:
