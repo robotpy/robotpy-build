@@ -111,9 +111,11 @@ class FunctionData(Model):
     overloads: Dict[str, "FunctionData"] = {}
 
     #: Adds py::keep_alive<x,y> to the function. Overrides automatic
-    #: keepalive support, which retains references passed to constructors
+    #: keepalive support, which retains references passed to constructors.
+    #: https://pybind11.readthedocs.io/en/stable/advanced/functions.html#keep-alive
     keepalive: Optional[List[Tuple[int, int]]] = None
 
+    #: https://pybind11.readthedocs.io/en/stable/advanced/functions.html#return-value-policies
     return_value_policy: ReturnValuePolicy = ReturnValuePolicy.AUTOMATIC
 
     #: If this is a function template, this is a list of instantiations
