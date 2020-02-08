@@ -136,7 +136,10 @@ FunctionData.update_forward_refs()
 
 class PropAccess(enum.Enum):
 
-    #: Determine read/read-write automatically
+    #: Determine read/read-write automatically:
+    #: - If a struct/union, default to readwrite
+    #: - If a class, default to readwrite if a basic type that isn't a
+    #:   reference, otherwise default to readonly
     AUTOMATIC = "auto"
 
     #: Allow python users access to the value, but ensure it can't
