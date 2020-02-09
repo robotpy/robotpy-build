@@ -160,13 +160,23 @@ class PropData(Model):
     #: Python code access to this property
     access: PropAccess = PropAccess.AUTOMATIC
 
+    #: Docstring for the property (only available on class properties)
+    doc: Optional[str] = None
+
 
 class EnumValue(Model):
     ignore: bool = False
     rename: Optional[str] = None
 
+    #: Docstring for the enum value
+    doc: Optional[str] = None
+
 
 class EnumData(Model):
+
+    # Docstring for the enum
+    doc: Optional[str] = None
+
     ignore: bool = False
     rename: Optional[str] = None
     value_prefix: Optional[str] = None
@@ -179,6 +189,9 @@ class EnumData(Model):
 
 
 class ClassData(Model):
+
+    #: Docstring for the class
+    doc: Optional[str] = None
 
     ignore: bool = False
     ignored_bases: List[str] = []

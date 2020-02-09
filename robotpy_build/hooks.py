@@ -126,6 +126,24 @@ class Hooks:
 
         return name
 
+    def _process_doc(self, thing, data) -> typing.Optional[typing.List[str]]:
+        doc = ""
+        doc_quoted: typing.Optional[typing.List[str]] = None
+
+        if data.doc is not None:
+            doc = data.doc
+        elif "doxygen" in thing:
+            doc = thing["doxygen"]
+            doc = sphinxify.process_raw(doc)
+
+        if doc:
+            # TODO
+            doc = doc.replace("\\", "\\\\").replace('"', '\\"')
+            doc_quoted = doc.splitlines(keepends=True)
+            doc_quoted = ['"%s"' % (dq.replace("\n", "\\n"),) for dq in doc_quoted]
+
+        return doc_quoted
+
     def _resolve_default(self, fn, name):
         if isinstance(name, (int, float)):
             return str(name)
@@ -164,6 +182,8 @@ class Hooks:
 
             en["x_name"] = self._set_name(ename, enum_data)
 
+        en["x_doc_quoted"] = self._process_doc(en, enum_data)
+
         if value_prefix:
             strip_prefixes = [value_prefix + "_", value_prefix]
         else:
@@ -176,6 +196,7 @@ class Hooks:
                 v_data = EnumValue()
             v["x_name"] = self._set_name(name, v_data, strip_prefixes)
             v["data"] = v_data
+            v["x_doc_quoted"] = self._process_doc(v, v_data)
 
     def header_hook(self, header, data):
         """Called for each header"""
@@ -410,20 +431,7 @@ class Hooks:
         elif fn["constructor"]:
             x_name = "__init__"
 
-        doc = ""
-        doc_quoted: typing.Optional[typing.List[str]] = None
-
-        if data.doc is not None:
-            doc = data.doc
-        elif "doxygen" in fn:
-            doc = fn["doxygen"]
-            doc = sphinxify.process_raw(doc)
-
-        if doc:
-            # TODO
-            doc = doc.replace("\\", "\\\\").replace('"', '\\"')
-            doc_quoted = doc.splitlines(keepends=True)
-            doc_quoted = ['"%s"' % (dq.replace("\n", "\\n"),) for dq in doc_quoted]
+        doc_quoted = self._process_doc(fn, data)
 
         if data.keepalive is not None:
             x_keepalives = data.keepalive
@@ -470,7 +478,6 @@ class Hooks:
                 x_callend=x_callend,
                 x_wrap_return=x_wrap_return,
                 # docstrings
-                x_doc=doc,
                 x_doc_quoted=doc_quoted,
             )
         )
@@ -726,6 +733,7 @@ class Hooks:
                     x_readonly = False
 
                 v["x_readonly"] = x_readonly
+                v["x_doc_quoted"] = self._process_doc(v, propdata)
 
         cls["x_has_trampoline"] = has_trampoline
         cls["x_template_parameter_list"] = template_parameter_list
@@ -739,3 +747,4 @@ class Hooks:
         cls["x_has_constructor"] = has_constructor
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)
+        cls["x_doc_quoted"] = self._process_doc(cls, class_data)
