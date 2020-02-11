@@ -32,6 +32,7 @@ class BuildDep:
             "build-dep", help="Install build dependencies", parents=[parent_parser]
         )
         parser.add_argument("--install", help="Actually do it", action="store_true")
+        parser.add_argument("--find-links", help="Find links arg", default=None)
         return parser
 
     def run(self, args):
@@ -47,6 +48,11 @@ class BuildDep:
             "--disable-pip-version-check",
             "install",
         ]
+        if args.find_links:
+            pipargs.extend(
+                ["--find-links", args.find_links,]
+            )
+
         pipargs.extend(requirements)
         print(" ".join(pipargs))
 
