@@ -3,6 +3,7 @@ from os.path import dirname, join
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import setuptools
+import sys
 import tempfile
 
 from .util import get_install_root
@@ -106,6 +107,20 @@ class BuildExt(build_ext):
         self.run_command("build_gen")
 
         build_ext.run(self)
+
+    def get_libraries(self, ext):
+        libraries = build_ext.get_libraries(self, ext)
+
+        if (
+            sys.platform != "win32"
+            and os.environ.get("RPYBUILD_STRIP_LIBPYTHON") == "1"
+        ):
+            pythonlib = "python{}.{}".format(
+                sys.hexversion >> 24, (sys.hexversion >> 16) & 0xFF
+            )
+            libraries = [lib for lib in libraries if not lib.startswith(pythonlib)]
+
+        return libraries
 
 
 if os.environ.get("RPYBUILD_PARALLEL") == "1":
