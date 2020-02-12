@@ -1,6 +1,5 @@
 import os
-from os.path import dirname, join
-from setuptools import setup, Extension
+from os.path import join
 from setuptools.command.build_ext import build_ext
 import setuptools
 import sys
@@ -11,6 +10,7 @@ from ..platforms import get_platform
 
 # TODO: only works for GCC
 debug = os.environ.get("RPYBUILD_DEBUG") == "1"
+
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
@@ -123,7 +123,8 @@ class BuildExt(build_ext):
         return libraries
 
 
-if os.environ.get("RPYBUILD_PARALLEL") == "1":
+parallel = int(os.environ.get("RPYBUILD_PARALLEL", "0"))
+if parallel > 0:
     # don't enable this hack by default, because not really sure of the
     # ramifications -- however, it's really useful for development
     #
@@ -151,7 +152,7 @@ if os.environ.get("RPYBUILD_PARALLEL") == "1":
         import multiprocessing
         import multiprocessing.pool
 
-        N = multiprocessing.cpu_count()
+        N = multiprocessing.cpu_count() if parallel == 1 else parallel
 
         def _single_compile(obj):
             try:
@@ -160,8 +161,8 @@ if os.environ.get("RPYBUILD_PARALLEL") == "1":
                 return
             self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
 
-        # convert to list, imap is evaluated on-demand
-        list(multiprocessing.pool.ThreadPool(N).imap(_single_compile, objects))
+        for _ in multiprocessing.pool.ThreadPool(N).imap(_single_compile, objects):
+            pass
         return objects
 
     import distutils.ccompiler
