@@ -262,7 +262,7 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
     {%- endif -%}
     , {{ name }});
   
-  {{ doc(cls, varname + '.doc() =', ';') }}
+  {{ doc(cls, varname + '.doc() = py::str(PyUnicode_DecodeLocale(', ', NULL));') }}
   
   {# define class enums in case they are used as default args #}
   {% for enum in cls.enums.public %}
