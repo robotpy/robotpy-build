@@ -88,6 +88,8 @@ class Wrapper:
 
         self._all_deps = None
 
+        self._gen_includes = []
+
         self.extension = None
         if self.cfg.sources or self.cfg.generate:
             define_macros = [("RPYBUILD_MODULE_NAME", extname)] + [
@@ -516,7 +518,6 @@ class Wrapper:
         else:
             data = HooksDataYaml()
 
-        sources = self.cfg.sources[:]
         pp_defines = [self._cpp_version] + self.platform.defines + self.cfg.pp_defines
         casters = self._all_casters()
 
@@ -551,7 +552,7 @@ class Wrapper:
                     class_templates = []
                 else:
                     cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                    sources.append(cpp_dst)
+                    self.extension.sources.append(cpp_dst)
                     classdeps_dst = join(cxx_gen_dir, f"{name}.json")
                     classdeps[name] = classdeps_dst
 
@@ -619,22 +620,27 @@ class Wrapper:
         else:
             gen_includes = []
 
+        self._gen_includes = gen_includes
+
+        for f in glob.glob(join(glob.escape(hppoutdir), "*.hpp")):
+            self._add_generated_file(f)
+
+    def finalize_extension(self):
+        if self.extension is None:
+            return
+
         # Add the root to the includes (but only privately)
         root_includes = [self.root]
 
         # update the build extension so that build_ext works
-        self.extension.sources = sources
         # use normpath to get rid of .. otherwise gcc is weird
         self.extension.include_dirs = [
             normpath(p)
-            for p in (self._all_includes(True) + gen_includes + root_includes)
+            for p in (self._all_includes(True) + self._gen_includes + root_includes)
         ]
         self.extension.library_dirs = self._all_library_dirs()
         self.extension.libraries = self._all_library_names()
         self.extension.extra_objects = self._all_extra_objects()
-
-        for f in glob.glob(join(glob.escape(hppoutdir), "*.hpp")):
-            self._add_generated_file(f)
 
     def _write_wrapper_hpp(self, outdir, classdeps):
 

@@ -106,6 +106,9 @@ class BuildExt(build_ext):
         # files need to be generated before building can occur
         self.run_command("build_gen")
 
+        for wrapper in self.wrappers:
+            wrapper.finalize_extension()
+
         build_ext.run(self)
 
     def get_libraries(self, ext):
