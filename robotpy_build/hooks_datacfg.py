@@ -211,6 +211,12 @@ class ClassData(Model):
     #: manually. TODO: make it so we don't need this
     force_depends: List[str] = []
 
+    #: Use this to bring in type casters for a particular type that may have
+    #: been hidden (for example, with a typedef or definition in another file),
+    #: instead of explicitly including the header. This should be the full
+    #: namespace of the type.
+    force_type_casters: List[str] = []
+
     #: If the object shouldn't be deleted by pybind11, use this. Disables
     #: implicit constructors.
     nodelete: bool = False

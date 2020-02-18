@@ -515,6 +515,9 @@ class Hooks:
         if class_data.ignore:
             return
 
+        for typename in class_data.force_type_casters:
+            self._add_type_caster(typename)
+
         self._add_subpackage(cls, class_data)
 
         # fix enum paths
