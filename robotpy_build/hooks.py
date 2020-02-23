@@ -438,7 +438,7 @@ class Hooks:
 
         if not self.report_only:
             if fn["template"]:
-                if data.template_impls is None:
+                if data.template_impls is None and not data.cpp_code:
                     raise ValueError(
                         f"{fn['name']}: must specify template impls for function template"
                     )
