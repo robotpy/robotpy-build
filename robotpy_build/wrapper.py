@@ -300,9 +300,23 @@ class Wrapper:
             if dlcfg.sources:
                 sources = [join(srcdir, normpath(s)) for s in dlcfg.sources]
                 self.extension.sources.extend(sources)
+            if dlcfg.patches:
+                import patch
+
+                for p in dlcfg.patches:
+                    patch_path = join(self.setup_root, normpath(p.patch))
+                    ps = patch.PatchSet()
+                    with open(patch_path, "rb") as fp:
+                        if not ps.parse(fp):
+                            raise ValueError(f"Error parsing patch '{patch_path}'")
+
+                    if not ps.apply(strip=p.strip, root=srcdir):
+                        raise ValueError(f"Error applying patch '{patch_path}")
             return []
         elif dlcfg.sources is not None:
             raise ValueError("sources must be None if use_sources is False!")
+        elif dlcfg.patches is not None:
+            raise ValueError("patches must be None if use_sources is False!")
 
         libnames = self.get_library_names()
         dlopen_libnames = self.get_dlopen_library_names()

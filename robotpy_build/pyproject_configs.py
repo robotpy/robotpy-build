@@ -5,6 +5,13 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 
+class PatchInfo(BaseModel):
+    #: Name of patch file to apply
+    patch: str
+    #: Number of directories to strip
+    strip: int = 0
+
+
 class MavenLibDownload(BaseModel):
     """
         The information required here can be found in the vendor JSON file
@@ -49,6 +56,11 @@ class MavenLibDownload(BaseModel):
 
     #: Configure the sources classifier
     sources_classifier: str = "sources"
+
+    #: If use_sources is set, apply the following patches to the sources. Patches
+    #: must be in unified diff format. Key is filename, value is number of paths
+    #: to strip from the file
+    patches: Optional[List[PatchInfo]] = None
 
 
 class StaticLibConfig(BaseModel):
