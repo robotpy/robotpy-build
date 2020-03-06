@@ -28,6 +28,8 @@ class ParamData(Model):
 
     force_out: bool = False
 
+    array_size: Optional[int] = None
+
     ignore: bool = False
 
 
