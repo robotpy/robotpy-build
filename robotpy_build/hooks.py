@@ -118,11 +118,15 @@ class Hooks:
         if strip_prefixes:
             for pfx in strip_prefixes:
                 if name.startswith(pfx):
-                    name = name[len(pfx) :]
-                    break
+                    n = name[len(pfx) :]
+                    if not n.isnumeric():
+                        name = n
+                        break
 
         if iskeyword(name):
             return f"{name}_"
+        elif name.isnumeric():
+            raise ValueError(f"name cannot be all numbers ({name})")
 
         return name
 
