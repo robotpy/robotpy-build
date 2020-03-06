@@ -363,6 +363,8 @@ class Hooks:
                 if asz:
                     p["x_type"] = "std::array<%s, %s>" % (p["x_type"], asz)
                     p["x_callname"] = "%(x_callname)s.data()" % p
+                    if "default" not in p:
+                        p["default"] = "{}"
                 else:
                     # it's a vector
                     pass
