@@ -178,7 +178,7 @@ class Setup:
                     raise ValueError("Invalid unsupported configuration.")
                 if platform_dict_val != v:
                     bad_platform = False
-            
+
             if bad_platform:
 
                 bad_arch = un_pl.get("arch", "")
@@ -196,14 +196,14 @@ class Setup:
                     bad_os = "macOS"
 
                 msg_plat = "{}{}{}".format(
-                    msg_arch,
-                    " " if msg_arch != "" else "",
-                    bad_os,
+                    msg_arch, " " if msg_arch != "" else "", bad_os,
                 )
 
-                err_msg = "{} is not supported on {}!".format(self.pypi_package, msg_plat)
+                err_msg = "{} is not supported on {}!".format(
+                    self.pypi_package, msg_plat
+                )
 
-                raise OSError(err_msg)       
+                raise OSError(err_msg)
 
         _setup(**self.setup_kwargs)
 
