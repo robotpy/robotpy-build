@@ -4,6 +4,7 @@ from setuptools import find_packages, setup as _setup
 from setuptools import Extension
 from setuptools_scm import get_version
 import toml
+import dataclasses
 
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -164,6 +165,46 @@ class Setup:
 
     def run(self):
         # assemble all the pieces and make it work
+
+        # Check for unsupported platforms
+        platform_dict = dataclasses.asdict(self.platform)
+
+        for un_pl in self.project.unsupported_platforms:
+            bad_platform = True
+            for k, v in un_pl.items():
+                try:
+                    platform_dict_val = platform_dict[k]
+                except:
+                    raise ValueError("Invalid unsupported configuration.")
+                if platform_dict_val != v:
+                    bad_platform = False
+            
+            if bad_platform:
+
+                bad_arch = un_pl.get("arch", "")
+                bad_os = un_pl.get("os", "versions of Python")
+
+                msg_arch = ""
+                if bad_arch == "x86":
+                    msg_arch = "32-bit"
+                elif bad_arch == "x86-64":
+                    msg_arch = "64-bit"
+                else:
+                    msg_arch = bad_arch
+
+                if bad_os == "osx":
+                    bad_os = "macOS"
+
+                msg_plat = "{}{}{}".format(
+                    msg_arch,
+                    " " if msg_arch != "" else "",
+                    bad_os,
+                )
+
+                err_msg = "{} is not supported on {}!".format(self.pypi_package, msg_plat)
+
+                raise OSError(err_msg)       
+
         _setup(**self.setup_kwargs)
 
 
