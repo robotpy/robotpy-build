@@ -196,13 +196,9 @@ class Setup:
             if not is_os_supported:
                 arch = ""
 
-            msg_plat = "{}{}{}".format(
-                arch, " " if arch != "" else "", os
-            )
+            msg_plat = "{}{}{}".format(arch, " " if arch != "" else "", os)
 
-            err_msg = "{} is not supported on {}!".format(
-                self.pypi_package, msg_plat
-            )
+            err_msg = "{} is not supported on {}!".format(self.pypi_package, msg_plat)
 
             raise OSError(err_msg)
 
