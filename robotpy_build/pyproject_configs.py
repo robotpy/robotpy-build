@@ -178,7 +178,7 @@ class RobotpyBuildConfig(BaseModel):
     base_package: str
 
     # platforms that are not supported
-    supported_platforms: List[Dict[str, str]] = []
+    supported_platforms: List[Dict[str, str]] = [{}]
 
     #
     # Everything below here are separate sections
