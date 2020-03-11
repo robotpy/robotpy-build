@@ -169,41 +169,42 @@ class Setup:
         # Check for unsupported platforms
         platform_dict = dataclasses.asdict(self.platform)
 
-        for un_pl in self.project.unsupported_platforms:
-            bad_platform = True
-            for k, v in un_pl.items():
-                try:
-                    platform_dict_val = platform_dict[k]
-                except:
-                    raise ValueError("Invalid unsupported configuration.")
-                if platform_dict_val != v:
-                    bad_platform = False
+        os = platform_dict["os"]
+        arch = platform_dict["arch"]
 
-            if bad_platform:
+        is_os_supported = False
+        is_arch_supported = False
 
-                bad_arch = un_pl.get("arch", "")
-                bad_os = un_pl.get("os", "versions of Python")
+        for supp_plat in self.project.supported_platforms:
+            supp_os = supp_plat.get("os", None)
+            supp_arch = supp_plat.get("arch", None)
 
-                msg_arch = ""
-                if bad_arch == "x86":
-                    msg_arch = "32-bit"
-                elif bad_arch == "x86-64":
-                    msg_arch = "64-bit"
-                else:
-                    msg_arch = bad_arch
+            if supp_os is None or supp_os == os:
+                is_os_supported = True
+                if supp_arch is None or supp_arch == arch:
+                    is_arch_supported = True
 
-                if bad_os == "osx":
-                    bad_os = "macOS"
+        if not (is_os_supported and is_arch_supported):
+            if arch == "x86":
+                arch = "32-bit"
+            elif arch == "x86-64":
+                arch = "64-bit"
 
-                msg_plat = "{}{}{}".format(
-                    msg_arch, " " if msg_arch != "" else "", bad_os,
-                )
+            if os == "osx":
+                os = "macOS"
 
-                err_msg = "{} is not supported on {}!".format(
-                    self.pypi_package, msg_plat
-                )
+            if not is_os_supported:
+                arch = ""
 
-                raise OSError(err_msg)
+            msg_plat = "{}{}{}".format(
+                arch, " " if arch != "" else "", os
+            )
+
+            err_msg = "{} is not supported on {}!".format(
+                self.pypi_package, msg_plat
+            )
+
+            raise OSError(err_msg)
 
         _setup(**self.setup_kwargs)
 
