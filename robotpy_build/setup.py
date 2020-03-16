@@ -166,6 +166,7 @@ class Setup:
         # assemble all the pieces and make it work
         _setup(**self.setup_kwargs)
 
+
 def setup():
     s = Setup()
     s.prepare()
