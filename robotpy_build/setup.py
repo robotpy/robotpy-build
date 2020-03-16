@@ -4,7 +4,6 @@ from setuptools import find_packages, setup as _setup
 from setuptools import Extension
 from setuptools_scm import get_version
 import toml
-import dataclasses
 
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -165,45 +164,7 @@ class Setup:
 
     def run(self):
         # assemble all the pieces and make it work
-
-        # Check for unsupported platforms
-        platform_dict = dataclasses.asdict(self.platform)
-
-        os = platform_dict["os"]
-        arch = platform_dict["arch"]
-
-        is_os_supported = False
-        is_arch_supported = False
-
-        for supp_plat in self.project.supported_platforms:
-            supp_os = supp_plat.get("os", None)
-            supp_arch = supp_plat.get("arch", None)
-
-            if supp_os is None or supp_os == os:
-                is_os_supported = True
-                if supp_arch is None or supp_arch == arch:
-                    is_arch_supported = True
-
-        if not (is_os_supported and is_arch_supported):
-            if arch == "x86":
-                arch = "32-bit"
-            elif arch == "x86-64":
-                arch = "64-bit"
-
-            if os == "osx":
-                os = "macOS"
-
-            if not is_os_supported:
-                arch = ""
-
-            msg_plat = "{}{}{}".format(arch, " " if arch != "" else "", os)
-
-            err_msg = "{} is not supported on {}!".format(self.pypi_package, msg_plat)
-
-            raise OSError(err_msg)
-
         _setup(**self.setup_kwargs)
-
 
 def setup():
     s = Setup()
