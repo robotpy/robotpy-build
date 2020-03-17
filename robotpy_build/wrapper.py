@@ -138,6 +138,7 @@ class Wrapper:
         try:
             download_maven(self.cfg.maven_lib_download, classifier, dst, cache)
         except HTTPError as e:
+            # Check for a 404 error and raise an error if the platform isn't supported.
             if e.code != 404:
                 raise e
             else:
