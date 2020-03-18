@@ -177,7 +177,7 @@ class RobotpyBuildConfig(BaseModel):
     # package to store version information in
     base_package: str
 
-    # platforms that are not supported
+    # platforms that are supported
     supported_platforms: List[Dict[str, str]] = [{}]
 
     #
