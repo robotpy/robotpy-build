@@ -108,7 +108,7 @@ class Hooks:
                 includes.add(header)
         return sorted(includes)
 
-    def _set_name(self, name, data, strip_prefixes=None):
+    def _set_name(self, name, data, strip_prefixes=None, is_operator=False):
         if data.rename:
             return data.rename
 
@@ -125,7 +125,7 @@ class Hooks:
 
         if iskeyword(name):
             return f"{name}_"
-        if not name.isidentifier():
+        if not name.isidentifier() and not is_operator:
             raise ValueError(f"name {name!r} is not a valid identifier")
 
         return name
@@ -240,7 +240,7 @@ class Hooks:
         """shared with methods/functions"""
 
         # Python exposed function name converted to camelcase
-        x_name = self._set_name(fn["name"], data)
+        x_name = self._set_name(fn["name"], data, is_operator=fn.get("operator", False))
         if not data.rename and not x_name[:2].isupper():
             x_name = x_name[0].lower() + x_name[1:]
 
