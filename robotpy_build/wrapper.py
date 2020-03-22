@@ -26,6 +26,9 @@ import yaml
 from header2whatever.config import Config
 from header2whatever.parse import ConfigProcessor
 
+from urllib.error import HTTPError
+import dataclasses
+
 from setuptools import Extension
 
 from .devcfg import get_dev_config
@@ -111,6 +114,9 @@ class Wrapper:
             # Add self to extension so that build_ext can query it on OSX
             self.extension.rpybuild_wrapper = self
 
+            # Used if the maven download fails
+            self.supported_platforms = setup.project.supported_platforms
+
         if self.cfg.generate and not self.cfg.generation_data:
             raise ValueError(
                 "generation_data must be specified when generate is specified"
@@ -129,7 +135,50 @@ class Wrapper:
         self.dev_config = get_dev_config(self.name)
 
     def _extract_zip_to(self, classifier, dst, cache):
-        download_maven(self.cfg.maven_lib_download, classifier, dst, cache)
+        try:
+            download_maven(self.cfg.maven_lib_download, classifier, dst, cache)
+        except HTTPError as e:
+            # Check for a 404 error and raise an error if the platform isn't supported.
+            if e.code != 404:
+                raise e
+            else:
+                platform_dict = dataclasses.asdict(self.platform)
+
+                os = platform_dict["os"]
+                arch = platform_dict["arch"]
+
+                is_os_supported = False
+                is_arch_supported = False
+
+                for supp_plat in self.supported_platforms:
+                    supp_os = supp_plat.get("os", None)
+                    supp_arch = supp_plat.get("arch", None)
+
+                    if supp_os is None or supp_os == os:
+                        is_os_supported = True
+                        if supp_arch is None or supp_arch == arch:
+                            is_arch_supported = True
+
+                if not (is_os_supported and is_arch_supported):
+                    if arch == "x86":
+                        arch = "32-bit"
+                    elif arch == "x86-64":
+                        arch = "64-bit"
+
+                    if os == "osx":
+                        os = "macOS"
+
+                    if not is_os_supported:
+                        arch = ""
+
+                    msg_plat = "{}{}{}".format(arch, " " if arch != "" else "", os)
+
+                    err_msg = "{} is not supported on {}!".format(
+                        self.pypi_package, msg_plat
+                    )
+
+                    raise OSError(err_msg)
+                raise e
 
     def _add_generated_file(self, fullpath):
         if not isdir(fullpath):
