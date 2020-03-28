@@ -1,0 +1,36 @@
+[build-system]
+requires = ["robotpy-build"]
+
+[tool.robotpy-build]
+base_package = "rpytest"
+
+[tool.robotpy-build.wrappers."rpytest.dl".maven_lib_download]
+artifact_id = "dl"
+group_id = "fake.dl"
+repo_url = "http://127.0.0.1:RANDOM_PORT"
+version = "1.2.3"
+use_sources = true
+sources = [
+    "downloaded.cpp"
+]
+
+[tool.robotpy-build.wrappers."rpytest.dl"]
+name = "rpytest_dl"
+
+sources = [
+    "rpytest/dl/dl.cpp"
+]
+
+generation_data = "gen/dl"
+generate = [
+    { downloaded = "downloaded.h" }
+]
+
+[tool.robotpy-build.metadata]
+name = "robotpy-build-test"
+description = "robotpy-build test program"
+author = "RobotPy Development Team"
+author_email = "robotpy@googlegroups.com"
+url = "https://github.com/robotpy/robotpy-build"
+license = "BSD-3-Clause"
+install_requires = []
