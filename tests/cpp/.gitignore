@@ -20,6 +20,10 @@
 /rpytest/dl/include
 /rpytest/dl/rpy-include
 
+/rpytest/ft/_init_rpytest_ft.py
+/rpytest/ft/pkgcfg.py
+/rpytest/ft/rpy-include
+
 /rpytest/srconly/_init_rpytest_srconly.py
 /rpytest/srconly/pkgcfg.py
 /rpytest/srconly/include

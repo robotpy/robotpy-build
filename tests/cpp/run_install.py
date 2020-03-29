@@ -67,6 +67,7 @@ if __name__ == "__main__":
             sys.executable,
             "-m",
             "pip",
+            "-v",
             "--disable-pip-version-check",
             "install",
             "--no-build-isolation",

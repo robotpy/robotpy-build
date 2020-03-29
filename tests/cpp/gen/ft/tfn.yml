@@ -1,0 +1,11 @@
+---
+
+classes:
+  TClassWithFn:
+    shared_ptr: true
+    methods:
+      getT:
+        template_impls:
+        # ordering matters here!
+        - ["bool"]
+        - ["int"]

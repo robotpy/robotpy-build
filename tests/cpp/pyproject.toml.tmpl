@@ -26,6 +26,33 @@ generate = [
     { downloaded = "downloaded.h" }
 ]
 
+[tool.robotpy-build.wrappers."rpytest.ft"]
+name = "rpytest_ft"
+
+sources = [
+    "rpytest/ft/src/ft.cpp"
+]
+
+generation_data = "gen/ft"
+generate = [
+    { abstract = "abstract.h" },
+    { docstrings = "docstrings.h" },
+    { fn_overloads = "fn_overloads.h" },
+    { keepalive = "keepalive.h" },
+    { static_only = "static_only.h" },
+
+    # Templates
+    {tbase = "templates/tbase.h"},
+    {tcrtp = "templates/tcrtp.h"},
+    {tcrtpfwd = "templates/tcrtpfwd.h"},
+    {tconcrete = "templates/tconcrete.h"},
+
+    {tbasic = "templates/basic.h"},
+    {tfn = "templates/fn.h" },
+    {tnumeric = "templates/numeric.h"},
+    {tnested = "templates/nested.h"},
+]
+
 [tool.robotpy-build.wrappers."rpytest.srconly"]
 name = "rpytest_srconly"
 sources = [

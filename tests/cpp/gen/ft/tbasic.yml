@@ -1,0 +1,14 @@
+---
+classes:
+  TBasic:
+    shared_ptr: true
+    template_params:
+    - T
+    attributes:
+      t:
+  
+templates:
+  TBasicString:
+    qualname: TBasic
+    params:
+    - std::string
