@@ -26,6 +26,12 @@ generate = [
     { downloaded = "downloaded.h" }
 ]
 
+[tool.robotpy-build.wrappers."rpytest.srconly"]
+name = "rpytest_srconly"
+sources = [
+    "rpytest/srconly/srconly.cpp"
+]
+
 [tool.robotpy-build.metadata]
 name = "robotpy-build-test"
 description = "robotpy-build test program"

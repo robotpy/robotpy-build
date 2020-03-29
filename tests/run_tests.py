@@ -15,4 +15,4 @@ if __name__ == "__main__":
     subprocess.check_call([sys.executable, wcpp])
 
     # Run pytest
-    subprocess.check_call([sys.executable, "-m", "py.test"])
+    subprocess.check_call([sys.executable, "-m", "pytest"])
