@@ -1,0 +1,7 @@
+---
+
+classes:
+  StaticOnly:
+    nodelete: true
+    methods:
+      callme:

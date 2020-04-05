@@ -1,0 +1,16 @@
+classes:
+  TConcrete:
+    shared_ptr: true
+    methods:
+      concrete:
+
+templates:
+  TcrtpFwdConcrete:
+    qualname: TCrtpFwd
+    params:
+    - TConcrete
+
+  TcrtpConcrete:
+    qualname: TCrtp
+    params:
+    - TConcrete

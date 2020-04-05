@@ -60,7 +60,7 @@ void init_{{ mod_fn }}(py::module &m) {
 {% endfor %}
 
 {# define global enums in case they are used as default args #}  
-{% for enum in header.enums %}
+{% for enum in header.enums if not enum.data.ignore %}
   {{ pybind11.genenum(enum.x_module_var, enum) }}
 {% endfor %}
 
