@@ -1,0 +1,48 @@
+---
+enums:
+  IgnoredEnum:
+    ignore: true
+  EnumWithIgnored:
+    values:
+      Ignored:
+        ignore: true
+functions:
+  fnIgnore:
+    ignore: true
+  fnIgnoredParam:
+    param_override:
+      x:
+        ignore: true
+    # ignoring the param requires inline cpp
+    cpp_code: |
+      []() {
+        return fnIgnoredParam(3);
+      }
+
+classes:
+  IgnoredClass:
+    ignore: true
+  ClassWithIgnored:
+    shared_ptr: true
+    attributes:
+      ignoredProp:
+        ignore: true
+    enums:
+      IgnoredInnerEnum:
+        ignore: true
+      InnerEnumWithIgnored:
+        values:
+          Param1:
+            ignore: true
+    methods:
+      fnIgnore:
+        ignore: true
+      fnIgnoredParam:
+        param_override:
+          x:
+            ignore: true
+        # ignoring the param requires inline cpp
+        cpp_code: |
+          [](ClassWithIgnored * self, int y) {
+            return self->fnIgnoredParam(42, y);
+          }

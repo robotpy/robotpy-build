@@ -251,7 +251,7 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
     {%- if cls.x_inherits -%}
       , {{ cls.x_inherits | join(', ', attribute='class') }}
     {%- endif -%}
-    
+
     >
       {{ varname }}(
 
@@ -271,7 +271,7 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
   {{ doc(cls, varname + '.doc() =', ';') }}
   
   {# define class enums in case they are used as default args #}
-  {% for enum in cls.enums.public %}
+  {% for enum in cls.enums.public if not enum.data.ignore %}
     {{ genenum(cls.x_varname, enum) }}
   {% endfor %}
 
