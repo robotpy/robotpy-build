@@ -40,3 +40,20 @@ def test_static_only():
 
     # should be able to call static
     assert ft.StaticOnly.callme() == 0x56
+
+
+#
+# Misc
+#
+
+# ensure that not calling __init__ from a inherited class raises TypeError
+def test_init_raises():
+    called = [False]
+
+    class PyGoodAbstract(ft.Abstract):
+        def __init__(self):
+            called[0] = True
+
+    with pytest.raises(TypeError):
+        PyGoodAbstract()
+    assert called == [True]
