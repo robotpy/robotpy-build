@@ -16,6 +16,8 @@ from ._rpytest_ft import (
     PChild,
     PGChild,
     PatientRef,
+    RenamedClass,
+    RenamedEnum,
     StaticOnly,
     TBase,
     TBaseGetN4,
@@ -29,6 +31,8 @@ from ._rpytest_ft import (
     TcrtpConcrete,
     TcrtpFwdConcrete,
     fnOverload,
+    fnRenamed,
+    fnRenamedParam,
     get123,
 )
 
@@ -46,6 +50,8 @@ __all__ = [
     "PChild",
     "PGChild",
     "PatientRef",
+    "RenamedClass",
+    "RenamedEnum",
     "StaticOnly",
     "TBase",
     "TBaseGetN4",
@@ -59,5 +65,7 @@ __all__ = [
     "TcrtpConcrete",
     "TcrtpFwdConcrete",
     "fnOverload",
+    "fnRenamed",
+    "fnRenamedParam",
     "get123",
 ]

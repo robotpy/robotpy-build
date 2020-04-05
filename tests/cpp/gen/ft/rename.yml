@@ -1,0 +1,36 @@
+---
+enums:
+  OriginalEnum:
+    rename: RenamedEnum
+    values:
+      Original1:
+        rename: Renamed1
+
+functions:
+  fnOriginal:
+    rename: fnRenamed
+  fnRenamedParam:
+    param_override:
+      x:
+        name: y
+classes:
+  OriginalClass:
+    shared_ptr: true
+    rename: RenamedClass
+    attributes:
+      originalProp:
+        rename: renamedProp
+    enums:
+      ClassOriginalEnum:
+        rename: ClassRenamedEnum
+        values:
+          Param1:
+            rename: P1
+    methods:
+      fnOriginal:
+        rename: fnRenamed
+      fnRenamedParam:
+        param_override:
+          x:
+            name: y
+      setProp:
