@@ -260,7 +260,13 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
     {%- else -%}
       {{ cls.x_module_var }}
     {%- endif -%}
-    , {{ name }});
+    , {{ name }}
+    
+    {%- if cls.final -%}
+      , py::is_final()
+    {%- endif -%}
+
+    );
   
   {{ doc(cls, varname + '.doc() =', ';') }}
   
