@@ -164,6 +164,23 @@ class DistutilsMetadata(BaseModel):
     # ext_modules
 
 
+class SupportedPlatform(BaseModel):
+    """
+        Supported platforms for this distribution. Currently this information is
+        merely advisory, and is used to generate error messages when platform
+        specific downloads fail.
+    """
+
+    class Config:
+        extra = "forbid"
+
+    #: Platform operating system name
+    os: Optional[str] = None
+
+    #: Platform architecture
+    arch: Optional[str] = None
+
+
 class RobotpyBuildConfig(BaseModel):
     """
         Main robotpy-build configuration specified in pyproject.toml
@@ -178,7 +195,7 @@ class RobotpyBuildConfig(BaseModel):
     base_package: str
 
     # platforms that are supported
-    supported_platforms: List[Dict[str, str]] = [{}]
+    supported_platforms: List[SupportedPlatform] = []
 
     #
     # Everything below here are separate sections

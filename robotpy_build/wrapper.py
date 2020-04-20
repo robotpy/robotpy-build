@@ -151,12 +151,9 @@ class Wrapper:
                 is_arch_supported = False
 
                 for supp_plat in self.supported_platforms:
-                    supp_os = supp_plat.get("os", None)
-                    supp_arch = supp_plat.get("arch", None)
-
-                    if supp_os is None or supp_os == os:
+                    if supp_plat.os is None or supp_plat.os == os:
                         is_os_supported = True
-                        if supp_arch is None or supp_arch == arch:
+                        if supp_plat.arch is None or supp_plat.arch == arch:
                             is_arch_supported = True
 
                 if not (is_os_supported and is_arch_supported):
