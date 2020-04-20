@@ -6,63 +6,68 @@
 import enum
 from typing import Dict, List, Tuple, Optional
 
-from pydantic import BaseModel, validator
-
-
-class Model(BaseModel):
-    class Config:
-        extra = "forbid"
+from pydantic import validator
+from .util import Model, _generating_documentation
 
 
 class ParamData(Model):
     """Various ways to modify parameters"""
 
-    # Rename parameter
+    #: Set parameter name to this
     name: Optional[str] = None
 
-    # C++ type emitted
+    #: Change C++ type emitted
     x_type: Optional[str] = None
 
-    # Default value for parameter
+    #: Default value for parameter
     default: Optional[str] = None
 
+    #: Force this to be an 'out' parameter
+    #:
+    #: .. seealso:: :ref:`autowrap_out_params`
+    #:
     force_out: bool = False
 
+    #: Force an array size
     array_size: Optional[int] = None
 
+    #: Ignore this parameter
     ignore: bool = False
 
 
 class BufferType(str, enum.Enum):
+
+    #: The buffer must indicate that it is readable (such as bytes, or bytearray)
     IN = "in"
+
+    #: The buffer must indicate that it is writeable (such as a bytearray)
     OUT = "out"
+
+    #: The buffer must indicate that it readable or writeable (such as a bytearray)
     INOUT = "inout"
 
 
 class BufferData(Model):
-    """Describes buffers"""
 
-    # Indicates what type of buffer is required: out/inout buffers require
-    # a writeable buffer such as a bytearray, but in only needs a readonly
-    # buffer (such as bytes)
+    #: Indicates what type of python buffer is required
     type: BufferType
 
-    # Name of source parameter -- user must pass in something that implements
-    # the buffer protocol (eg bytes, bytearray)
+    #: Name of C++ parameter that the buffer will use
     src: str
 
-    # Name of length parameter. An out-only parameter, it will be set to the size
-    # of the src buffer, and will be returned so the caller can determine how
-    # many bytes were written
+    #: Name of the C++ length parameter. An out-only parameter, it will be set
+    #: to the size of the python buffer, and will be returned so the caller can
+    #: determine how many bytes were written
     len: str
 
-    # If specified, the minimum size of the passed in buffer
+    #: If specified, the minimum size of the python buffer
     minsz: Optional[int] = None
 
 
 class ReturnValuePolicy(enum.Enum):
     """
-        see pybind11 documentation for this
+        See `pybind11 documentation <https://pybind11.readthedocs.io/en/stable/advanced/functions.html#return-value-policies>`_
+        for what each of these values mean.
     """
 
     TAKE_OWNERSHIP = "take_ownership"
@@ -75,37 +80,42 @@ class ReturnValuePolicy(enum.Enum):
 
 
 class FunctionData(Model):
-    # If True, don't wrap this
+    """
+
+
+    """
+
+    #: If True, don't wrap this
     ignore: bool = False
 
-    # If True, don't wrap this, but provide a pure virtual implementation
-    # -> in theory we could autodetect this, but sometimes ignore
-    #    is used for when CppHeaderParser totally blows it
+    #: If True, don't wrap this, but provide a pure virtual implementation
     ignore_pure: bool = False
 
-    # Generate this in an `#ifdef`
+    #: Generate this in an `#ifdef`
     ifdef: Optional[str] = None
-    # Generate this in an `#ifndef`
+    #: Generate this in an `#ifndef`
     ifndef: Optional[str] = None
 
-    # Use this code instead of the generated code
+    #: Use this code instead of the generated code
     cpp_code: Optional[str] = None
 
-    # Docstring for the function
+    #: Docstring for the function
     doc: Optional[str] = None
 
-    # If True, prepends an underscore to the python name
+    #: If True, prepends an underscore to the python name
     internal: bool = False
 
-    # Set this to rename the function
+    #: Use this to set the name of the function as exposed to python
     rename: Optional[str] = None
 
-    # Mechanism to override individual parameters
+    #: Mechanism to override individual parameters
     param_override: Dict[str, ParamData] = {}
 
     #: If specified, put the function in a sub.pack.age
     subpackage: Optional[str] = None
 
+    #: By default, robotpy-build will release the GIL whenever a wrapped
+    #: function is called.
     no_release_gil: Optional[bool] = None
 
     buffers: List[BufferData] = []
@@ -133,7 +143,8 @@ class FunctionData(Model):
         return value
 
 
-FunctionData.update_forward_refs()
+if not _generating_documentation:
+    FunctionData.update_forward_refs()
 
 
 class PropAccess(enum.Enum):
@@ -154,9 +165,11 @@ class PropAccess(enum.Enum):
 
 
 class PropData(Model):
+
+    #: If set to True, this property is not made available to python
     ignore: bool = False
 
-    #: Set the name of this property to the specified value
+    #: Set the python name of this property to the specified string
     rename: Optional[str]
 
     #: Python code access to this property
@@ -167,7 +180,11 @@ class PropData(Model):
 
 
 class EnumValue(Model):
+
+    #: If set to True, this property is not made available to python
     ignore: bool = False
+
+    #: Set the python name of this enum value to the specified string
     rename: Optional[str] = None
 
     #: Docstring for the enum value
@@ -176,11 +193,15 @@ class EnumValue(Model):
 
 class EnumData(Model):
 
-    # Docstring for the enum
+    #: Set your own docstring for the enum
     doc: Optional[str] = None
 
+    #: If set to True, this property is not made available to python
     ignore: bool = False
+
+    #: Set the python name of this enum to the specified string
     rename: Optional[str] = None
+
     value_prefix: Optional[str] = None
 
     #: If specified, put the enum in a sub.pack.age (ignored for
@@ -198,7 +219,7 @@ class ClassData(Model):
     ignore: bool = False
     ignored_bases: List[str] = []
 
-    # Specify fully qualified names for the bases
+    #: Specify fully qualified names for the bases
     base_qualnames: Dict[str, str] = {}
 
     attributes: Dict[str, PropData] = {}
@@ -281,13 +302,11 @@ class ClassData(Model):
 
 class TemplateData(Model):
 
-    # Fully qualified name of template
+    #: Fully qualified name of template
     qualname: str
 
-    # Template parameters to use
+    #: Template parameters to use
     params: List[str]
-
-    # TODO: other parameters useful for concrete types
 
 
 class HooksDataYaml(Model):
