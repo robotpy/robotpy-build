@@ -378,7 +378,9 @@ class MavenParser:
                         if e.code != 404:
                             raise e
                         else:
-                            print("The repo url returned a 404 error. Try using the brute_force flag.")
+                            print(
+                                "The repo url returned a 404 error. Try using the brute_force flag."
+                            )
                             exit()
 
                     found_source = False
@@ -447,7 +449,7 @@ def main():
         ImportCreator,
         LibraryRelinker,
         PlatformInfo,
-        MavenParser
+        MavenParser,
     ):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
 
