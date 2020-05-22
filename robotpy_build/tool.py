@@ -276,6 +276,12 @@ class MavenParser:
         "jetsontx",
     ]
 
+    known_after_archs = [
+        "static",
+        "debug",
+        "staticdebug",
+    ]
+
     @classmethod
     def add_subparser(cls, parent_parser, subparsers):
         parser = subparsers.add_parser(
@@ -350,11 +356,12 @@ class MavenParser:
 
                     for os in self.os_names:
                         for arch in self.known_arch_names:
-                            classifier = os + arch
-                            file_url = f"{dir_url}{art}-{ver}-{classifier}.zip"
+                            for after_arch in self.known_after_archs + [""]:
+                                classifier = os + arch + after_arch
+                                file_url = f"{dir_url}{art}-{ver}-{classifier}.zip"
 
-                            if self.check_url_exists(file_url):
-                                plats[os].add(arch)
+                                if self.check_url_exists(file_url):
+                                    plats[os].add(arch)
 
                     if self.check_url_exists(f"{dir_url}{art}-{ver}-source.zip"):
                         found_source = True
@@ -396,11 +403,11 @@ class MavenParser:
                             idx = m.find(os)
 
                             if idx != -1:
-                                arch = (
-                                    m[idx + len(os) :]
-                                    .replace("static", "")
-                                    .replace("debug", "")
-                                )
+                                arch = m[idx + len(os) :]
+
+                                for after_arch in self.known_after_archs:
+                                    arch = arch.replace(after_arch, "")
+
                                 plats[os].add(arch)
                                 break
 
@@ -440,6 +447,7 @@ def main():
         ImportCreator,
         LibraryRelinker,
         PlatformInfo,
+        MavenParser
     ):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
 
