@@ -263,20 +263,7 @@ class PlatformInfo:
 
 class MavenParser:
 
-    os_names = ["linux", "windows", "osx"]
-    known_arch_names = [
-        "x86",
-        "x86-64",
-        "aarch64",
-        "arm64",
-        "x64",
-        "athena",
-        "aarch64bionic",
-        "raspbian",
-        "jetsontx",
-    ]
-
-    known_after_archs = [
+    after_archs = [
         "static",
         "debug",
         "staticdebug",
@@ -309,6 +296,12 @@ class MavenParser:
         return False
 
     def run(self, args):
+
+        self.os_names = set()
+        self.arch_names = set()
+        for plat in platforms._platforms.values():
+            self.os_names.add(plat.os)
+            self.arch_names.add(plat.arch)
 
         with open(args.toml_link) as fp:
             config = toml.load(fp)["tool"]["robotpy-build"]
@@ -355,8 +348,8 @@ class MavenParser:
                 if args.brute_force:
 
                     for os in self.os_names:
-                        for arch in self.known_arch_names:
-                            for after_arch in self.known_after_archs + [""]:
+                        for arch in self.arch_names:
+                            for after_arch in self.after_archs + [""]:
                                 classifier = os + arch + after_arch
                                 file_url = f"{dir_url}{art}-{ver}-{classifier}.zip"
 
@@ -407,7 +400,7 @@ class MavenParser:
                             if idx != -1:
                                 arch = m[idx + len(os) :]
 
-                                for after_arch in self.known_after_archs:
+                                for after_arch in self.after_archs:
                                     arch = arch.replace(after_arch, "")
 
                                 plats[os].add(arch)
