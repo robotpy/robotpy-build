@@ -11,6 +11,7 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from collections import defaultdict
 import toml
+from contextlib import suppress
 
 from .setup import Setup
 from .generator_data import MissingReporter
@@ -288,11 +289,9 @@ class MavenParser:
         return parser
 
     def check_url_exists(self, file_url):
-        try:
+        with suppress(Exception):
             if urlopen(Request(file_url)).code == 200:
                 return True
-        except:
-            pass
         return False
 
     def run(self, args):
