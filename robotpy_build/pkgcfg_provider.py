@@ -119,33 +119,25 @@ class PkgCfgProvider:
         self.pkgs = {}
 
     def detect_pkgs(self):
-
+        deps_names = set().union(*[pkg.depends for pkg in self.pkgs.values()])
         entry_points = list(iter_entry_points(group="robotpybuild", name=None))
 
-        def ingest():
-            deps_names = set().union(*[pkg.depends for pkg in self.pkgs.values()])
-            for i in range(len(entry_points)):
-                if (
-                    entry_points[i].name not in deps_names
-                    and entry_points[i].name != "robotpy-build"
-                ):
+        run_loop = True
+        while run_loop:
+            run_loop = False
+            for ep in entry_points:
+                if ep.name in self.pkgs:
                     continue
-                if entry_points[i].name in self.pkgs:
+                if ep.name not in deps_names and ep.name != "robotpy-build":
                     continue
                 try:
-                    pkg = PkgCfg(entry_points[i])
+                    pkg = PkgCfg(ep)
                 except Exception as e:
-                    warnings.warn(
-                        f"Error loading entry point {entry_points[i].name}: {e}"
-                    )
+                    warnings.warn(f"Error loading entry point {ep.name}: {e}")
                 else:
                     self.add_pkg(pkg)
-                    entry_points.pop(i)
-                    return True
-            return False
-
-        while ingest():
-            pass
+                    deps_names |= set(pkg.depends)
+                    run_loop = True
 
     def add_pkg(self, pkg: PkgCfg) -> None:
         self.pkgs[pkg.name] = pkg
