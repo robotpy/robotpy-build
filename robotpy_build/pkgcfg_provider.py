@@ -118,15 +118,23 @@ class PkgCfgProvider:
     def __init__(self):
         self.pkgs = {}
 
-    def detect_pkgs(self):
+    def detect_pkgs(self) -> None:
+        """
+            Detect and load packages under the robotpybuild entry point group.
+            Only loads packages that are dependencies.
+        """
         deps_names = set().union(*[pkg.depends for pkg in self.pkgs.values()])
         entry_points = list(iter_entry_points(group="robotpybuild", name=None))
 
+        # Only load the dependencies of the package we're building.
+        # If we load the [package being built], then the current build will fail.
+        # If we load a package that depends on the [package being built],
+        # then the [package being built] will be loaded and the current build will fail.
         run_loop = True
         while run_loop:
             run_loop = False
             for ep in entry_points:
-                if ep.name in self.pkgs:
+                if ep.name in self.pkgs:  # Prevents loading the package being built
                     continue
                 if ep.name not in deps_names and ep.name != "robotpy-build":
                     continue
