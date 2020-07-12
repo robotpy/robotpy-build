@@ -105,6 +105,8 @@ class Setup:
         self._collect_static_libs()
         self._collect_wrappers()
 
+        self.pkgcfg.detect_pkgs()
+
         self.setup_kwargs["cmdclass"] = {
             "build_py": BuildPy,
             "build_dl": BuildDl,
