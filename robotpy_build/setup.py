@@ -129,6 +129,9 @@ class Setup:
         packages = {w.package_name for w in self.wrappers}
         packages.update(find_packages())
         self.setup_kwargs["packages"] = list(packages)
+        self.setup_kwargs["package_data"] = {
+            "": ["*.h", "*.hpp", "include/*.h", "include/*.hpp"]
+        }
 
     def _generate_long_description(self):
         readme_rst = join(self.root, "README.rst")
