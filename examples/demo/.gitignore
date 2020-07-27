@@ -1,0 +1,13 @@
+*.py[cod]
+*.so
+*.dylib
+*.egg-info
+*.whl
+
+/build
+/dist
+
+_init*.py
+pkgcfg.py
+version.py
+rpy-include
