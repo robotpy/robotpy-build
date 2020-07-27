@@ -187,7 +187,7 @@ class WrapperConfig(Model):
     #:
     #:    robotpy-build create-gen --write
     #:
-    #: .. seealso:: :ref:`hooks_yml`
+    #: .. seealso:: :ref:`gendata`
     #:
     generation_data: Optional[str] = None
 

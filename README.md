@@ -8,28 +8,22 @@ libraries build needs, chiefly around:
 * Autogenerating pybind11 wrappers around those dependencies
 * Building wheels from those generated wrappers
 
+robotpy-build is intended to be a generally useful build tool for any python
+project that has binary dependencies. If you find that isn't the case, please
+report a bug on github.
+
 Requires Python 3.6+
 
-Workflow
---------
+Documentation
+-------------
 
-There are two types of generated artifacts from RobotPy wrapper library
-projects:
+Documentation can be found at https://robotpy-build.readthedocs.io/
 
-* sdist - This should contain enough information to build a wheel
-  * This is NOT intended to be usable offline, because upstream artifacts
-    can get to be fairly large
-* wheel - Platform specific build installable via pip
-  * Should contain headers and libraries necessary for other projects
-    to build from it
+Author
+------
 
-Eventual goal is to support cross-compilation somehow so we can build
-various types of artifacts via CI
+Dustin Spicuzza is the primary author of robotpy-build, but it is the
+culmination of many years of experimentation with automated wrapper
+generation by members of the RobotPy community.
 
-Usage
------
-
-TODO: This tool is still very much under development
-
-See [docs/wrapping.md](docs/wrapping.md) for details on writing your
-own wrapped project.
+robotpy-build is available under the BSD 3-clause license.
