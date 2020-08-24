@@ -1,8 +1,9 @@
-*.py[cod]
+*.py[ciod]
 *.so
 *.dylib
 *.egg-info
 *.whl
+py.typed
 
 /build
 /dist

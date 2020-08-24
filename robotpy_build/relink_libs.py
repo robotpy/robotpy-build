@@ -137,7 +137,7 @@ def relink_extension(
     extension_rel: str,
     pkg: PkgCfg,
     pkgcfg: PkgCfgProvider,
-):
+) -> LibsDict:
     """
     Given an extension, relink it
 
@@ -158,3 +158,4 @@ def relink_extension(
         )
     }
     _fix_libs(to_fix, libs)
+    return libs

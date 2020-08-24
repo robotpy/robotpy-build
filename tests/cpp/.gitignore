@@ -1,10 +1,12 @@
 
-*.pyc
+*.py[ciod]
 
 *.so
 *.dll
 *.pyd
 *.dylib
+py.typed
+
 
 /build
 /dist

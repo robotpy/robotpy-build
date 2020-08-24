@@ -22,6 +22,7 @@ from .command.build_py import BuildPy
 from .command.build_dl import BuildDl
 from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
+from .command.build_pyi import BuildPyi
 from .command.develop import Develop
 
 from .overrides import apply_overrides
@@ -112,6 +113,7 @@ class Setup:
             "build_dl": BuildDl,
             "build_gen": BuildGen,
             "build_ext": BuildExt,
+            "build_pyi": BuildPyi,
             "develop": Develop,
         }
         if bdist_wheel:
