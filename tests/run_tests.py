@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
     # Install cpp project
     wcpp = join(root, "cpp", "run_install.py")
-    subprocess.check_call([sys.executable, wcpp])
+    subprocess.check_call([sys.executable, wcpp] + sys.argv[1:])
 
     # Run pytest
     subprocess.check_call([sys.executable, "-m", "pytest"])
