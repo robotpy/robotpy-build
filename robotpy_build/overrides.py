@@ -28,20 +28,20 @@ def _merge(name, d, override_keys):
 
 def apply_overrides(d: Dict, override_keys: List[str]):
     """
-        The idea is that any dictionary key can contain a key
-        called 'override', which will be processed as follows:
+    The idea is that any dictionary key can contain a key
+    called 'override', which will be processed as follows:
 
-        - override contents must be a dictionary
-          - key is a potential 'override key'
-          - value must be a dictionary
-        - If a key matches an override key, then the contained
-          dictionary will be shallow updated with the contents
-          of the dictionary
-        - This will recurse all structures and implement overrides
-          wherever dictionaries are found
+    - override contents must be a dictionary
+      - key is a potential 'override key'
+      - value must be a dictionary
+    - If a key matches an override key, then the contained
+      dictionary will be shallow updated with the contents
+      of the dictionary
+    - This will recurse all structures and implement overrides
+      wherever dictionaries are found
 
-        Currently, if a list is overridden, the entire list is replaced. It may
-        make sense to provide
+    Currently, if a list is overridden, the entire list is replaced. It may
+    make sense to provide
     """
     _merge("", d, override_keys)
 

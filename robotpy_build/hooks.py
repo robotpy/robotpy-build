@@ -61,7 +61,7 @@ def _using_signature(fn):
 
 class Hooks:
     """
-        Header2Whatever hooks used for generating C++ wrappers
+    Header2Whatever hooks used for generating C++ wrappers
     """
 
     _qualname_bad = ":<>="

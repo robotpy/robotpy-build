@@ -41,7 +41,7 @@ from .download import download_maven
 
 class Wrapper:
     """
-        Wraps downloading bindings and generating them
+    Wraps downloading bindings and generating them
     """
 
     # Used during preprocessing

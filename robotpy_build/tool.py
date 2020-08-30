@@ -56,7 +56,10 @@ class BuildDep:
         ]
         if args.find_links:
             pipargs.extend(
-                ["--find-links", args.find_links,]
+                [
+                    "--find-links",
+                    args.find_links,
+                ]
             )
 
         pipargs.extend(requirements)
@@ -235,7 +238,8 @@ class MavenParser:
             parents=[parent_parser],
         )
         parser.add_argument(
-            "toml_link", help="Ex: pyproject.toml",
+            "toml_link",
+            help="Ex: pyproject.toml",
         )
         parser.add_argument(
             "-b",

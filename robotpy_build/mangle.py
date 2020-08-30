@@ -75,16 +75,16 @@ def _encode_type(param):
 
 def trampoline_signature(fn):
     """
-        In our trampoline functions, each function can be disabled by defining
-        a macro corresponding to the function type. This helper function
-        generates a mangled name based on the function name and types.
+    In our trampoline functions, each function can be disabled by defining
+    a macro corresponding to the function type. This helper function
+    generates a mangled name based on the function name and types.
 
-        This is roughly based on the IA64 name mangling scheme that GCC uses,
-        but omits template stuff.
+    This is roughly based on the IA64 name mangling scheme that GCC uses,
+    but omits template stuff.
 
-        function name
-        cv qualifiers
-        parameter types
+    function name
+    cv qualifiers
+    parameter types
     """
 
     # TODO: operator overloads

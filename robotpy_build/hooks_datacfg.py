@@ -66,8 +66,8 @@ class BufferData(Model):
 
 class ReturnValuePolicy(enum.Enum):
     """
-        See `pybind11 documentation <https://pybind11.readthedocs.io/en/stable/advanced/functions.html#return-value-policies>`_
-        for what each of these values mean.
+    See `pybind11 documentation <https://pybind11.readthedocs.io/en/stable/advanced/functions.html#return-value-policies>`_
+    for what each of these values mean.
     """
 
     TAKE_OWNERSHIP = "take_ownership"
@@ -81,23 +81,23 @@ class ReturnValuePolicy(enum.Enum):
 
 class FunctionData(Model):
     """
-        Customize the way the autogenerator binds a function.
+    Customize the way the autogenerator binds a function.
 
-        .. code-block:: yaml
+    .. code-block:: yaml
 
-           functions:
-             # for non-overloaded functions, just specify the name + customizations
-             name_of_non_overloaded_fn:
-               # add customizations for function here
-            
-             # For overloaded functions, specify the name, but each overload
-             # separately
-             my_overloaded_fn:
-               overloads:
-                 int, int:
-                   # customizations for `my_overloaded_fn(int, int)`
-                 int, int, int:
-                   # customizations for `my_overloaded_fn(int, int, int)`
+       functions:
+         # for non-overloaded functions, just specify the name + customizations
+         name_of_non_overloaded_fn:
+           # add customizations for function here
+
+         # For overloaded functions, specify the name, but each overload
+         # separately
+         my_overloaded_fn:
+           overloads:
+             int, int:
+               # customizations for `my_overloaded_fn(int, int)`
+             int, int, int:
+               # customizations for `my_overloaded_fn(int, int, int)`
     """
 
     #: If True, don't wrap this
@@ -318,31 +318,31 @@ class ClassData(Model):
 
 class TemplateData(Model):
     """
-        Instantiates a template as a python type. To customize the class,
-        add it to the ``classes`` key and specify the template type.
+    Instantiates a template as a python type. To customize the class,
+    add it to the ``classes`` key and specify the template type.
 
-        Code to be wrapped:
+    Code to be wrapped:
 
-        .. code-block:: c++
+    .. code-block:: c++
 
-            template <typename T>
-            class MyClass {};
-        
-        To bind ``MyClass<int>`` as the python class ``MyIntClass``, add this
-        to your YAML:
+        template <typename T>
+        class MyClass {};
 
-        .. code-block:: yaml
+    To bind ``MyClass<int>`` as the python class ``MyIntClass``, add this
+    to your YAML:
 
-            classes:
-              MyClass:
-                template_params:
-                - T
-            
-            templates:
-              MyIntClass:
-                qualname: MyClass
-                params:
-                - int
+    .. code-block:: yaml
+
+        classes:
+          MyClass:
+            template_params:
+            - T
+
+        templates:
+          MyIntClass:
+            qualname: MyClass
+            params:
+            - int
     """
 
     #: Fully qualified name of instantiated class
@@ -354,8 +354,8 @@ class TemplateData(Model):
 
 class HooksDataYaml(Model):
     """
-        Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
-        generation_data
+    Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
+    generation_data
     """
 
     strip_prefixes: List[str] = []

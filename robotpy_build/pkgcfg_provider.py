@@ -24,7 +24,7 @@ def _hacky_entrypoint_loader(module_name):
 
 class PkgCfg:
     """
-        Contains information about an installed package that uses robotpy-build
+    Contains information about an installed package that uses robotpy-build
     """
 
     def __init__(self, entry_point):
@@ -47,7 +47,7 @@ class PkgCfg:
 
     def get_include_dirs(self) -> Optional[List[str]]:
         """
-            Include directories provided by this module
+        Include directories provided by this module
         """
         fn = getattr(self.module, "get_include_dirs", None)
         if fn:
@@ -56,7 +56,7 @@ class PkgCfg:
 
     def get_library_dirs(self) -> Optional[List[str]]:
         """
-            Directories where libraries reside
+        Directories where libraries reside
         """
         fn = getattr(self.module, "get_library_dirs", None)
         if fn:
@@ -65,7 +65,7 @@ class PkgCfg:
 
     def get_library_dirs_rel(self) -> Optional[List[str]]:
         """
-            Directories where libraries reside, relative to package
+        Directories where libraries reside, relative to package
         """
         fn = getattr(self.module, "get_library_dirs_rel", None)
         if fn:
@@ -74,7 +74,7 @@ class PkgCfg:
 
     def get_library_names(self) -> Optional[List[str]]:
         """
-            Names of libraries provided (for linking)
+        Names of libraries provided (for linking)
         """
         fn = getattr(self.module, "get_library_names", None)
         if fn:
@@ -83,7 +83,7 @@ class PkgCfg:
 
     def get_extra_objects(self) -> Optional[List[str]]:
         """
-            Names of extra objects to link in
+        Names of extra objects to link in
         """
         fn = getattr(self.module, "get_extra_objects", None)
         if fn:
@@ -92,7 +92,7 @@ class PkgCfg:
 
     def get_library_full_names(self) -> Optional[List[str]]:
         """
-            Full names of libraries provided (needed for OSX support)
+        Full names of libraries provided (needed for OSX support)
         """
         fn = getattr(self.module, "get_library_full_names", None)
         if fn:
@@ -101,7 +101,7 @@ class PkgCfg:
 
     def get_type_casters(self, casters: Dict[str, str]) -> None:
         """
-            Type caster headers provided
+        Type caster headers provided
         """
         fn = getattr(self.module, "get_type_casters", None)
         if fn:
@@ -110,9 +110,9 @@ class PkgCfg:
 
 class PkgCfgProvider:
     """
-        Retrieves information about robotpy-build packages
+    Retrieves information about robotpy-build packages
 
-        Warning: Not to be confused with 'pkg-config'
+    Warning: Not to be confused with 'pkg-config'
     """
 
     def __init__(self):
@@ -120,8 +120,8 @@ class PkgCfgProvider:
 
     def detect_pkgs(self) -> None:
         """
-            Detect and load packages under the robotpybuild entry point group.
-            Only loads packages that are dependencies.
+        Detect and load packages under the robotpybuild entry point group.
+        Only loads packages that are dependencies.
         """
         deps_names = set().union(*[pkg.depends for pkg in self.pkgs.values()])
         entry_points = list(iter_entry_points(group="robotpybuild", name=None))

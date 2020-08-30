@@ -46,7 +46,7 @@ _platforms = {
 
 def get_platform() -> WPILibMavenPlatform:
     """
-        Retrieve platform specific information
+    Retrieve platform specific information
     """
 
     # TODO: _PYTHON_HOST_PLATFORM is used for cross builds,

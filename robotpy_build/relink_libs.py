@@ -117,11 +117,11 @@ def _fix_libs(to_fix: LibsDict, libs: LibsDict):
 
 def relink_libs(install_root: str, pkg: PkgCfg, pkgcfg: PkgCfgProvider):
     """
-        Given a package, relink it's external libraries
+    Given a package, relink it's external libraries
 
-        :param install_root: Where this package will be (is) installed
-        :param pkg: Object that implements pkgcfg for this wrapper
-        :param pkgcfg: robotpy-build pkgcfg resolver
+    :param install_root: Where this package will be (is) installed
+    :param pkg: Object that implements pkgcfg for this wrapper
+    :param pkgcfg: robotpy-build pkgcfg resolver
     """
     libs: LibsDict = {}
     _resolve_dependencies(install_root, pkg, pkgcfg, libs)
@@ -139,13 +139,13 @@ def relink_extension(
     pkgcfg: PkgCfgProvider,
 ):
     """
-        Given an extension, relink it
+    Given an extension, relink it
 
-        :param install_root: Where this package will be (is) installed
-        :param extension_path: full path to extension library
-        :param extension_rel: Relative path to library where it will be (is) installed
-        :param pkg: Object that implements pkgcfg for this wrapper
-        :param pkgcfg: robotpy-build pkgcfg resolver
+    :param install_root: Where this package will be (is) installed
+    :param extension_path: full path to extension library
+    :param extension_rel: Relative path to library where it will be (is) installed
+    :param pkg: Object that implements pkgcfg for this wrapper
+    :param pkgcfg: robotpy-build pkgcfg resolver
     """
     libs: LibsDict = {}
     _resolve_dependencies(install_root, pkg, pkgcfg, libs)

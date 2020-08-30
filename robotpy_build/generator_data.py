@@ -13,8 +13,8 @@ from typing import Dict, Optional
 
 class GeneratorData:
     """
-        Used by the hooks to retrieve user-specified generation data, and 
-        report to the user that there is data missing
+    Used by the hooks to retrieve user-specified generation data, and
+    report to the user that there is data missing
     """
 
     data: HooksDataYaml
@@ -124,8 +124,8 @@ class GeneratorData:
 
     def report_missing(self, name: str, reporter: "MissingReporter"):
         """
-            Generate a structure that can be copy/pasted into the generation
-            data yaml and print it out if there's missing data
+        Generate a structure that can be copy/pasted into the generation
+        data yaml and print it out if there's missing data
         """
 
         # note: sometimes we have strings from CppHeaderParser that aren't

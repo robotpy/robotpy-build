@@ -13,7 +13,7 @@ from urllib.request import urlretrieve, urlcleanup
 
 def _download(url):
     """
-        Downloads a file to a temporary directory
+    Downloads a file to a temporary directory
     """
 
     print("Downloading", url)
@@ -30,10 +30,10 @@ def _download(url):
 
 def download_and_extract_zip(url, to=None, cache=None):
     """
-        Utility method intended to be useful for downloading/extracting
-        third party source zipfiles
+    Utility method intended to be useful for downloading/extracting
+    third party source zipfiles
 
-        :param to: is either a string or a dict of {src: dst}
+    :param to: is either a string or a dict of {src: dst}
     """
 
     if to is None:

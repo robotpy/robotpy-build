@@ -7,8 +7,8 @@ from .hooks_datacfg import Model
 
 class DevConfig(Model):
     """
-        Configuration options useful for developing robotpy-build wrappers.
-        To use these, set the environment variable RPYBUILD_GEN_FILTER=filename.yml
+    Configuration options useful for developing robotpy-build wrappers.
+    To use these, set the environment variable RPYBUILD_GEN_FILTER=filename.yml
     """
 
     #: When set this will only generate new wrapping code for the specified

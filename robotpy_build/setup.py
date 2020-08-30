@@ -34,8 +34,8 @@ from .wrapper import Wrapper
 
 class Setup:
     """
-        Hacky wrapper around setuptools because it's easier than copy/pasting
-        this stuff to a million setup.py files
+    Hacky wrapper around setuptools because it's easier than copy/pasting
+    this stuff to a million setup.py files
     """
 
     def __init__(self):

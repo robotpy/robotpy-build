@@ -57,7 +57,10 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 intersphinx_mapping = {
-    "pybind11": ("https://pybind11.readthedocs.io/en/latest/", None,)
+    "pybind11": (
+        "https://pybind11.readthedocs.io/en/latest/",
+        None,
+    )
 }
 
 
