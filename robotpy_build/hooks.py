@@ -1,4 +1,5 @@
 from keyword import iskeyword
+import re
 import sphinxify
 import typing
 import yaml
@@ -97,15 +98,22 @@ class Hooks:
             v["x_module_var"] = "m"
 
     def _get_type_caster_includes(self):
+        seps = re.compile(r"[<>\(\)]")
         includes = set()
         for typename in self.types:
             tmpl_idx = typename.find("<")
-            if tmpl_idx != -1:
-                typename = typename[:tmpl_idx]
+            if tmpl_idx == -1:
+                typenames = [typename]
+            else:
+                typenames = [typename[:tmpl_idx]] + seps.split(
+                    typename[tmpl_idx:].replace(" ", "")
+                )
 
-            header = self.casters.get(typename)
-            if header:
-                includes.add(header)
+            for typename in typenames:
+                if typename:
+                    header = self.casters.get(typename)
+                    if header:
+                        includes.add(header)
         return sorted(includes)
 
     def _set_name(self, name, data, strip_prefixes=None, is_operator=False):
