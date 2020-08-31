@@ -1,0 +1,77 @@
+---
+functions:
+  # check_pure_io:
+  check_impure_io:
+classes:
+  VBase:
+    shared_ptr: true
+    methods:
+      pure_io:
+        param_override:
+          ss:
+            ignore: true
+        cpp_code: |
+          [](VBase * self) -> std::string {
+            std::stringstream ss;
+            self->pure_io(ss);
+            return "py vbase pure + " + ss.str();
+          }
+        virtual_xform: |
+          [&](py::function &overload) {
+            auto s = py::cast<std::string>(overload());
+            ss << "vbase-xform-pure ";
+            ss << s;
+          }
+      impure_io:
+        param_override:
+          ss:
+            ignore: true
+        cpp_code: |
+          [](VBase * self) -> std::string {
+            std::stringstream ss;
+            self->impure_io(ss);
+            // only shows up when calling from python
+            return "py vbase impure + " + ss.str();
+          }
+        virtual_xform: |
+          [&](py::function &overload) {
+            auto s = py::cast<std::string>(overload());
+            ss << "vbase-xform-impure ";
+            ss << s;
+          }
+
+  VChild:
+    shared_ptr: true
+    methods:
+      pure_io:
+        param_override:
+          ss:
+            ignore: true
+        cpp_code: |
+          [](VChild * self) -> std::string {
+            std::stringstream ss;
+            self->pure_io(ss);
+            return "py vchild pure + " + ss.str();
+          }
+        virtual_xform: |
+          [&](py::function &overload) {
+            auto s = py::cast<std::string>(overload());
+            ss << "vchild-xform-pure ";
+            ss << s;
+          }
+      impure_io:
+        param_override:
+          ss:
+            ignore: true
+        cpp_code: |
+          [](VChild * self) -> std::string {
+            std::stringstream ss;
+            self->impure_io(ss);
+            return "py vchild impure + " + ss.str();
+          }
+        virtual_xform: |
+          [&](py::function &overload) {
+            auto s = py::cast<std::string>(overload());
+            ss << "vchild-xform-impure ";
+            ss << s;
+          }

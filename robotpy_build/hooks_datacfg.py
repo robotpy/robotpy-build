@@ -150,6 +150,30 @@ class FunctionData(Model):
     #: list is the template parameters for that function
     template_impls: Optional[List[List[str]]] = None
 
+    #: Specify a transformation lambda to be used when this virtual function
+    #: is called from C++. This inline code should be a lambda that has the same
+    #: arguments as the original C++ virtual function, except the first argument
+    #: will be a py::function with the python overload
+    #:
+    #: cpp_code should also be specified for this to be useful
+    #:
+    #: For example, to transform a function that takes an iostream into a function
+    #: that returns a string:
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    cpp_code: |
+    #:      [](MyClass* self) {
+    #:        return "string";
+    #:      }
+    #:    virtual_xform: |
+    #:      [](py::function fn, MyClass* self, std::iostream &is) {
+    #:         std::string d = py::cast(fn());
+    #:         is << d;
+    #:      }
+    #:
+    virtual_xform: Optional[str] = None
+
     @validator("overloads", pre=True)
     def validate_overloads(cls, value):
         for k, v in value.items():

@@ -103,8 +103,15 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     {% if fn.data.ignore_pure %}
         throw std::runtime_error("not implemented");
     {% else %}
-    {% if fn.pure_virtual -%}
+    {% if fn.data.virtual_xform %}
+        auto custom_fn = {{ fn.data.virtual_xform }};
+    {% endif %}
+    {% if fn.pure_virtual and fn.data.virtual_xform %}
+        RPYBUILD_OVERLOAD_PURE_CUSTOM_NAME({{ cls.name }},
+    {%- elif fn.pure_virtual -%}
         RPYBUILD_OVERLOAD_PURE_NAME({{ cls.name }},
+    {%- elif fn.data.virtual_xform -%}
+        RPYBUILD_OVERLOAD_CUSTOM_NAME(
     {%- else -%}
         PYBIND11_OVERLOAD_NAME(
     {%- endif -%}
