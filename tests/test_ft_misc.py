@@ -43,6 +43,66 @@ def test_static_only():
 
 
 #
+# virtual_xform.h
+#
+# Check to see that python and C++ see different things for each type
+# - py: () -> str
+# - C++ (stringstream&) -> void
+#
+
+
+def test_virtual_xform():
+
+    base = ft.VBase()
+
+    with pytest.raises(RuntimeError):
+        assert base.pure_io() == "ohai"
+
+    with pytest.raises(RuntimeError):
+        assert ft.check_pure_io(base)
+
+    assert base.impure_io() == "py vbase impure + c++ vbase impure"
+    assert ft.check_impure_io(base) == "c++ vbase impure"
+
+    class PyChild(ft.VBase):
+        def pure_io(self) -> str:
+            return "pychild pure"
+
+        def impure_io(self) -> str:
+            return "pychild impure"
+
+    pychild = PyChild()
+    assert pychild.pure_io() == "pychild pure"
+    assert ft.check_pure_io(pychild) == "vbase-xform-pure pychild pure"
+
+    assert pychild.impure_io() == "pychild impure"
+    assert ft.check_impure_io(pychild) == "vbase-xform-impure pychild impure"
+
+    child = ft.VChild()
+
+    assert child.pure_io() == "py vchild pure + c++ vchild pure"
+    assert ft.check_pure_io(child) == "c++ vchild pure"
+
+    assert child.impure_io() == "py vchild impure + c++ vchild impure"
+    assert ft.check_impure_io(child) == "c++ vchild impure"
+
+    class PyGrandChild(ft.VChild):
+        def pure_io(self) -> str:
+            return "pygrandchild pure"
+
+        def impure_io(self) -> str:
+            return "pygrandchild impure"
+
+    pygrandchild = PyGrandChild()
+
+    assert pygrandchild.pure_io() == "pygrandchild pure"
+    assert ft.check_pure_io(pygrandchild) == "vchild-xform-pure pygrandchild pure"
+
+    assert pygrandchild.impure_io() == "pygrandchild impure"
+    assert ft.check_impure_io(pygrandchild) == "vchild-xform-impure pygrandchild impure"
+
+
+#
 # Misc
 #
 

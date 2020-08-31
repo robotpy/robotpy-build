@@ -70,14 +70,6 @@ a ``doc`` value in the YAML file.
      X:
        doc: Docstring for this class
 
-Inline code
------------
-
-You can put C++ code in the YAML. You can specify it at file level, or on a
-function by function basis.
-
-TODO
-
 .. _autowrap_parameters:
 
 Parameters
@@ -169,4 +161,79 @@ python that call ``bool getT(bool)`` and ``int getT(int)``.
             - ["bool"]
             - ["int"]
 
+Differing python and C++ function signatures
+--------------------------------------------
 
+Custom configuration of your functions allows you to define a more pythonic
+API for your C++ classes.
+
+Python only
+~~~~~~~~~~~
+
+This often comes up when the python type and a C++ type of a function parameter
+or return value is different, or you want to omit a parameter. Just define a
+lambda via ``cpp_code``:
+
+.. code-block:: c++
+
+  // original code
+  int foo(int param1);
+
+.. code-block:: yaml
+
+  functions:
+    foo:
+      cpp_code:
+        [](int param1) -> std::string {
+          return std::to_string(param1);
+        }
+
+If you change the parameters, then you need to use ``param_override`` to
+adjust the parameters. Let's say you wanted to remove 'param2':
+
+.. code-block:: yaml
+
+  functions:
+    foo:
+      param_override:
+        param2:
+          ignore: true
+
+.. note:: When you change things like this, these inline definitions are
+          *not* callable from C++, you need virtual functions for that.
+
+Python and C++
+~~~~~~~~~~~~~~
+
+Let's say that you have a C++ virtual function ``void MyClass::foo(std::iostream &s)``.
+Semantically, it's just returning a string. Because you really don't want to
+wrap ``std::iostream``, you decide that the function should just return a
+string in python.
+
+Because this is a virtual function, you need to define a ``virtual_xform``
+lambda that will take the original arguments, call the python API, then
+return the original return type. Then when C++ code calls that virtual
+function, it will call the xform function which will call your python API.
+
+.. code-block:: yaml
+
+  classes:
+    MyClass:
+      methods:
+        foo:
+          param_override:
+            s:
+              ignore: true
+          cpp_code: |
+            // python API
+            [](MyClass * self) -> std::string {
+              std::stringstream ss;
+              self->foo(ss);
+              return ss.str();
+            }
+          virtual_xform: |
+            // C++ virtual function transformer
+            [&](py::function &overload) {
+              auto s = py::cast<std::string>(overload());
+              ss << s;
+            }
