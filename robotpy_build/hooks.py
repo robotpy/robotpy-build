@@ -238,9 +238,10 @@ class Hooks:
             qualname = tmpl_data.qualname
             if "::" not in qualname:
                 qualname = f"::{qualname}"
-            tmpl_data = tmpl_data.dict()
-            tmpl_data["x_qualname_"] = qualname.translate(self._qualname_trans)
-            templates[k] = tmpl_data
+            tmpl_data_d = tmpl_data.dict()
+            tmpl_data_d["x_qualname_"] = qualname.translate(self._qualname_trans)
+            self._add_subpackage(tmpl_data_d, tmpl_data)
+            templates[k] = tmpl_data_d
 
         data["templates"] = templates
 
@@ -605,6 +606,11 @@ class Hooks:
         template_parameter_list = ""
 
         if class_data.template_params:
+            if class_data.subpackage:
+                raise ValueError(
+                    f"{cls_name}: classes with subpackages must define subpackage on template instantiation"
+                )
+
             template_args = []
             template_params = []
 

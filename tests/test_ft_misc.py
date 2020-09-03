@@ -117,3 +117,7 @@ def test_init_raises():
     with pytest.raises(TypeError):
         PyGoodAbstract()
     assert called == [True]
+
+
+def test_subpkg():
+    from rpytest.ft.subpkg import SPClass
