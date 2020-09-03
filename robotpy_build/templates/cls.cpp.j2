@@ -45,40 +45,87 @@ using {{ using.raw_type }};
   - class enums
   - class methods
   - global methods
+
+  Additionally, we use two-part initialization to ensure that documentation
+  strings are generated properly. First part is to register the class with
+  pybind11, second part is to generate all the methods/etc for it.
+
 #}
 
-void init_{{ mod_fn }}(py::module &m) {
+{% for cls in header.classes
+   if cls.namespace and not cls.parent and not cls.data.ignore and cls.template is not defined %}
+  using namespace {{ cls.namespace }};
+{% endfor %}
+
+
+struct rpybuild_{{ mod_fn }}_initializer {
 
 {# namespaces/typealiases #}
 {% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
   {{ pybind11.cls_using(cls) }}
 {% endfor %}
 
-{# subpackages #}
 {% for pkg, vname in subpackages.items() %}
-  auto {{ vname }} = m.def_submodule("{{ pkg }}");
+  py::module {{ vname }};
 {% endfor %}
 
-{# define global enums in case they are used as default args #}  
-{% for enum in header.enums if not enum.data.ignore %}
-  {{ pybind11.genenum(enum.x_module_var, enum) }}
+{# enums #}
+{% for enum in header.enums if "name" in enum and not enum.data.ignore %}
+  {{ pybind11.enum_decl(enum.x_module_var, enum) }} enum{{ loop.index }};
+{% endfor %}
+
+{# template decls #}
+{% for name, tmpl_data in templates.items() %}
+  rpygen::bind_{{ tmpl_data.x_qualname_ }}<{{ tmpl_data.params | join(', ') }}> tmplCls{{ loop.index }};
+{% endfor %}
+
+{# class decls #}
+{%- for cls in header.classes
+     if not cls.parent and not cls.data.ignore and cls.template is not defined %}
+  {{ pybind11.cls_decl(cls) }}
+{% endfor %}
+
+  py::module &m;
+
+  {# register classes with pybind11 #}
+  rpybuild_{{ mod_fn }}_initializer(py::module &m) :
+
+  {% for pkg, vname in subpackages.items() %}
+    {{ vname }}(m.def_submodule("{{ pkg }}")),
+  {% endfor %}
+
+  {% for enum in header.enums if "name" in enum and not enum.data.ignore %}
+    enum{{ loop.index }}{{ pybind11.enum_init(enum.x_module_var, enum) }},
+  {% endfor %}
+
+  {% for name, tmpl_data in templates.items() %}
+    tmplCls{{ loop.index }}({{ tmpl_data.x_module_var }}, "{{ name }}"),
+  {% endfor %}
+
+  {% for cls in header.classes
+     if not cls.parent and not cls.data.ignore and cls.template is not defined %}
+    {{ pybind11.cls_init(cls, '"' + cls.x_name + '"') }}
+  {% endfor %}
+
+    m(m)
+  {}
+
+void finish() {
+
+{# enums #}
+{% for enum in header.enums if "name" in enum and not enum.data.ignore %}
+  enum{{ loop.index }}{{ pybind11.enum_def(enum.x_module_var, enum) }}
 {% endfor %}
 
 {# templates #}
-{% for name, tmpl_data in templates.items() %}
-  rpygen::bind_{{ tmpl_data.x_qualname_ }}<{{ tmpl_data.params | join(', ') }}>({{ tmpl_data.x_module_var }}, "{{ name }}");
-{% endfor %}
-
-{# class declarations #}
-{%- for cls in header.classes
-   if not cls.parent and not cls.data.ignore and cls.template is not defined %}
-  {{ pybind11.cls_decl(cls, cls.x_varname, '"' + cls.x_name + '"') }}
+{% for _ in templates.items() %}
+  tmplCls{{ loop.index }}.finish();
 {% endfor %}
 
 {# class methods #}
 {%- for cls in header.classes
    if not cls.parent and not cls.data.ignore and cls.template is not defined %}
-  {{ pybind11.cls_methods(cls, cls.x_varname) }}
+  {{ pybind11.cls_def(cls, cls.x_varname) }}
 {% endfor %}
 
 {# global methods #}
@@ -92,4 +139,17 @@ void init_{{ mod_fn }}(py::module &m) {
 
   {{ data.inline_code }}
 {% endif %}
+}
+
+}; // struct rpybuild_{{ mod_fn }}_initializer
+
+static std::unique_ptr<rpybuild_{{ mod_fn }}_initializer> cls;
+
+void begin_init_{{ mod_fn }}(py::module &m) {
+  cls = std::make_unique<rpybuild_{{ mod_fn }}_initializer>(m);
+}
+
+void finish_init_{{ mod_fn }}() {
+  cls->finish();
+  cls.reset();
 }

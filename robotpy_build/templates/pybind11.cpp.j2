@@ -198,10 +198,16 @@
   {%- endif -%}
 {%- endmacro -%}
 
-{%- macro genenum(scope, enum) %}
-{%- if 'name' in enum -%}
-py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}"
+{%- macro enum_decl(scope, enum) %}
+  py::enum_<{{ enum.x_namespace }}{{ enum.name }}>
+{%- endmacro -%}
+
+{%- macro enum_init(scope, enum) %}
+  ({{ scope }}, "{{ enum.x_name }}"
   {{ doc(enum, ',', '') }})
+{%- endmacro -%}
+
+{%- macro enum_def(scope, enum) %}
   {% for val in enum['values'] if not val.data.ignore %}
     .value("{{ val.x_name }}", {{ enum.x_namespace }}{{ enum.name }}::{{ val.name }}
     {%- if val.x_doc_quoted %},
@@ -211,7 +217,6 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
     {%- endif -%})
   {% endfor -%}
   ;
-{%- endif -%}
 {% endmacro -%}
 
 {%- macro unnamed_enum(x, enums) %}
@@ -223,9 +228,6 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
 {% endmacro -%}
 
 {%- macro cls_using(cls) -%}
-  {% if cls.namespace and not cls.parent %}
-    using namespace {{ cls.namespace }};
-  {% endif %}
   {% if cls.parent and '<' not in cls.x_qualname %}
   using {{ cls.name }} = {{ cls.x_qualname }};
   {% endif %}
@@ -237,7 +239,7 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
   {% endfor %}
 {% endmacro -%}
 
-{%- macro cls_decl(cls, varname, name) -%}
+{%- macro cls_decl(cls) -%}
   py::class_<typename {{ cls.x_qualname }}
     {%- if cls.data.nodelete -%}
       , std::unique_ptr<typename {{ cls.x_qualname }}, py::nodelete>
@@ -251,9 +253,22 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
     {%- if cls.x_inherits -%}
       , {{ cls.x_inherits | join(', ', attribute='class') }}
     {%- endif -%}
+    > {{ cls.x_varname }};
 
-    >
-      {{ varname }}(
+    {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
+    {{ enum_decl(cls.x_varname, enum) }} {{ cls.x_varname }}_enum{{ loop.index }};
+    {% endfor %}
+
+    {# recurse #}
+    {% for ncls in cls.nested_classes
+      if not ncls.data.ignore and ncls.template is not defined %}
+      {{ cls_decl(ncls) }}
+    {% endfor -%}
+
+{%- endmacro -%}
+
+{%- macro cls_init(cls, name) -%}
+    {{ cls.x_varname }}(
 
     {%- if cls.parent -%}
       {{ cls.parent.x_varname }}
@@ -268,23 +283,28 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
       , py::is_final()
     {%- endif -%}
 
-    );
-  
-  {{ doc(cls, varname + '.doc() =', ';') }}
-  
-  {# define class enums in case they are used as default args #}
-  {% for enum in cls.enums.public if not enum.data.ignore %}
-    {{ genenum(cls.x_varname, enum) }}
+    ),
+
+  {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
+    {{ cls.x_varname }}_enum{{ loop.index }}{{ enum_init(cls.x_varname, enum) }},
   {% endfor %}
 
   {# recurse #}
   {% for ncls in cls.nested_classes
      if not ncls.data.ignore and ncls.template is not defined %}
-    {{ cls_decl(ncls, ncls.x_varname, '"' + ncls.x_name + '"') }}
+    {{ cls_init(ncls, '"' + ncls.x_name + '"') }}
   {% endfor -%}
+
 {%- endmacro -%}
 
-{%- macro cls_methods(cls, varname) -%}
+{%- macro cls_def(cls, varname) -%}
+
+  {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
+    {{ cls.x_varname }}_enum{{ loop.index }}{{ enum_def(cls.x_varname, enum) }}
+  {% endfor %}
+
+  {{ doc(cls, varname + '.doc() =', ';') }}
+
   {{ varname }}
   {# default constructor if not defined #}
   {% if not cls.x_has_constructor and not cls.data.nodelete and not cls.data.force_no_default_constructor %}
@@ -312,7 +332,7 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
   {#- recurse -#}
   {%- for ncls in cls.nested_classes 
       if not ncls.data.ignore and ncls.template is not defined %}
-  {{ cls_methods(ncls, ncls.x_varname) }}
+  {{ cls_def(ncls, ncls.x_varname) }}
   {% endfor -%}
 
 {%- endmacro -%}

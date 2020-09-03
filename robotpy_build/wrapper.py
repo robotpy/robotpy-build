@@ -705,7 +705,8 @@ class Wrapper:
     def _write_wrapper_hpp(self, outdir, classdeps):
 
         decls = []
-        calls = []
+        begin_calls = []
+        finish_calls = []
 
         def _clean(n):
             tmpl_idx = n.find("<")
@@ -747,8 +748,10 @@ class Wrapper:
         ordering.extend(toposort.toposort_flatten(to_sort, sort=True))
 
         for name in ordering:
-            decls.append(f"void init_{name}(py::module &m);")
-            calls.append(f"    init_{name}(m);")
+            decls.append(f"void begin_init_{name}(py::module &m);")
+            decls.append(f"void finish_init_{name}();")
+            begin_calls.append(f"    begin_init_{name}(m);")
+            finish_calls.append(f"    finish_init_{name}();")
 
         content = (
             inspect.cleandoc(
@@ -762,13 +765,16 @@ class Wrapper:
         ##DECLS##
 
         static void initWrapper(py::module &m) {
-        ##CALLS##
+        ##BEGIN_CALLS##
+
+        ##FINISH_CALLS##
         }
         
         """
             )
             .replace("##DECLS##", "\n".join(decls))
-            .replace("##CALLS##", "\n".join(calls))
+            .replace("##BEGIN_CALLS##", "\n".join(begin_calls))
+            .replace("##FINISH_CALLS##", "\n".join(finish_calls))
         )
 
         with open(join(outdir, "rpygen_wrapper.hpp"), "w") as fp:
