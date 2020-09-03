@@ -257,6 +257,8 @@ py::enum_<{{ enum.x_namespace }}{{ enum.name }}>({{ scope }}, "{{ enum.x_name }}
 
     {%- if cls.parent -%}
       {{ cls.parent.x_varname }}
+    {%- elif cls.data.template_params -%}
+      m
     {%- else -%}
       {{ cls.x_module_var }}
     {%- endif -%}

@@ -66,7 +66,7 @@ void init_{{ mod_fn }}(py::module &m) {
 
 {# templates #}
 {% for name, tmpl_data in templates.items() %}
-  rpygen::bind_{{ tmpl_data.x_qualname_ }}<{{ tmpl_data.params | join(', ') }}>(m, "{{ name }}");
+  rpygen::bind_{{ tmpl_data.x_qualname_ }}<{{ tmpl_data.params | join(', ') }}>({{ tmpl_data.x_module_var }}, "{{ name }}");
 {% endfor %}
 
 {# class declarations #}

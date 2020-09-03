@@ -297,7 +297,9 @@ class ClassData(Model):
     shared_ptr: bool = True
 
     #: If specified, put the class in a sub.pack.age. Ignored
-    #: for functions attached to a class.
+    #: for functions attached to a class. When template parameters
+    #: are used, must define subpackage on template instances
+    #: instead
     subpackage: Optional[str] = None
 
     #: Extra 'using' directives to insert into the trampoline and the
@@ -374,6 +376,9 @@ class TemplateData(Model):
 
     #: Template parameters to use
     params: List[str]
+
+    #: If specified, put the template instantiation in a sub.pack.age
+    subpackage: Optional[str] = None
 
 
 class HooksDataYaml(Model):
