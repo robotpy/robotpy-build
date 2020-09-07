@@ -10,6 +10,11 @@ def test_basic_template():
     assert s.getT() == "string"
 
 
+def test_dependent_using():
+    du = ft.TDependentUsingInt()
+    assert du.getThird([1, 2, 3]) == 3
+
+
 def test_classwithfn():
     assert ft.TClassWithFn.getT(1) == 1
     assert ft.TClassWithFn.getT(False) is False

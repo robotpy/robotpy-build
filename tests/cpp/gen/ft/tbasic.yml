@@ -6,6 +6,12 @@ classes:
     - T
     attributes:
       t:
+    template_inline_code: |
+      cls_TBasic
+        .def("__repr__", [=](const TBasic<T> &self){
+          // checking to see if clsName is available
+          return "<" + clsName + ">";
+        });
   
 templates:
   TBasicString:

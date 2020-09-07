@@ -15,16 +15,29 @@ using {{ using.raw_type }};
 {% endfor %}
 
 template <{{ cls.x_template_parameter_list }}>
-inline void bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) {
+struct bind_{{ cls.x_qualname_ }} {
 
     {{ pybind11.cls_using(cls) }}
 
-    {# TODO: embedded structs will fail here #}
-    {{ pybind11.cls_decl(cls, cls.x_varname, "clsName") }}
+    {{ pybind11.cls_decl(cls) }}
 
-    {{ pybind11.cls_methods(cls, cls.x_varname) }}
+    py::module &m;
+    std::string clsName;
+
+bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) :
+    {# TODO: embedded structs will fail here #}
+    {{ pybind11.cls_init(cls, "clsName") }}
+    m(m),
+    clsName(clsName)
+{}
+
+void finish() {
+
+    {{ pybind11.cls_def(cls, cls.x_varname) }}
 
     {{ cls.data.template_inline_code }}
 }
+
+}; // struct bind_{{ cls.x_qualname_ }}
 
 }; // namespace rpygen

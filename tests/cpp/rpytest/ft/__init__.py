@@ -29,6 +29,7 @@ from ._rpytest_ft import (
     TChildGetN6,
     TClassWithFn,
     TConcrete,
+    TDependentUsingInt,
     TOuter,
     TcrtpConcrete,
     TcrtpFwdConcrete,
