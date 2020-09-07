@@ -370,6 +370,7 @@ class MavenParser:
                 print()
                 print(f"Wrapper / static_lib :: {w_name}")
                 print(f"Artifact ID :: {art}")
+                print(f"URL :: {dir_url}")
                 print()
 
                 if found_source:
