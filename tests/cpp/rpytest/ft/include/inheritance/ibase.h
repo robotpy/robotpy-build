@@ -52,9 +52,9 @@ protected:
         return 7;
     }
 
-    virtual void protectedOutMethod(int *out, int in)
+    virtual void protectedOutMethod(int *out, int inp)
     {
-        *out = in + 5;
+        *out = inp + 5;
     }
 };
 

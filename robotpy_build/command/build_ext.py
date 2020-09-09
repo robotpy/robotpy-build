@@ -93,13 +93,16 @@ class BuildExt(build_ext):
             install_root = get_install_root(self)
 
             for ext in self.extensions:
-                relink_extension(
+                libs = relink_extension(
                     install_root,
                     self.get_ext_fullpath(ext.name),
                     self.get_ext_filename(ext.name),
                     ext.rpybuild_wrapper,
                     self.rpybuild_pkgcfg,
                 )
+
+                # Used in build_pyi
+                ext.rpybuild_libs = libs
 
     def run(self):
 
@@ -110,6 +113,9 @@ class BuildExt(build_ext):
             wrapper.finalize_extension()
 
         build_ext.run(self)
+
+        # pyi can only be built after ext is built
+        self.run_command("build_pyi")
 
     def get_libraries(self, ext):
         libraries = build_ext.get_libraries(self, ext)
