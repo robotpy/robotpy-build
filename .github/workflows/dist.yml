@@ -5,37 +5,26 @@ on: [push, pull_request]
 
 jobs:
   check:
-    runs-on: ubuntu-18.04
-    
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Black
-      run: |
-        pip install black
-        black --check --diff .
+    - uses: psf/black@stable
   
   check-doc:
     runs-on: ubuntu-18.04
     
     steps:
     - uses: actions/checkout@v2
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      with:
+        submodules: recursive
 
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
         python-version: 3.8
     - name: Sphinx
       run: |
-        pip install -e .
-        pip install -r docs/requirements.txt
+        pip --disable-pip-version-check install -e .
+        pip --disable-pip-version-check install -r docs/requirements.txt
         cd docs && make clean html SPHINXOPTS="-W --keep-going"
   
   test:
@@ -53,20 +42,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      with:
+        submodules: recursive
     
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python_version }}
         architecture: ${{ matrix.architecture }}
 
     - name: Install build dependencies
-      run: pip install wheel
+      run: pip --disable-pip-version-check install wheel
 
     - name: Build wheel
       run: python setup.py bdist_wheel
@@ -78,10 +63,35 @@ jobs:
         RPYBUILD_STRIP_LIBPYTHON: 1
       run: |
         cd dist
-        python -m pip install *.whl
+        python -m pip --disable-pip-version-check install *.whl
         cd ../tests
-        python -m pip install -r requirements.txt
+        python -m pip --disable-pip-version-check install -r requirements.txt
         python run_tests.py
+
+  cross-build:
+    runs-on: ubuntu-latest
+    container: robotpy/roborio-cross-ubuntu:2020.1-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    
+    - name: Install build dependencies
+      run: /build/venv/bin/cross-pip --disable-pip-version-check install wheel
+
+    - name: Build wheel
+      run: /build/venv/bin/cross-python setup.py bdist_wheel
+    
+    - name: Build cross wheel
+      shell: bash
+      env:
+        RPYBUILD_PARALLEL: 1
+        RPYBUILD_STRIP_LIBPYTHON: 1
+      run: |
+        cd dist
+        /build/venv/bin/cross-pip --disable-pip-version-check install *.whl
+        cd ../tests/cpp
+        /build/venv/bin/cross-python run_install.py wheel
 
   publish:
     runs-on: ubuntu-latest
@@ -90,17 +100,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      with:
+        submodules: recursive
     
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - run: pip install wheel
+    - run: pip --disable-pip-version-check install wheel
 
     - name: Build packages
       run: python setup.py sdist bdist_wheel

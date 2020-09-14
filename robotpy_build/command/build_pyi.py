@@ -33,6 +33,7 @@ class BuildPyi(Command):
         # cannot build pyi files when cross-compiling
         if (
             "_PYTHON_HOST_PLATFORM" in os.environ
+            or "PYTHON_CROSSENV" in os.environ
             or os.environ.get("RPYBUILD_SKIP_PYI") == "1"
         ):
             return

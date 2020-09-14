@@ -62,23 +62,29 @@ if __name__ == "__main__":
             with open(join(root, "pyproject.toml"), "w") as wfp:
                 wfp.write(content)
 
-        # run pip install
-        pip_install_args = [
-            sys.executable,
-            "-m",
-            "pip",
-            "-v",
-            "--disable-pip-version-check",
-            "install",
-            "--no-build-isolation",
-        ]
+        cwd = None
 
-        if len(sys.argv) == 2 and sys.argv[1] == "-e":
-            pip_install_args.append("-e")
+        if len(sys.argv) == 2 and sys.argv[1] == "wheel":
+            cmd_args = [sys.executable, "setup.py", "bdist_wheel"]
+            cwd = root
+        else:
+            # run pip install
+            cmd_args = [
+                sys.executable,
+                "-m",
+                "pip",
+                "-v",
+                "--disable-pip-version-check",
+                "install",
+                "--no-build-isolation",
+            ]
 
-        pip_install_args.append(root)
+            if len(sys.argv) == 2 and sys.argv[1] == "-e":
+                cmd_args.append("-e")
 
-        subprocess.check_call(pip_install_args)
+            cmd_args.append(root)
+
+        subprocess.check_call(cmd_args, cwd=cwd)
 
         # Windows fails if you try to delete the directory you're currently in
         os.chdir(root)
