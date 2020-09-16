@@ -128,7 +128,7 @@ class HeaderScanner:
 
     def run(self, args):
         s = get_setup()
-        for wrapper in s.wrappers:
+        for wrapper in s.wrappers + s.static_libs:
             for incdir in wrapper.get_include_dirs():
                 files = list(
                     sorted(
