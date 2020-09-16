@@ -1,6 +1,28 @@
 External dependencies
 =====================
 
+Download files
+--------------
+
+Used to download files from an arbitrary URL. This can download headers,
+shared/static libraries, and sources.
+
+.. code-block:: toml
+
+    [[tool.robotpy-build.wrappers."PACKAGENAME".download]]
+    url = "https://my/url/something.zip"
+    incdir = "include"
+    libs = ["mylib"]
+    libdir = "libpath"
+
+That tells robotpy-build:
+
+* To download the zipfile at that URL
+* Anything in the "include" directory will be extracted to the include path
+  for the wrapper
+* Libraries will be searched in the "libpath" directory (default is "")
+* The shared library "mylib" will be linked to the python module being built
+
 Maven artifacts
 ---------------
 

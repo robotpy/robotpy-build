@@ -1,6 +1,6 @@
 import atexit
 import os
-from os.path import exists, join
+from os.path import dirname, exists, join, normpath
 import posixpath
 import shutil
 import sys
@@ -55,21 +55,34 @@ def download_and_extract_zip(url, to=None, cache=None):
 
     with zipfile.ZipFile(zip_fname) as z:
         if isinstance(to, str):
-            z.extractall(to)
-            return to
-        else:
-            for src, dst in to.items():
-                with z.open(src, "r") as zfp:
-                    with open(dst, "wb") as fp:
+            to = {"": to}
+
+        for src, dst in to.items():
+            if src == "":
+                z.extractall(dst)
+            else:
+                # if is directory, copy whole thing recursively
+                try:
+                    info = z.getinfo(src)
+                except KeyError:
+                    src = src + "/"
+                    info = z.getinfo(src)
+                if info.is_dir():
+                    ilen = len(info.filename)
+                    for minfo in z.infolist():
+                        if minfo.is_dir():
+                            continue
+                        srcname = posixpath.normpath(minfo.filename)
+                        if srcname.startswith(info.filename):
+                            dstname = join(dst, normpath(srcname[ilen:]))
+                            dstdir = dirname(dstname)
+                            if not exists(dstdir):
+                                os.makedirs(dstdir)
+                            with z.open(minfo.filename, "r") as zfp, open(
+                                dstname, "wb"
+                            ) as fp:
+                                shutil.copyfileobj(zfp, fp)
+                else:
+                    # otherwise write a single file
+                    with z.open(src, "r") as zfp, open(dst, "wb") as fp:
                         shutil.copyfileobj(zfp, fp)
-
-
-def download_maven(dlcfg, classifier, to, cache):
-    # TODO: support development against locally installed things?
-    repo_url = dlcfg.repo_url
-    grp = dlcfg.group_id.replace(".", "/")
-    art = dlcfg.artifact_id
-    ver = dlcfg.version
-
-    url = f"{repo_url}/{grp}/{art}/{ver}/{art}-{ver}-{classifier}.zip"
-    return download_and_extract_zip(url, to, cache)

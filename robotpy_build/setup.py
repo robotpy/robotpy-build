@@ -25,6 +25,7 @@ from .command.build_ext import BuildExt
 from .command.build_pyi import BuildPyi
 from .command.develop import Develop
 
+from .maven import convert_maven_to_downloads
 from .overrides import apply_overrides
 from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
@@ -148,6 +149,7 @@ class Setup:
         for package_name, cfg in self.project.wrappers.items():
             if cfg.ignore:
                 continue
+            self._fix_downloads(cfg, False)
             w = Wrapper(package_name, cfg, self)
             self.wrappers.append(w)
             self.pkgcfg.add_pkg(w)
@@ -162,9 +164,26 @@ class Setup:
         for name, cfg in self.project.static_libs.items():
             if cfg.ignore:
                 continue
+            self._fix_downloads(cfg, True)
+            if not cfg.download:
+                raise ValueError(f"static_lib {name} must specify downloads")
             s = StaticLib(name, cfg, self)
             self.static_libs.append(s)
             self.pkgcfg.add_pkg(s)
+
+    def _fix_downloads(self, cfg, static: bool):
+        # maven is just a special case of a download
+        if cfg.maven_lib_download:
+            downloads = convert_maven_to_downloads(cfg.maven_lib_download, static)
+            cfg.maven_lib_download = None
+            if cfg.download:
+                cfg.download.append(downloads)
+            else:
+                cfg.download = downloads
+
+        if cfg.download:
+            for dl in cfg.download:
+                dl._update_with_platform(self.platform)
 
     def run(self):
         # assemble all the pieces and make it work
