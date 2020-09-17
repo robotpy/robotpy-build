@@ -115,7 +115,7 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
     {%- else -%}
         PYBIND11_OVERLOAD_NAME(
     {%- endif -%}
-        {{ fn.rtnType }}, CxxBase, "{{ fn.x_name }}", {{ fn.name }},{{ fn.parameters | join(', ', attribute='name') }});
+        PYBIND11_TYPE({{ fn.rtnType }}), CxxBase, "{{ fn.x_name }}", {{ fn.name }},{{ fn.parameters | join(', ', attribute='name') }});
     {%- endif %}
     }
 #endif
