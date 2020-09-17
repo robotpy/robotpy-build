@@ -16,7 +16,15 @@
 #pragma once
 #include <robotpy_build.h>
 
+{% for inc in data.extra_includes_first %}
+#include <{{ inc }}>
+{% endfor %}
+
 #include <{{ header.rel_fname }}>
+
+{% for inc in data.extra_includes %}
+#include <{{ inc }}>
+{% endfor %}
 
 {% if cls.x_has_trampoline %}
 {% include 'cls_trampoline.hpp.j2' %}
