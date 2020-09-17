@@ -120,6 +120,11 @@ class Download(Model):
     #: {{ARCH}} and {{OS}} are replaced with the architecture/os name
     libdir: str = ""
 
+    #: Extra include paths, relative to the include directory
+    #:
+    #: {{ARCH}} and {{OS}} are replaced with the architecture/os name
+    extra_includes: List[str] = []
+
     # Common with MavenLibDownload
 
     #: If specified, names of contained shared libraries (in loading order)
@@ -148,6 +153,12 @@ class Download(Model):
             if v is not None:
                 v = _os_re.sub(platform.os, _arch_re.sub(platform.arch, v))
                 setattr(self, n, v)
+
+        if self.extra_includes:
+            self.extra_includes = [
+                _os_re.sub(platform.os, _arch_re.sub(platform.arch, v))
+                for v in self.extra_includes
+            ]
 
 
 class StaticLibConfig(Model):

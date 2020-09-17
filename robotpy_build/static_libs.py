@@ -31,7 +31,12 @@ class StaticLib:
         self.incdir = join(self.root, self.name, "include")
 
     def get_include_dirs(self) -> Optional[List[str]]:
-        return [self.incdir]
+        includes = [self.incdir]
+        if self.cfg.download:
+            for dl in self.cfg.download:
+                if dl.extra_includes:
+                    includes += [join(self.incdir, inc) for inc in dl.extra_includes]
+        return includes
 
     def get_library_dirs(self) -> Optional[List[str]]:
         return [self.libdir]

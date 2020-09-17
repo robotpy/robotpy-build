@@ -184,6 +184,10 @@ class Wrapper:
     # pkgcfg interface
     def get_include_dirs(self) -> Optional[List[str]]:
         includes = [self.incdir, self.rpy_incdir]
+        if self.cfg.download:
+            for dl in self.cfg.download:
+                if dl.extra_includes:
+                    includes += [join(self.incdir, inc) for inc in dl.extra_includes]
         for h in self.cfg.extra_includes:
             includes.append(join(self.setup_root, normpath(h)))
         return includes
