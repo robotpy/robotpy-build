@@ -32,11 +32,11 @@ import dataclasses
 from setuptools import Extension
 
 from .devcfg import get_dev_config
-from .pyproject_configs import WrapperConfig, MavenLibDownload
+from .download import download_and_extract_zip
+from .pyproject_configs import WrapperConfig, Download
 from .generator_data import MissingReporter
 from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
-from .download import download_maven
 
 
 class Wrapper:
@@ -134,9 +134,9 @@ class Wrapper:
 
         self.dev_config = get_dev_config(self.name)
 
-    def _extract_zip_to(self, classifier, dst, cache):
+    def _extract_zip_to(self, dl: Download, dst, cache):
         try:
-            download_maven(self.cfg.maven_lib_download, classifier, dst, cache)
+            download_and_extract_zip(dl.url, dst, cache)
         except HTTPError as e:
             # Check for a 404 error and raise an error if the platform isn't supported.
             if e.code != 404:
@@ -184,6 +184,10 @@ class Wrapper:
     # pkgcfg interface
     def get_include_dirs(self) -> Optional[List[str]]:
         includes = [self.incdir, self.rpy_incdir]
+        if self.cfg.download:
+            for dl in self.cfg.download:
+                if dl.extra_includes:
+                    includes += [join(self.incdir, inc) for inc in dl.extra_includes]
         for h in self.cfg.extra_includes:
             includes.append(join(self.setup_root, normpath(h)))
         return includes
@@ -199,45 +203,41 @@ class Wrapper:
         return []
 
     def get_library_names(self) -> Optional[List[str]]:
-        mcfg = self.cfg.maven_lib_download
-        if mcfg:
-            if mcfg.use_sources:
-                return []
-            elif mcfg.libs is None:
-                return [mcfg.artifact_id]
-            else:
-                return mcfg.libs
-        else:
-            return []
+        libs = []
+        if self.cfg.download:
+            for dl in self.cfg.download:
+                if dl.libs:
+                    libs += dl.libs
+        return libs
 
     def get_library_full_names(self) -> Optional[List[str]]:
-        dlcfg = self.cfg.maven_lib_download
-        if not dlcfg:
+        if not self.cfg.download:
             return []
 
-        libnames = self.get_library_names()
         dlopen_libnames = self.get_dlopen_library_names()
 
-        libnames = [lib for lib in libnames if lib not in dlopen_libnames]
         libnames_full = []
 
-        if libnames or dlopen_libnames:
-            libext = dlcfg.libexts.get(self.platform.libext, self.platform.libext)
+        for dl in self.cfg.download:
+            libext = dl.libexts.get(self.platform.libext, self.platform.libext)
+            if dl.libs:
+                for lib in dl.libs:
+                    if lib not in dlopen_libnames:
+                        libnames_full.append(f"{self.platform.libprefix}{lib}{libext}")
+            if dl.dlopenlibs:
+                libnames_full += [
+                    f"{self.platform.libprefix}{lib}{libext}" for lib in dl.dlopenlibs
+                ]
 
-            libnames_full = [
-                f"{self.platform.libprefix}{lib}{libext}" for lib in libnames
-            ]
-            libnames_full += [
-                f"{self.platform.libprefix}{lib}{libext}" for lib in dlopen_libnames
-            ]
         return libnames_full
 
     def get_dlopen_library_names(self) -> Optional[List[str]]:
-        mcfg = self.cfg.maven_lib_download
-        if mcfg and mcfg.dlopenlibs:
-            return mcfg.dlopenlibs
-        else:
-            return []
+        libs = []
+        if self.cfg.download:
+            for dl in self.cfg.download:
+                if dl.dlopenlibs:
+                    libs += dl.dlopenlibs
+        return libs
 
     def get_extra_objects(self) -> Optional[List[str]]:
         pass
@@ -319,83 +319,103 @@ class Wrapper:
             pass
 
         libnames_full = []
-        dlcfg = self.cfg.maven_lib_download
-        if dlcfg:
-            libnames_full = self._clean_and_download(dlcfg, cache, srcdir)
+        downloads = self.cfg.download
+        if downloads:
+            libnames_full = self._clean_and_download(downloads, cache, srcdir)
 
         self._write_libinit_py(libnames_full)
         self._write_pkgcfg_py(pkgcfgpy, libnames_full)
 
     def _clean_and_download(
-        self, dlcfg: MavenLibDownload, cache: str, srcdir: str
+        self, downloads: List[Download], cache: str, srcdir: str
     ) -> List[str]:
 
         libdir = join(self.root, "lib")
         incdir = join(self.root, "include")
+
+        add_libdir = False
+        add_incdir = False
 
         # Remove downloaded/generated artifacts first
         shutil.rmtree(libdir, ignore_errors=True)
         shutil.rmtree(incdir, ignore_errors=True)
         shutil.rmtree(srcdir, ignore_errors=True)
 
-        # grab headers
-        self._extract_zip_to("headers", incdir, cache)
-
-        if dlcfg.use_sources:
-            self._extract_zip_to(dlcfg.sources_classifier, srcdir, cache)
-            if dlcfg.sources:
-                sources = [join(srcdir, normpath(s)) for s in dlcfg.sources]
-                self.extension.sources.extend(sources)
-            if dlcfg.patches:
-                import patch
-
-                for p in dlcfg.patches:
-                    patch_path = join(self.setup_root, normpath(p.patch))
-                    ps = patch.PatchSet()
-                    with open(patch_path, "rb") as fp:
-                        if not ps.parse(fp):
-                            raise ValueError(f"Error parsing patch '{patch_path}'")
-
-                    if not ps.apply(strip=p.strip, root=srcdir):
-                        raise ValueError(f"Error applying patch '{patch_path}")
-            return []
-        elif dlcfg.sources is not None:
-            raise ValueError("sources must be None if use_sources is False!")
-        elif dlcfg.patches is not None:
-            raise ValueError("patches must be None if use_sources is False!")
-
-        libnames = self.get_library_names()
         dlopen_libnames = self.get_dlopen_library_names()
+        libnames_full = []
 
-        libnames = [lib for lib in libnames if lib not in dlopen_libnames]
-        libnames_full = self.get_library_full_names()
+        for dl in downloads:
+            # extract the whole thing into a directory when using for sources
+            if dl.sources is not None:
+                download_and_extract_zip(dl.url, srcdir, cache)
+                sources = [join(srcdir, normpath(s)) for s in dl.sources]
+                self.extension.sources.extend(sources)
+                if dl.patches:
+                    import patch
 
-        if libnames_full:
-            libext = dlcfg.libexts.get(self.platform.libext, self.platform.libext)
-            linkext = dlcfg.linkexts.get(self.platform.linkext, self.platform.linkext)
+                    for p in dl.patches:
+                        patch_path = join(self.setup_root, normpath(p.patch))
+                        ps = patch.PatchSet()
+                        with open(patch_path, "rb") as fp:
+                            if not ps.parse(fp):
+                                raise ValueError(f"Error parsing patch '{patch_path}'")
 
-            os.makedirs(libdir)
+                        if not ps.apply(strip=p.strip, root=srcdir):
+                            raise ValueError(f"Error applying patch '{patch_path}")
+            elif dl.sources is not None:
+                raise ValueError("sources must be None if use_sources is False!")
+            elif dl.patches is not None:
+                raise ValueError("patches must be None if use_sources is False!")
 
-            extract_names = libnames_full[:]
-            if libext != linkext:
-                extract_names += [
-                    f"{self.platform.libprefix}{lib}{linkext}" for lib in libnames
-                ]
+            if dl.libs or dl.dlopenlibs:
+                add_libdir = True
+                extract_names = []
+                os.makedirs(libdir)
 
-            to = {
-                posixpath.join(
-                    self.platform.os, self.platform.arch, "shared", libname
-                ): join(libdir, libname)
-                for libname in extract_names
-            }
+                libext = dl.libexts.get(self.platform.libext, self.platform.libext)
+                linkext = dl.linkexts.get(self.platform.linkext, self.platform.linkext)
+                if dl.libs:
+                    for lib in dl.libs:
+                        if lib not in dlopen_libnames:
+                            name = f"{self.platform.libprefix}{lib}{libext}"
+                            libnames_full.append(name)
+                            extract_names.append(name)
+                            if libext != linkext:
+                                extract_names.append(
+                                    f"{self.platform.libprefix}{lib}{linkext}"
+                                )
 
-            self._extract_zip_to(f"{self.platform.os}{self.platform.arch}", to, cache)
+                if dl.dlopenlibs:
+                    libnames_full += [
+                        f"{self.platform.libprefix}{lib}{libext}"
+                        for lib in dl.dlopenlibs
+                    ]
+                    if libext != linkext:
+                        extract_names += [
+                            f"{self.platform.libprefix}{lib}{linkext}"
+                            for lib in dl.dlopenlibs
+                        ]
 
-        for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
-            self._add_generated_file(f)
+                to = {
+                    posixpath.join(dl.libdir, libname): join(libdir, libname)
+                    for libname in extract_names
+                }
+            else:
+                to = {}
 
-        for f in glob.glob(join(glob.escape(libdir), "**"), recursive=True):
-            self._add_generated_file(f)
+            if dl.incdir is not None:
+                to[dl.incdir] = self.incdir
+                add_incdir = True
+
+            download_and_extract_zip(dl.url, to, cache)
+
+        if add_incdir:
+            for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
+                self._add_generated_file(f)
+
+        if add_libdir:
+            for f in glob.glob(join(glob.escape(libdir), "**"), recursive=True):
+                self._add_generated_file(f)
 
         return libnames_full
 

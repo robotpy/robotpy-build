@@ -4,8 +4,8 @@ import posixpath
 import shutil
 from typing import Dict, List, Optional
 
-from .download import download_maven
-from .pyproject_configs import StaticLibConfig
+from .download import download_and_extract_zip
+from .pyproject_configs import Download, StaticLibConfig
 
 
 class StaticLib:
@@ -31,7 +31,12 @@ class StaticLib:
         self.incdir = join(self.root, self.name, "include")
 
     def get_include_dirs(self) -> Optional[List[str]]:
-        return [self.incdir]
+        includes = [self.incdir]
+        if self.cfg.download:
+            for dl in self.cfg.download:
+                if dl.extra_includes:
+                    includes += [join(self.incdir, inc) for inc in dl.extra_includes]
+        return includes
 
     def get_library_dirs(self) -> Optional[List[str]]:
         return [self.libdir]
@@ -58,20 +63,20 @@ class StaticLib:
     def get_type_casters(self, casters: Dict[str, str]) -> None:
         pass
 
-    def _get_libnames(self, useext=True):
-        mcfg = self.cfg.maven_lib_download
-        if mcfg.libs is None:
-            libs = [mcfg.artifact_id]
-        else:
-            libs = mcfg.libs
+    def _get_dl_libnames(self, dl: Download, useext=True):
         ext = ""
         if useext:
             ext = self.platform.staticext
-        return [f"{self.platform.libprefix}{lib}{ext}" for lib in libs]
+        return [f"{self.platform.libprefix}{lib}{ext}" for lib in dl.libs]
+
+    def _get_libnames(self, useext=True):
+        libs = []
+        for dl in self.cfg.download:
+            if dl.libs:
+                libs += self._get_dl_libnames(dl, useext)
+        return libs
 
     def on_build_dl(self, cache: str, libdir: str):
-
-        dlcfg = self.cfg.maven_lib_download
 
         self.set_root(libdir)
 
@@ -80,17 +85,23 @@ class StaticLib:
 
         os.makedirs(self.libdir)
 
-        download_maven(dlcfg, "headers", self.incdir, cache)
+        for dl in self.cfg.download:
 
-        extract_names = self._get_libnames()
+            if dl.sources is not None:
+                raise ValueError(f"{dl.url}: cannot specify sources in static lib")
 
-        to = {
-            posixpath.join(
-                self.platform.os, self.platform.arch, "static", libname
-            ): join(self.libdir, libname)
-            for libname in extract_names
-        }
+            if dl.libs is None:
+                raise ValueError(f"{dl.url}: must specify libs in static lib")
 
-        download_maven(
-            dlcfg, f"{self.platform.os}{self.platform.arch}static", to, cache
-        )
+            to = {
+                posixpath.join(dl.libdir, libname): join(self.libdir, libname)
+                for libname in self._get_dl_libnames(dl)
+            }
+
+            if dl.incdir is not None:
+                to[dl.incdir] = self.incdir
+
+            if dl.dlopenlibs is not None:
+                raise ValueError(f"{dl.url}: cannot specify dlopenlibs in static lib")
+
+            download_and_extract_zip(dl.url, to, cache)

@@ -3,9 +3,13 @@
 #
 
 import os
+import re
 from typing import Dict, List, Optional
 
 from .util import Model
+
+_arch_re = re.compile(r"\{\{\s*ARCH\s*\}\}")
+_os_re = re.compile(r"\{\{\s*OS\s*\}\}")
 
 
 class PatchInfo(Model):
@@ -56,6 +60,16 @@ class MavenLibDownload(Model):
     #: Version of artifact to download
     version: str
 
+    #: Configure the sources classifier
+    sources_classifier: str = "sources"
+
+    #: When set, download sources instead of downloading libraries. When
+    #: using this, you need to manually add the sources to the configuration
+    #: to be compiled via :attr:`sources`.
+    use_sources: bool = False
+
+    # common with Download
+
     #: Names of contained shared libraries (in loading order). If None,
     #: set to artifact_id.
     libs: Optional[List[str]] = None
@@ -70,20 +84,81 @@ class MavenLibDownload(Model):
     #: Compile time extensions map
     linkexts: Dict[str, str] = {}
 
-    #: When set, download sources instead of downloading libraries. When
-    #: using this, you need to manually add the sources to the configuration
-    #: to be compiled via :attr:`sources`.
-    use_sources: bool = False
-
     #: If :attr:`use_sources` is set, this is the list of sources to compile
     sources: Optional[List[str]] = None
-
-    #: Configure the sources classifier
-    sources_classifier: str = "sources"
 
     #: If :attr:`use_sources` is set, apply the following patches to the sources. Patches
     #: must be in unified diff format.
     patches: Optional[List[PatchInfo]] = None
+
+
+class Download(Model):
+    """
+    Download sources/libs/includes from a single file
+
+    .. code-block:: toml
+
+       [[tool.robotpy-build.wrappers."PACKAGENAME".download]]
+       url = "https://my/url/something.zip"
+       incdir = "include"
+       libs = ["mylib"]
+
+    """
+
+    #: URL of zipfile to download
+    #:
+    #: {{ARCH}} and {{OS}} are replaced with the architecture/os name
+    url: str
+
+    #: Directory that contains include files.
+    #:
+    #: {{ARCH}} and {{OS}} are replaced with the architecture/os name
+    incdir: Optional[str] = None
+
+    #: Directory that contains library files
+    #:
+    #: {{ARCH}} and {{OS}} are replaced with the architecture/os name
+    libdir: str = ""
+
+    #: Extra include paths, relative to the include directory
+    #:
+    #: {{ARCH}} and {{OS}} are replaced with the architecture/os name
+    extra_includes: List[str] = []
+
+    # Common with MavenLibDownload
+
+    #: If specified, names of contained shared libraries (in loading order)
+    libs: Optional[List[str]] = None
+
+    #: If specified, names of contained shared link only libraries (in loading order).
+    #: If None, set to name. If empty list, link only libs will not be downloaded.
+    dlopenlibs: Optional[List[str]] = None
+
+    #: Library extensions map
+    libexts: Dict[str, str] = {}
+
+    #: Compile time extensions map
+    linkexts: Dict[str, str] = {}
+
+    #: List of sources to compile
+    sources: Optional[List[str]] = None
+
+    #: If :attr:`sources` is set, apply the following patches to the sources. Patches
+    #: must be in unified diff format.
+    patches: Optional[List[PatchInfo]] = None
+
+    def _update_with_platform(self, platform):
+        for n in ("url", "incdir", "libdir"):
+            v = getattr(self, n, None)
+            if v is not None:
+                v = _os_re.sub(platform.os, _arch_re.sub(platform.arch, v))
+                setattr(self, n, v)
+
+        if self.extra_includes:
+            self.extra_includes = [
+                _os_re.sub(platform.os, _arch_re.sub(platform.arch, v))
+                for v in self.extra_includes
+            ]
 
 
 class StaticLibConfig(Model):
@@ -100,7 +175,11 @@ class StaticLibConfig(Model):
 
     #: If this project depends on external libraries stored in a maven repo
     #: specify it here
-    maven_lib_download: MavenLibDownload
+    maven_lib_download: Optional[MavenLibDownload] = None
+
+    #: If this project depends on external libraries downloadable from some URL
+    #: specify it here
+    download: Optional[List[Download]] = None
 
     #: If True, skip this library; typically used in conjection with an override
     ignore: bool = False
@@ -146,6 +225,10 @@ class WrapperConfig(Model):
     #: If this project depends on external libraries stored in a maven repo
     #: specify it here.
     maven_lib_download: Optional[MavenLibDownload] = None
+
+    #: If this project depends on external libraries downloadable from some URL
+    #: specify it here
+    download: Optional[List[Download]] = None
 
     #: List of extra include directories to export, relative to the
     #: project root.
