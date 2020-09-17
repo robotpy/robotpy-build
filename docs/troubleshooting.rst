@@ -66,6 +66,36 @@ for a specific type:
      X:
        force_no_trampoline: true
 
+error: 'rpygen/__SomeClassName.hpp' file not found
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This occurs when robotpy-build has created a trampoline class for a child
+class, and it is trying to include the header for the parent trampoline
+class. There are several reasons why this might happen.
+
+Sometimes this error occurs because the parent lives in a different package
+that you didn't declare a dependency on in ``pyproject.toml``. Add the
+dependency and the parent trampoline class should be found.
+
+If the base class is polymorphic in a way that robotpy-build wasn't able to
+detect, you can force it to be polymorphic:
+
+.. code-block:: yaml
+
+   classes:
+     X:
+       is_polymorphic: true
+
+Unfortunately, sometimes the base isn't a polymorphic type and you can't
+change it. In this case you can turn off the trampoline class for the child
+class:
+
+.. code-block:: yaml
+
+   classes:
+     X:
+       force_no_trampoline: true
+
 Runtime errors
 --------------
 
