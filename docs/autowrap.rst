@@ -5,7 +5,7 @@ Automated C++ header wrapping
 =============================
 
 robotpy-build can be told to parse C/C++ headers and automatically generate 
-:std:doc:`pybind11 <pybind11:intro>` wrappers around the functions
+:std:doc:`pybind11 <pybind11:basics>` wrappers around the functions
 and objects found in that header.
 
 .. note:: We use a fork of `CppHeaderParser <https://github.com/robotpy/robotpy-cppheaderparser>`_
