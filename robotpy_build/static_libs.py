@@ -91,12 +91,14 @@ class StaticLib:
                 raise ValueError(f"{dl.url}: cannot specify sources in static lib")
 
             if dl.libs is None:
-                raise ValueError(f"{dl.url}: must specify libs in static lib")
-
-            to = {
-                posixpath.join(dl.libdir, libname): join(self.libdir, libname)
-                for libname in self._get_dl_libnames(dl)
-            }
+                if dl.incdir is None:
+                    raise ValueError(f"{dl.url}: must specify libs in static lib")
+                to = {}
+            else:
+                to = {
+                    posixpath.join(dl.libdir, libname): join(self.libdir, libname)
+                    for libname in self._get_dl_libnames(dl)
+                }
 
             if dl.incdir is not None:
                 to[dl.incdir] = self.incdir
