@@ -107,13 +107,13 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
         auto custom_fn = {{ fn.data.virtual_xform }};
     {% endif %}
     {% if fn.pure_virtual and fn.data.virtual_xform %}
-        RPYBUILD_OVERLOAD_PURE_CUSTOM_NAME({{ cls.name }},
+        RPYBUILD_OVERRIDE_PURE_CUSTOM_NAME({{ cls.name }},
     {%- elif fn.pure_virtual -%}
-        RPYBUILD_OVERLOAD_PURE_NAME({{ cls.name }},
+        RPYBUILD_OVERRIDE_PURE_NAME({{ cls.name }},
     {%- elif fn.data.virtual_xform -%}
-        RPYBUILD_OVERLOAD_CUSTOM_NAME(
+        RPYBUILD_OVERRIDE_CUSTOM_NAME(
     {%- else -%}
-        PYBIND11_OVERLOAD_NAME(
+        PYBIND11_OVERRIDE_NAME(
     {%- endif -%}
         PYBIND11_TYPE({{ fn.rtnType }}), CxxBase, "{{ fn.x_name }}", {{ fn.name }},{{ fn.parameters | join(', ', attribute='name') }});
     {%- endif %}
