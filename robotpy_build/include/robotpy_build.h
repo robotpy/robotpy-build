@@ -1,6 +1,6 @@
 #pragma once
 
-// Base definitions used by all roobtpy-build projects
+// Base definitions used by all robotpy-build projects
 
 #include <pybind11/pybind11.h>
 
