@@ -44,7 +44,7 @@ def cpp_flag(compiler, pfx, sep="="):
 
 
 def get_opts(typ):
-    c_opts = {"msvc": ["/EHsc"], "unix": []}
+    c_opts = {"msvc": ["/EHsc", "/bigobj"], "unix": []}
     l_opts = {"msvc": [], "unix": []}
 
     platform = get_platform()
