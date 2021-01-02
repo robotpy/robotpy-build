@@ -5,7 +5,7 @@ import shutil
 from typing import Dict, List, Optional
 
 from .download import download_and_extract_zip
-from .pyproject_configs import Download, StaticLibConfig
+from .config.pyproject_toml import Download, StaticLibConfig
 
 
 class StaticLib:

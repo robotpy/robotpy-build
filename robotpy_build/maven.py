@@ -1,6 +1,6 @@
 import typing
 
-from .pyproject_configs import Download, MavenLibDownload
+from .config.pyproject_toml import Download, MavenLibDownload
 
 
 def _get_artifact_url(dlcfg: MavenLibDownload, classifier: str) -> str:

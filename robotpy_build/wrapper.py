@@ -31,12 +31,15 @@ import dataclasses
 
 from setuptools import Extension
 
-from .devcfg import get_dev_config
+
 from .download import download_and_extract_zip
-from .pyproject_configs import WrapperConfig, Download
+
 from .generator_data import MissingReporter
 from .hooks import Hooks
-from .hooks_datacfg import HooksDataYaml
+
+from .config.autowrap_yml import AutowrapConfigYaml
+from .config.dev_yml import get_dev_config
+from .config.pyproject_toml import WrapperConfig, Download
 
 
 class Wrapper:
@@ -550,7 +553,7 @@ class Wrapper:
         if data is None:
             data = {}
 
-        return HooksDataYaml(**data)
+        return AutowrapConfigYaml(**data)
 
     def on_build_gen(
         self, cxx_gen_dir, missing_reporter: Optional[MissingReporter] = None
@@ -596,7 +599,7 @@ class Wrapper:
             if not per_header:
                 data = self._load_generation_data(datapath)
         else:
-            data = HooksDataYaml()
+            data = AutowrapConfigYaml()
 
         pp_defines = [self._cpp_version] + self.platform.defines + self.cfg.pp_defines
         casters = self._all_casters()
@@ -654,7 +657,7 @@ class Wrapper:
                     data_fname = join(datapath, name + ".yml")
                     if not exists(data_fname):
                         print("WARNING: could not find", data_fname)
-                        data = HooksDataYaml()
+                        data = AutowrapConfigYaml()
                     else:
                         data = self._load_generation_data(data_fname)
 

@@ -4,8 +4,8 @@ import sphinxify
 import typing
 import yaml
 
-from .hooks_datacfg import (
-    HooksDataYaml,
+from .config.autowrap_yml import (
+    AutowrapConfigYaml,
     BufferType,
     ClassData,
     EnumValue,
@@ -69,7 +69,10 @@ class Hooks:
     _qualname_trans = str.maketrans(_qualname_bad, "_" * len(_qualname_bad))
 
     def __init__(
-        self, data: HooksDataYaml, casters: typing.Dict[str, str], report_only: bool
+        self,
+        data: AutowrapConfigYaml,
+        casters: typing.Dict[str, str],
+        report_only: bool,
     ):
         self.gendata = GeneratorData(data)
         self.rawdata = data
