@@ -23,9 +23,10 @@ from .command.build_ext import BuildExt
 from .command.build_pyi import BuildPyi
 from .command.develop import Develop
 
+from .config.pyproject_toml import RobotpyBuildConfig
+
 from .maven import convert_maven_to_downloads
 from .overrides import apply_overrides
-from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
 from .platforms import get_platform, get_platform_override_keys
 from .static_libs import StaticLib

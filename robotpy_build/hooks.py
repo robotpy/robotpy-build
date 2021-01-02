@@ -3,8 +3,8 @@ import re
 import sphinxify
 import typing
 
-from .hooks_datacfg import (
-    HooksDataYaml,
+from .config.autowrap_yml import (
+    AutowrapConfigYaml,
     BufferType,
     ClassData,
     EnumValue,
@@ -70,7 +70,7 @@ class Hooks:
 
     def __init__(
         self,
-        data: HooksDataYaml,
+        data: AutowrapConfigYaml,
         casters: typing.Dict[str, typing.Dict[str, typing.Any]],
         report_only: bool,
     ):

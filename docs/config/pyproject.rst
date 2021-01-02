@@ -116,6 +116,6 @@ For ARM linux distributions we support:
 Reference
 ---------
 
-.. automodule:: robotpy_build.pyproject_configs
+.. automodule:: robotpy_build.config.pyproject_toml
    :members:
    :exclude-members: __init__, Config

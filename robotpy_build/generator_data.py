@@ -1,9 +1,9 @@
 import yaml
 
-from .hooks_datacfg import (
+from .config.autowrap_yml import (
     ClassData,
     EnumData,
-    HooksDataYaml,
+    AutowrapConfigYaml,
     PropData,
     FunctionData,
 )
@@ -17,9 +17,9 @@ class GeneratorData:
     report to the user that there is data missing
     """
 
-    data: HooksDataYaml
+    data: AutowrapConfigYaml
 
-    def __init__(self, data: HooksDataYaml):
+    def __init__(self, data: AutowrapConfigYaml):
         self.data = data
 
         # report data
