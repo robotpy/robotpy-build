@@ -35,7 +35,7 @@ OSX = WPILibMavenPlatform(X86_64, "osx", libext=".dylib")
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
     "linux-athena": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
-    "linux-armv7l": WPILibMavenPlatform("raspbian"),
+    "linux-raspbian": WPILibMavenPlatform("raspbian", defines=["__RASPBIAN__"]),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
     "linux-aarch64": WPILibMavenPlatform("aarch64bionic"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
@@ -62,8 +62,12 @@ def get_platform() -> WPILibMavenPlatform:
         try:
             import distro
 
-            if distro.id() == "nilrt":
+            distro_id = distro.id()
+
+            if distro_id == "nilrt":
                 pyplatform = "linux-athena"
+            elif distro_id == "raspbian":
+                pyplatform = "linux-raspbian"
 
         except Exception:
             pass

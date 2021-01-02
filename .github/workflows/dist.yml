@@ -70,7 +70,15 @@ jobs:
 
   cross-build:
     runs-on: ubuntu-latest
-    container: robotpy/roborio-cross-ubuntu:2020.1-20.04
+    strategy:
+      matrix:
+        container:
+        - robotpy/roborio-cross-ubuntu:2021.3
+        - robotpy/raspbian-cross-ubuntu:2021.2
+
+    container:
+      image: "${{ matrix.container }}"
+    
     steps:
     - uses: actions/checkout@v2
       with:
