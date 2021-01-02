@@ -93,7 +93,13 @@ file and print the resulting TOML out:
 Current supported platform/os/arch combinations are:
 
 * OS: windows/osx/linux
-* Arch: x86/x86-64/athena
+* Arch: x86/x86-64/armv7l/aarch64
+
+For ARM linux distributions we support:
+
+* armv7l + nilrt (RoboRIO)
+* armv7l + raspbian (Raspbian 10)
+* aarch64 + bionic (??)
 
 Reference
 ---------

@@ -1,6 +1,6 @@
 from distutils.util import get_platform as _get_platform
 from dataclasses import dataclass, field
-from typing import List, Tuple, Union
+from typing import List
 import re
 
 
@@ -30,17 +30,16 @@ class WPILibMavenPlatform:
 
 
 X86_64 = "x86-64"
+OSX = WPILibMavenPlatform(X86_64, "osx", libext=".dylib")
 
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
-    # TODO: this isn't always true
-    # -> __FRC_ROBORIO__ is injected by the WPILib built compiler
-    "linux-armv7l": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
+    "linux-athena": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
+    "linux-raspbian": WPILibMavenPlatform("raspbian", defines=["__RASPBIAN__"]),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
-    # TODO: linuxraspbian
+    "linux-aarch64": WPILibMavenPlatform("aarch64bionic"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
     "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib", ".lib"),
-    "osx": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
 }
 
 
@@ -57,7 +56,21 @@ def get_platform() -> WPILibMavenPlatform:
 
     # Check for 64 bit x86 macOS (version agnostic)
     if re.fullmatch(r"macosx-.*-x86_64", pyplatform):
-        pyplatform = "osx"
+        return OSX
+
+    if pyplatform == "linux-armv7l":
+        try:
+            import distro
+
+            distro_id = distro.id()
+
+            if distro_id == "nilrt":
+                pyplatform = "linux-athena"
+            elif distro_id == "raspbian":
+                pyplatform = "linux-raspbian"
+
+        except Exception:
+            pass
 
     try:
         return _platforms[pyplatform]
