@@ -15,16 +15,13 @@ from os.path import (
     splitext,
 )
 import posixpath
-import subprocess
-import sys
+import pprint
+from robotpy_build.autowrap.parser_visitor import CxxParserVisitor
 import shutil
-import tempfile
 import toposort
 from typing import Dict, List, Optional, Set
 import yaml
 
-from header2whatever.config import Config
-from header2whatever.parse import ConfigProcessor
 
 from urllib.error import HTTPError
 import dataclasses
@@ -37,9 +34,12 @@ from .download import download_and_extract_zip
 from .generator_data import MissingReporter
 from .hooks import Hooks
 
+
 from .config.autowrap_yml import AutowrapConfigYaml
 from .config.dev_yml import get_dev_config
 from .config.pyproject_toml import WrapperConfig, Download
+
+from .autowrap.generator import WrapperGenerator
 
 
 class Wrapper:
@@ -562,21 +562,14 @@ class Wrapper:
         if not self.cfg.generate:
             return
 
-        cxx_gen_dir = join(cxx_gen_dir, self.name)
-
         if missing_reporter:
             report_only = True
         else:
             report_only = False
             missing_reporter = MissingReporter()
 
-        thisdir = abspath(dirname(__file__))
-
-        hppoutdir = join(self.rpy_incdir, "rpygen")
-        tmpl_dir = join(thisdir, "templates")
-        cpp_tmpl = join(tmpl_dir, "cls.cpp.j2")
-        hpp_tmpl = join(tmpl_dir, "cls_rpy_include.hpp.j2")
-        classdeps_tmpl = join(tmpl_dir, "clsdeps.json.j2")
+        cxx_gen_dir = join(cxx_gen_dir, self.name)
+        hpp_gen_dir = join(self.rpy_incdir, "rpygen")
 
         pp_includes = self._all_includes(False)
 
@@ -586,10 +579,10 @@ class Wrapper:
 
             if self.dev_config.only_generate is None:
                 shutil.rmtree(cxx_gen_dir, ignore_errors=True)
-                shutil.rmtree(hppoutdir, ignore_errors=True)
+                shutil.rmtree(hpp_gen_dir, ignore_errors=True)
 
             os.makedirs(cxx_gen_dir, exist_ok=True)
-            os.makedirs(hppoutdir, exist_ok=True)
+            os.makedirs(hpp_gen_dir, exist_ok=True)
 
         per_header = False
         data_fname = self.cfg.generation_data
@@ -597,9 +590,9 @@ class Wrapper:
             datapath = join(self.setup_root, normpath(self.cfg.generation_data))
             per_header = isdir(datapath)
             if not per_header:
-                data = self._load_generation_data(datapath)
+                cfg = self._load_generation_data(datapath)
         else:
-            data = AutowrapConfigYaml()
+            cfg = AutowrapConfigYaml()
 
         pp_defines = [self._cpp_version] + self.platform.defines + self.cfg.pp_defines
         casters = self._all_casters()
@@ -607,7 +600,7 @@ class Wrapper:
         # These are written to file to make it easier for dev mode to work
         classdeps = {}
 
-        processor = ConfigProcessor(tmpl_dir)
+        generator = WrapperGenerator()
 
         if self.dev_config.only_generate is not None:
             only_generate = {n: True for n in self.dev_config.only_generate}
@@ -625,30 +618,8 @@ class Wrapper:
                     if exists(header_path):
                         break
                 else:
-                    import pprint
-
                     pprint.pprint(generation_search_path)
                     raise ValueError("could not find " + header)
-
-                if report_only:
-                    templates = []
-                    class_templates = []
-                else:
-                    cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                    self.extension.sources.append(cpp_dst)
-                    classdeps_dst = join(cxx_gen_dir, f"{name}.json")
-                    classdeps[name] = classdeps_dst
-
-                    hpp_dst = join(
-                        hppoutdir,
-                        "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
-                    )
-
-                    templates = [
-                        {"src": cpp_tmpl, "dst": cpp_dst},
-                        {"src": classdeps_tmpl, "dst": classdeps_dst},
-                    ]
-                    class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
 
                 if only_generate is not None and not only_generate.pop(name, False):
                     continue
@@ -657,34 +628,29 @@ class Wrapper:
                     data_fname = join(datapath, name + ".yml")
                     if not exists(data_fname):
                         print("WARNING: could not find", data_fname)
-                        data = AutowrapConfigYaml()
+                        cfg = AutowrapConfigYaml()
                     else:
-                        data = self._load_generation_data(data_fname)
+                        cfg = self._load_generation_data(data_fname)
 
-                # for each thing, create a h2w configuration dictionary
-                cfgd = {
-                    # generation code depends on this being just one header!
-                    "headers": [header_path],
-                    "templates": templates,
-                    "class_templates": class_templates,
-                    "preprocess": True,
-                    "pp_retain_all_content": False,
-                    "pp_include_paths": pp_includes,
-                    "pp_defines": pp_defines,
-                    "vars": {"mod_fn": name},
-                }
+                rel_fname = relpath(incdir, header_path)
 
-                cfg = Config(cfgd)
-                cfg.validate()
-                cfg.root = self.incdir
+                visitor = CxxParserVisitor(cfg, name, rel_fname, report_only, casters)
 
-                hooks = Hooks(data, casters, report_only)
-                try:
-                    processor.process_config(cfg, data, hooks)
-                except Exception as e:
-                    raise ValueError(f"processing {header}") from e
+                generator.parse_header(
+                    header_path,
+                    pp_includes,
+                    pp_defines,
+                    visitor,
+                )
 
-                hooks.report_missing(data_fname, missing_reporter)
+                if not report_only:
+                    cpp_dst, classdeps_dst = generator.write_files(
+                        visitor.gendata, cxx_gen_dir, hpp_gen_dir
+                    )
+                    self.extension.sources.append(cpp_dst)
+                    classdeps[name] = classdeps_dst
+
+                visitor.report_missing(data_fname, missing_reporter)
 
         if only_generate:
             unused = ", ".join(sorted(only_generate))
@@ -705,7 +671,7 @@ class Wrapper:
 
         self._gen_includes = gen_includes
 
-        for f in glob.glob(join(glob.escape(hppoutdir), "*.hpp")):
+        for f in glob.glob(join(glob.escape(hpp_gen_dir), "*.hpp")):
             self._add_generated_file(f)
 
     def finalize_extension(self):
