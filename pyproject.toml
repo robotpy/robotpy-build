@@ -19,6 +19,7 @@ exclude = '''
     | dist
 
     | robotpy_build/pybind11
+    | robotpy_build/autowrap/_pcpp
   )/
 )
 '''
