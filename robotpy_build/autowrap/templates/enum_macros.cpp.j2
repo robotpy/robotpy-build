@@ -1,0 +1,32 @@
+{#
+    Enum macros (tmplcontext.EnumeratorContext)
+#}
+
+{% import "doc_macros.cpp.j2" as docm %}
+
+
+{# declare python enum class #}
+{%- macro enum_decl(enum) -%}
+  py::enum_<{{ enum.full_cpp_name }}>
+{%- endmacro -%}
+
+{# initialize py::enum for this enum #}
+{%- macro enum_init_args(enum) -%}
+  {{ enum.scope_var }}, "{{ enum.py_name }}"
+  {{ docm.doc_str(enum, ',', '') }}
+{%- endmacro -%}
+
+{# define enum content #}
+{%- macro enum_values(enum) -%}
+  {% for val in enum.values %}
+    .value("{{ val.py_name }}", {{ enum.full_cpp_name }}::{{ val.cpp_name }}
+    {{ docm.doc_str(enum, ',', '') }})
+  {% endfor -%}
+  ;
+{%- endmacro -%}
+
+{%- macro anon_enum_values(scope, enum) -%}
+  {% for val in enum.values %}
+    {{ scope }}.attr("{{ val.name }}") = (int){{ enum.full_cpp_name }}::{{ val.cpp_name }};
+  {% endfor %}
+{%- endmacro -%}

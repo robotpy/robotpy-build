@@ -1,0 +1,18 @@
+{#
+    Documentation macros
+#}
+
+{# Produces a series of quoted strings for documentation, inserting pre/post
+   if docs are present, empty otherwise #}
+{%- macro doc_str(o, pre, post) -%}
+  {%- if o.doc %}{{ pre }}
+    {% for dq in o.doc -%}
+    {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
+    {%- endfor -%}{{ post }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{# Documentation for functions, properties #}
+{%- macro doc_arg(o) -%}
+  {{ _doc(fn, ', py::doc(', ')') }}
+{%- endmacro -%}

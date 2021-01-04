@@ -95,7 +95,7 @@ struct rpybuild_{{ mod_fn }}_initializer {
   {% endfor %}
 
   {% for enum in header.enums if "name" in enum and not enum.data.ignore %}
-    enum{{ loop.index }}{{ pybind11.enum_init(enum.x_module_var, enum) }},
+    enum{{ loop.index }}({{ pybind11.enum_init_args(enum.x_module_var, enum) }}),
   {% endfor %}
 
   {% for name, tmpl_data in templates.items() %}

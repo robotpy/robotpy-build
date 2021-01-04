@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import typing
 
 # only put in data that should be written out, don't store anything else
@@ -8,17 +8,58 @@ import typing
 # -> ns + decl_name
 # -> class in class_data
 
+Documentation = typing.Optional[typing.List[str]]
+
+
+@dataclass
+class EnumeratorContext:
+
+    #: Name in C++
+    cpp_name: str
+
+    #: Name in python
+    py_name: str
+
+    #: Documentation
+    doc: Documentation
+
 
 @dataclass
 class EnumContext:
-    pass
 
-    # x_namespace
+    #: C++ name, including namespace/classname
+    full_cpp_name: str
+
+    #: Python name
+    py_name: str
+
+    #: Enum values
+    values: typing.List[EnumeratorContext]
+
+    #: Documentation
+    doc: Documentation
+
+
+@dataclass
+class FieldContext:
+
+    #: Name in C++
+    cpp_name: str
+
+    #: Name in python
+    py_name: str
+
     # name
-    # doc
-    # named vs unnamed
+    # x_type
 
-    # per-value: x_name, name, doc
+    # constant/constexpr/x_readonly
+    # reference
+    # array
+    # array_size
+    # x_name
+
+    #: Documentation
+    doc: Documentation
 
 
 @dataclass
@@ -42,6 +83,9 @@ class ParamContext:
     # - used to generate signature for py::init
 
     # x_type only used to generate x_type_full
+
+    #: Documentation
+    doc: Documentation
 
 
 @dataclass
@@ -95,21 +139,8 @@ class FunctionContext:
 
     # virtual_xform
 
-
-@dataclass
-class VariableContext:
-    pass
-
-    # name
-    # x_type
-
-    # constant/constexpr/x_readonly
-    # reference
-    # array
-    # array_size
-    # x_name
-
-    # x_doc
+    #: Documentation
+    doc: Documentation
 
 
 @dataclass
@@ -189,6 +220,9 @@ class ClassContext:
     # - typealias
     # - constants
 
+    #: Documentation
+    doc: Documentation
+
     bases: typing.List[BaseClassData]
 
     # header:
@@ -206,11 +240,40 @@ class ClassContext:
     # don't add protected things if trampoline not enabled
     # .. more nuance than that
 
+    enums: typing.List[EnumContext] = field(default_factory=list)
+
+    anon_enums: typing.List[EnumContext] = field(default_factory=list)
+
+
+@dataclass
+class PackageContext:
+
+    #: If a subpackage, this is set
+    name: str
+
+    enums: typing.List[EnumContext] = field(default_factory=list)
+
+    # classes
+
+    # trampolines
+
+    # template_classes
+
 
 @dataclass
 class HeaderContext:
     #
     rel_fname: str
+
+    # classes
+
+    # trampolines
+
+    # template_classes
+
+    using_ns: typing.List[str] = field(default_factory=list)
+
+    packages: typing.Dict[str, PackageContext] = field(default_factory=dict)
 
 
 # get rid of .ignore

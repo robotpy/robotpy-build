@@ -1,5 +1,10 @@
-import sys
+from robotpy_build.autowrap.tmplcontext import (
+    EnumContext,
+    EnumeratorContext,
+    HeaderContext,
+)
 import typing
+from keyword import iskeyword
 
 
 from cxxheaderparser.types import (
@@ -80,22 +85,73 @@ class CxxParserVisitor:
         casters: typing.Dict[str, str],
         report_only: bool,
     ) -> None:
+        self.userdata = data
         self.gendata = GeneratorData(data)
+
+        self.context = HeaderContext()
 
         # self.data = CollectedHeaderData
 
     def report_missing(self, name: str, reporter: MissingReporter):
         self.gendata.report_missing(name, reporter)
 
-    def _process_doc(self, thing, data) -> typing.Optional[typing.List[str]]:
+    #
+    # Utility functions
+    #
+
+    def _add_type_caster(self, typename: str):
+        # typename included the namespace, originally the specialization
+        # too but we don't need that anymore
+
+        # still need to extract names from each element of the specialization
+        # and add those
+
+        # variable[raw_type]
+        # fn[returns]
+        # parameter[x_type]
+        # force_type_casters
+        # cls[props][raw_type]
+
+        # defer until the end since there's lots of duplication
+        self.types.add(typename)
+
+    # def _get_type_caster_includes(self):
+    #     seps = re.compile(r"[<>\(\)]")
+    #     includes = set()
+    #     for typename in self.types:
+    #         tmpl_idx = typename.find("<")
+    #         if tmpl_idx == -1:
+    #             typenames = [typename]
+    #         else:
+    #             typenames = [typename[:tmpl_idx]] + seps.split(
+    #                 typename[tmpl_idx:].replace(" ", "")
+    #             )
+
+    #         for typename in typenames:
+    #             if typename:
+    #                 header = self.casters.get(typename)
+    #                 if header:
+    #                     includes.add(header)
+    #     return sorted(includes)
+
+    # def _add_subpackage(self, v, data):
+    #     if data.subpackage:
+    #         var = "pkg_" + data.subpackage.replace(".", "_")
+    #         self.subpackages[data.subpackage] = var
+    #         v["x_module_var"] = var
+    #     else:
+    #         v["x_module_var"] = "m"
+
+    def _process_doc(
+        self, doxygen: typing.Optional[str], userdata
+    ) -> typing.Optional[typing.List[str]]:
         doc = ""
         doc_quoted: typing.Optional[typing.List[str]] = None
 
-        if data.doc is not None:
-            doc = data.doc
-        elif "doxygen" in thing:
-            doc = thing["doxygen"]
-            doc = sphinxify.process_raw(doc)
+        if userdata.doc is not None:
+            doc = userdata.doc
+        elif doxygen:
+            doc = sphinxify.process_raw(doxygen)
 
         if doc:
             # TODO
@@ -105,57 +161,53 @@ class CxxParserVisitor:
 
         return doc_quoted
 
-    def on_define(self, state: State, content: str) -> None:
-        pass
+    def _cpp2pyname(self, name: str, userdata, strip_prefixes=None, is_operator=False):
+        # given a C++ name, convert it to the python name
+        if userdata.rename:
+            return userdata.rename
 
-    def on_pragma(self, state: State, content: str) -> None:
-        pass
+        if strip_prefixes is None:
+            strip_prefixes = self.userdata.strip_prefixes
 
-    def on_include(self, state: State, filename: str) -> None:
-        pass
+        if strip_prefixes:
+            for pfx in strip_prefixes:
+                if name.startswith(pfx):
+                    n = name[len(pfx) :]
+                    if n.isidentifier():
+                        name = n
+                        break
 
-    def on_empty_block_start(self, state: EmptyBlockState) -> None:
-        pass
+        if iskeyword(name):
+            return f"{name}_"
+        if not name.isidentifier() and not is_operator:
+            raise ValueError(f"name {name!r} is not a valid identifier")
 
-    def on_empty_block_end(self, state: EmptyBlockState) -> None:
-        pass
+        return name
 
-    def on_extern_block_start(self, state: ExternBlockState) -> None:
-        pass
-
-    def on_extern_block_end(self, state: ExternBlockState) -> None:
-        pass
+    #
+    # Parser visitor functions
+    #
 
     def on_namespace_start(self, state: NamespaceBlockState) -> None:
         """
         Called when a ``namespace`` directive is encountered
         """
 
+        # update path
+
     def on_namespace_end(self, state: NamespaceBlockState) -> None:
         """
         Called at the end of a ``namespace`` block
         """
 
-    def on_forward_decl(self, state: State, fdecl: ForwardDecl) -> None:
-        """
-        Called when a forward declaration is encountered
-        """
-
-    def on_variable(self, state: State, v: Variable) -> None:
-        pass
+        # unpop path
 
     def on_function(self, state: State, fn: Function) -> None:
         pass
 
-    def on_typedef(self, state: State, typedef: Typedef) -> None:
-        pass
-
     def on_using_namespace(self, state: State, namespace: typing.List[str]) -> None:
-        """
-        .. code-block:: c++
-
-            using namespace std;
-        """
+        ns = "::".join(namespace)
+        self.context.using_ns.append(ns)
 
     def on_using_alias(self, state: State, using: UsingAlias):
         """
@@ -184,6 +236,50 @@ class CxxParserVisitor:
         """
         Called after an enum is encountered
         """
+        x = state.userdata
+
+        value_prefix = None
+
+        enum.typename
+
+        userdata = self.gendata.get_enum_data(typename, clsname, clsdata)
+        if userdata.ignore:
+            return
+
+        # if is_class and access == private: return
+
+        # -> for cpp full name, take ns + class into account
+
+        # -> convert typename to name
+
+        # last piece
+        py_name = self._cpp2pyname(name, userdata)
+
+        doc = self._process_doc(enum.doxygen, userdata)
+
+        if value_prefix:
+            strip_prefixes = [value_prefix + "_", value_prefix]
+        else:
+            strip_prefixes = []
+
+        values = []
+        for ev in enum.values:
+            v_cppname = ev.name
+            v_userdata = userdata.values.get(v_cppname)
+            if v_userdata is None:
+                v_userdata = EnumValue()
+
+            if v_userdata.ignore:
+                continue
+
+            v_pyname = self._cpp2pyname(v_cppname, v_userdata, strip_prefixes)
+            v_doc = self._process_doc(ev.doxygen, v_userdata)
+            values.append(EnumeratorContext(v_cppname, v_pyname, v_doc))
+
+        enumcxt = EnumContext(full_cpp_name, py_name, values, doc)
+
+        # needs class context otherwise can't attach to correct scope
+        # self.header.enums.append(enumcxt)
 
     #
     # Class/union/struct
@@ -204,33 +300,65 @@ class CxxParserVisitor:
         typedef.
         """
 
+        # if ignored, return
+
+        # if parent access is private, return
+
     def on_class_field(self, state: ClassBlockState, f: Field) -> None:
         """
         Called when a field of a class is encountered
         """
 
-    def on_class_friend(self, state: ClassBlockState, friend: FriendDecl):
-        """
-        Called when a friend declaration is encountered
-        """
+        # if ignored, return
+
+        # if parent access is private, return
 
     def on_class_method(self, state: ClassBlockState, method: Method) -> None:
         """
         Called when a method of a class is encountered
         """
 
+        # if ignored, return
+
+        # if parent access is private, return
+
+    #
+    # Unused items
+    #
+
+    def on_define(self, state: State, content: str) -> None:
+        pass  # intentionally empty
+
+    def on_pragma(self, state: State, content: str) -> None:
+        pass  # intentionally empty
+
+    def on_include(self, state: State, filename: str) -> None:
+        pass  # intentionally empty
+
+    def on_empty_block_start(self, state: EmptyBlockState) -> None:
+        pass  # intentionally empty
+
+    def on_empty_block_end(self, state: EmptyBlockState) -> None:
+        pass  # intentionally empty
+
+    def on_extern_block_start(self, state: ExternBlockState) -> None:
+        pass  # intentionally empty
+
+    def on_extern_block_end(self, state: ExternBlockState) -> None:
+        pass  # intentionally empty
+
+    def on_forward_decl(self, state: State, fdecl: ForwardDecl) -> None:
+        pass  # intentionally empty
+        # TODO: maybe turn these into typealiases since they might be used somewhere
+
+    def on_variable(self, state: State, v: Variable) -> None:
+        pass  # intentionally empty, not supported by robotpy-build
+
+    def on_typedef(self, state: State, typedef: Typedef) -> None:
+        pass  # intentionally empty
+
+    def on_class_friend(self, state: ClassBlockState, friend: FriendDecl) -> None:
+        pass  # intentionally empty
+
     def on_class_end(self, state: ClassBlockState) -> None:
-        """
-        Called when the end of a class/struct/union is encountered.
-
-        When a variable like this is declared:
-
-        .. code-block:: c++
-
-            struct X {
-
-            } x;
-
-        Then ``on_class_start``, .. ``on_class_end`` are emitted, along with
-        ``on_variable`` for each instance declared.
-        """
+        pass  # intentionally empty

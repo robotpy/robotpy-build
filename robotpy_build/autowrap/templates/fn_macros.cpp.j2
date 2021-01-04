@@ -1,0 +1,152 @@
+{#
+    Macros for generating function wrappers
+#}
+
+{% import "doc_macros.cpp.j2" as docm %}
+
+{%- macro fndef(cls_qualname, fn) %}
+{% if cls_qualname and fn.static %}def_static{% else %}def{% endif %}
+{% endmacro -%}
+
+{%- macro fnptr(cls_qualname, fn, trampoline_qualname, tmpl) -%}
+  {%- if fn.data.cpp_code -%}
+    {{ fn.data.cpp_code }}
+  {%- elif not fn.x_genlambda -%}
+    &
+    {%- if trampoline_qualname -%}
+      {{ trampoline_qualname }}::
+    {%- elif cls_qualname -%}
+      {{ cls_qualname }}::
+    {%- else -%}
+      {{ fn.namespace }}
+    {%- endif -%}
+    {{ fn.name }}{{ tmpl }}
+  {%- else -%}
+    [](
+      {%- if cls_qualname -%}
+        {{ cls_qualname }} * __that
+        {%- if fn.x_in_params %},{% endif -%}
+      {% endif -%}
+      {{ fn.x_in_params | join(', ', attribute='x_decl') -}}
+      ) {
+          {% for stmt in fn.x_lambda_pre %}
+          {{ stmt }};
+          {% endfor %}
+          {{ fn.x_callstart }}
+          {%- if trampoline_qualname -%}
+            (({{ trampoline_qualname }}*)__that)->
+          {%- elif cls_qualname -%}
+            __that->
+          {%- else -%}
+            {{ fn.namespace }}
+          {%- endif -%}
+          {{ fn.name }}{{ tmpl }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
+          {% for stmt in fn.x_lambda_post %}
+          {{ stmt }};
+          {% endfor %}
+          {{ fn.x_wrap_return }}
+        }
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro gensig(cls_qualname, fn) -%}
+  {#-
+    py::overload_cast fails in some obscure cases, so we don't use it here
+    https://github.com/pybind/pybind11/issues/1153
+  -#}
+  {{- fn.rtnType }} (
+  {%- if cls_qualname and not fn.static -%}
+    {{ cls_qualname }}::
+  {%- endif -%}
+  *)(
+      {{- fn.x_in_params | join(', ', attribute='x_type_full') -}}
+  )
+  {%- if fn.const %} const{% endif -%}
+{%- endmacro -%}
+
+{%- macro _genmethod(cls_qualname, fn, trampoline_qualname, tmpl) -%}
+  {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
+  {%+ if fn.data.ifdef %}
+
+  #ifdef {{ fn.data.ifdef }}
+  {% endif %}
+  {%+ if fn.data.ifndef %}
+
+  #ifndef {{ fn.data.ifndef }}
+  {% endif %}
+  {%- if fn.operator -%}
+    {%- if fn.data.cpp_code -%}
+      {{ fn.data.cpp_code }}
+    {%- else -%}
+      {%- if ns.arg_params -%}
+        .def(py::self {{ fn.operator }} {{ ns.arg_params[0].raw_type }}()
+      {%- else -%}
+        .def({{ fn.operator}} py::self
+      {%- endif -%}
+    {%- endif -%}
+    {%- set ns.arg_params = [] -%}
+  {%- elif fn.constructor -%}
+    {%- set ns.arg_params = fn.x_all_params -%}
+    {%- if fn.data.cpp_code -%}
+      {{ fn.data.cpp_code }}
+    {%- elif trampoline_qualname -%}
+      .def(py::init([]({{ ns.arg_params | join(', ', attribute='x_decl') }}) {
+        return std::make_unique<{{ trampoline_qualname }}>(
+          {{- ns.arg_params | join(', ', attribute='x_callname') -}}
+        );
+      })
+    {%- else -%}
+      .def(py::init<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
+    {%- endif -%}
+  {%- else -%}
+    .{{ fndef(cls_qualname, fn) }}("{{ fn.x_name }}",{{ ' ' }}
+      {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
+        
+        {%- if trampoline_qualname -%}
+          {%- set ns.qualname = trampoline_qualname -%}
+          static_cast<{{ gensig(cls_qualname, fn) }}>(
+        {%- endif -%}
+        {%- if fn.x_overloaded -%}
+          static_cast<{{ gensig(ns.qualname, fn) }}>(
+        {% endif -%}
+      {%- endif -%}
+	      {{- fnptr(cls_qualname, fn, trampoline_qualname, tmpl) -}}
+      {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
+        {%- if fn.x_overloaded -%}){%- endif -%}
+        {%- if trampoline_qualname -%}){%- endif -%}
+      {%- endif -%}
+  {%- endif -%}
+
+  {%- if ns.arg_params -%},
+      {{ ns.arg_params | join(', ', attribute='x_pyarg') }}
+  {%- endif -%}
+
+  {%- if not fn.data.no_release_gil -%}
+    , release_gil()
+  {%- endif -%}
+
+  {%- for nurse, patient in fn.x_keepalives %}
+    , py::keep_alive<{{ nurse }}, {{ patient }}>()
+  {%- endfor -%}
+
+  {{- fn.x_return_value_policy -}}
+
+  {{ doc(fn, ', py::doc(', ')') }}
+  )
+  {%+ if fn.data.ifdef %}
+  #endif // {{ fn.data.ifdef }}
+  {% endif %}
+  {%+ if fn.data.ifndef %}
+  #endif // {{ fn.data.ifndef }}
+  {% endif %}
+{%- endmacro -%}
+
+{%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
+  {%- if not fn.data.template_impls -%}
+    {{ _genmethod(cls_qualname, fn, trampoline_qualname, "") }}
+  {%- else -%}
+    {%- for tmpl in fn.data.template_impls -%}
+    {{ _genmethod(cls_qualname, fn, trampoline_qualname, "<" + (tmpl | join(", ")) + ">") }}
+    {% endfor -%}
+  {%- endif -%}
+{%- endmacro %}
