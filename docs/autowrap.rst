@@ -75,14 +75,14 @@ a ``doc`` value in the YAML file.
 Parameters
 ----------
 
-TODO
+Documentation TODO
 
 .. _autowrap_out_params:
 
 Out parameters
 ~~~~~~~~~~~~~~
 
-TODO
+Documentation TODO
 
 Conditional compilation
 -----------------------
