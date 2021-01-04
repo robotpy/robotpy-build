@@ -1,0 +1,5 @@
+---
+
+enums:
+  StripPrefixEnum:
+    value_prefix: STRIP_
