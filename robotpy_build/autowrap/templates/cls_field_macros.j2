@@ -1,44 +1,31 @@
 {# 
-    Class properties
+    Class fields (tmplcontext.FieldContext)
 #}
 
-{%- macro genprop(qualname, prop) -%}
-  {%- if prop.array_size is defined -%}
-    .def_property_readonly("{{ prop.x_name }}", []({{ qualname }}& inst) {
-        return py::memoryview(py::buffer_info(
-          &inst.{{ prop.name }}, sizeof({{ prop.type }}),
-          py::format_descriptor<{{ prop.type }}>::format(),
-          1, {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.type }})}
-        ));
-    }
-    {{- doc(prop, ', py::doc(', ')') }})
-  {%- elif prop.array -%}
-    .def_property("{{ prop.x_name }}",
-      [](const {{ qualname }}& inst) { return inst.{{ prop.name}}; },
-      []({{ qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; }
-      {{- doc(prop, ', py::doc(', ')') }})
-  {%- elif prop.reference -%}
-    .def_property
-    {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
-        _readonly
-    {%- endif -%}
-    ("{{ prop.x_name }}", {{ ' ' }}
-        [](const {{ qualname }}& inst) -> {{ prop.type }} { return inst.{{ prop.name}}; }
-        {%- if not (prop.constant or prop.constexpr or prop.x_readonly) %},
-        []({{ qualname }}& inst, {{ prop.type }} v) {inst.{{ prop.name}} = v; }
-        {%- endif -%}
-        {{- doc(prop, ', py::doc(', ')') }}
-    )
+{% import "doc_macros.cpp.j2" as docm %}
 
-  {%- else -%}
-    .def_
-      {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
-        readonly
-      {%- else -%}
-        readwrite
-      {%- endif -%}
-      {%- if prop.static %}_static{% endif -%}
-      ("{{ prop.x_name }}", &{{ qualname }}::{{ prop.name}}
-      {{- doc(prop, ', py::doc(', ')') }})
+{%- macro cls_field(cls_qualname, field) -%}
+  .def_property_
+    {%- if field.readonly %}readonly{% else %}readwrite{%- endif -%}
+    {%- if field.static -%}_static{%- endif -%}
+  ("{{ field.py_name }}",
+
+  {%- if field.array_size %}
+    []({{ cls_qualname }}& inst) {
+        return py::memoryview::from_buffer(
+          &inst.{{ field.cpp_name }}, sizeof({{ field.cpp_type }}),
+          py::format_descriptor<{{ field.cpp_type }}>::value,
+          {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ field.cpp_type }})},
+          {% if field.readonly %}true{% else %}false{% endif %}
+        );
+    }
+  {% elif field.reference %}
+    [](const {{ cls_qualname }}& inst) -> {{ field.cpp_type }} { return inst.{{ field.cpp_name }}; }
+    {%- if not field.readonly %},
+    []({{ cls_qualname }}& inst, {{ field.cpp_type }} v) {inst.{{ field.cpp_name }} = v; }
+    {%- endif %}
+  {% else -%}
+    &{{ cls_qualname }}::{{ prop.name}}
   {%- endif -%}
+  {{- docm.doc_arg(field) }})
 {%- endmacro -%}

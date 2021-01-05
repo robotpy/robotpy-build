@@ -1,6 +1,6 @@
 import yaml
 
-from .config.autowrap_yml import (
+from ..config.autowrap_yml import (
     ClassData,
     EnumData,
     AutowrapConfigYaml,

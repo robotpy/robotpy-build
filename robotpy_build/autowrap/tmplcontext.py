@@ -43,20 +43,23 @@ class EnumContext:
 @dataclass
 class FieldContext:
 
+    # needed for arrays and references -- underlying type including cv qualifiers,
+    # but not including array reference
+    cpp_type: str
+
     #: Name in C++
     cpp_name: str
 
     #: Name in python
     py_name: str
 
-    # name
-    # x_type
+    readonly: bool
+    static: bool
 
-    # constant/constexpr/x_readonly
-    # reference
-    # array
-    # array_size
-    # x_name
+    reference: bool
+
+    #: If an array, the underlying array size
+    array_size: typing.Optional[str]
 
     #: Documentation
     doc: Documentation

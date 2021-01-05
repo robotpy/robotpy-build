@@ -1,24 +1,5 @@
-from robotpy_build.autowrap.tmplcontext import (
-    EnumContext,
-    EnumeratorContext,
-    HeaderContext,
-)
 import typing
 from keyword import iskeyword
-
-
-from cxxheaderparser.types import (
-    EnumDecl,
-    Field,
-    ForwardDecl,
-    FriendDecl,
-    Function,
-    Method,
-    Typedef,
-    UsingAlias,
-    UsingDecl,
-    Variable,
-)
 
 from cxxheaderparser.parserstate import (
     State,
@@ -27,6 +8,22 @@ from cxxheaderparser.parserstate import (
     ExternBlockState,
     NamespaceBlockState,
 )
+from cxxheaderparser.tokfmt import tokfmt
+from cxxheaderparser.types import (
+    Array,
+    EnumDecl,
+    Field,
+    ForwardDecl,
+    FriendDecl,
+    Function,
+    Method, Type,
+    Typedef,
+    UsingAlias,
+    UsingDecl,
+    Variable,
+)
+
+
 import sphinxify
 
 from ..config.autowrap_yml import (
@@ -41,6 +38,12 @@ from ..config.autowrap_yml import (
 )
 from .generator_data import GeneratorData, MissingReporter
 from .mangle import trampoline_signature
+from .tmplcontext import (
+    EnumContext,
+    EnumeratorContext,
+    FieldContext,
+    HeaderContext,
+)
 
 
 def _gen_int_types():
@@ -72,6 +75,10 @@ _operators = {
     "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=",
 }
 # fmt: on
+
+
+def _is_fundamental(t: Type):
+    if isinstance(self.typename.segments[-1], FundamentalSpecifier)
 
 
 class CxxParserVisitor:
@@ -309,9 +316,72 @@ class CxxParserVisitor:
         Called when a field of a class is encountered
         """
 
-        # if ignored, return
+        # if access in "private" or (
+        #             access == "protected" and not has_trampoline
+        #         ):
+        #             v["data"] = PropData(ignore=True)
+        #             continue
 
-        # if parent access is private, return
+        if state.access == "private" or (
+            state.access == "protected" and state.class_decl.final
+        ):
+            return
+
+        cpp_name = f.name
+        if not cpp_name:
+            # can't wrap unnamed fields
+            return
+
+        cpp_type = f.type
+
+        array_size = None
+        if isinstance(cpp_type, Array):
+            # ignore arrays with incomplete size
+            if cpp_type.size is None:
+                return
+
+            array_size = tokfmt(cpp_type.size.tokens)
+            cpp_type = cpp_type.array_of
+
+            if isinstance(cpp_type, Array):
+                # punt on multidimensional arrays for now
+                return
+
+        userdata = self.gendata.get_cls_prop_data(cpp_name, cls_key, cls_userdata)
+        if userdata.ignore:
+            return
+
+        cpp_typename = wtf
+
+        if userdata.rename:
+            py_name = userdata.rename
+        elif state.access == "protected":
+            py_name = f"{cpp_name}_"
+        else:
+            py_name = cpp_name
+
+        if userdata.access == PropAccess.AUTOMATIC:
+            # We assume that a struct intentionally has readwrite data
+            # attributes regardless of type
+            if state.class_decl.classkey != "class":
+                readonly = False
+            
+            # Properties that aren't fundamental or a reference are readonly unless
+            # overridden by the hook configuration
+            #elif isinstance(cpp_type, Funda)
+            else:
+                
+                readonly = not v["fundamental"] and not v["reference"]
+        elif userdata.access == PropAccess.READONLY:
+            readonly = True
+        else:
+            readonly = False
+
+        readonly = False
+        doc = self._process_doc(f.doxygen, userdata)
+
+        # do something with this
+        FieldContext()
 
     def on_class_method(self, state: ClassBlockState, method: Method) -> None:
         """
