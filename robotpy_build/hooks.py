@@ -226,7 +226,9 @@ class Hooks:
             v["data"] = var_data
             self._add_type_caster(v["raw_type"])
 
-        data["type_caster_includes"] = self._get_type_caster_includes()
+        for _, u in header.using.items():
+            self._add_type_caster(u["raw_type"])
+
         data["class_hierarchy"] = self.class_hierarchy
         data["subpackages"] = self.subpackages
         data["x_has_operators"] = self.has_operators
@@ -241,7 +243,12 @@ class Hooks:
             self._add_subpackage(tmpl_data_d, tmpl_data)
             templates[k] = tmpl_data_d
 
+            for param in tmpl_data.params:
+                self._add_type_caster(param)
+
         data["templates"] = templates
+
+        data["type_caster_includes"] = self._get_type_caster_includes()
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -527,6 +534,9 @@ class Hooks:
 
         if class_data.ignore:
             return
+
+        for _, u in cls["using"].items():
+            self._add_type_caster(u["raw_type"])
 
         for typename in class_data.force_type_casters:
             self._add_type_caster(typename)
