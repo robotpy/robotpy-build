@@ -24,6 +24,8 @@ def _download(url):
         sys.stdout.flush()
 
     filename, _ = urlretrieve(url, reporthook=_reporthook)
+    sys.stdout.write("\n")
+    sys.stdout.flush()
     atexit.register(urlcleanup)
     return filename
 
