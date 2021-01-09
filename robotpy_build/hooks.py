@@ -2,7 +2,6 @@ from keyword import iskeyword
 import re
 import sphinxify
 import typing
-import yaml
 
 from .hooks_datacfg import (
     HooksDataYaml,
@@ -17,7 +16,6 @@ from .hooks_datacfg import (
 from .generator_data import GeneratorData, MissingReporter
 from .mangle import trampoline_signature
 
-_missing = object()
 
 # TODO: this isn't the best solution
 def _gen_int_types():
@@ -29,7 +27,7 @@ def _gen_int_types():
     yield "uintmax_t"
 
 
-_int32_types = set(_gen_int_types())
+_int32_types = frozenset(_gen_int_types())
 
 
 _rvp_map = {

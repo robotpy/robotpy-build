@@ -15,10 +15,7 @@ from os.path import (
     splitext,
 )
 import posixpath
-import subprocess
-import sys
 import shutil
-import tempfile
 import toposort
 from typing import Dict, List, Optional, Set
 import yaml
