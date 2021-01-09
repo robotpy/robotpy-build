@@ -1,7 +1,6 @@
 import os
 from os.path import abspath, exists, join
 from setuptools import find_packages, setup as _setup
-from setuptools import Extension
 from setuptools_scm import get_version
 import toml
 
