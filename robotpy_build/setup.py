@@ -134,6 +134,7 @@ class Setup:
         readme_rst = join(self.root, "README.rst")
         readme_md = join(self.root, "README.md")
         if exists(readme_rst):
+            self.setup_kwargs["long_description_content_type"] = "text/x-rst"
             with open(readme_rst) as fp:
                 self.setup_kwargs["long_description"] = fp.read()
 
