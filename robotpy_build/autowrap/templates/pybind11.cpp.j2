@@ -19,33 +19,7 @@
   {% endfor %}
 {% endmacro -%}
 
-{%- macro cls_decl(cls) -%}
-  py::class_<typename {{ cls.x_qualname }}
-    {%- if cls.data.nodelete -%}
-      , std::unique_ptr<typename {{ cls.x_qualname }}, py::nodelete>
-    {%- elif cls.data.shared_ptr -%}
-      , std::shared_ptr<typename {{ cls.x_qualname }}>
-    {%- endif -%}
-    {%- if cls.x_has_trampoline -%}
-      , {{ cls.x_trampoline_name }}
-    {%- endif -%}
 
-    {%- if cls.x_inherits -%}
-      , {{ cls.x_inherits | join(', ', attribute='class') }}
-    {%- endif -%}
-    > {{ cls.x_varname }};
-
-    {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
-    {{ enum_decl(cls.x_varname, enum) }} {{ cls.x_varname }}_enum{{ loop.index }};
-    {% endfor %}
-
-    {# recurse #}
-    {% for ncls in cls.nested_classes
-      if not ncls.data.ignore and ncls.template is not defined %}
-      {{ cls_decl(ncls) }}
-    {% endfor -%}
-
-{%- endmacro -%}
 
 {%- macro cls_init(cls, name) -%}
     {{ cls.x_varname }}(
@@ -66,7 +40,7 @@
     ),
 
   {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
-    {{ cls.x_varname }}_enum{{ loop.index }}({{ enum_init_args(enum) }}),
+    {{ enum_init_args(enum) }},
   {% endfor %}
 
   {# recurse #}

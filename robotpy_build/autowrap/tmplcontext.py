@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from robotpy_build.config.autowrap_yml import ClassData
 import typing
 
 # only put in data that should be written out, don't store anything else
@@ -26,6 +27,12 @@ class EnumeratorContext:
 
 @dataclass
 class EnumContext:
+
+    #: Name of variable in initializer
+    varname: str
+
+    #: Name of variable in initializer that this will attach to
+    scope_var: str
 
     #: C++ name, including namespace/classname
     full_cpp_name: str
@@ -93,6 +100,10 @@ class ParamContext:
 
 @dataclass
 class FunctionContext:
+
+    #: Name of variable in initializer that this will attach to
+    scope_var: str
+
     pass
 
     # ... all the logic needs to be moved out of the template and
@@ -217,7 +228,20 @@ class TrampolineContext:
 @dataclass
 class ClassContext:
 
-    #
+    # used for dealing with methods/etc
+    ignored: bool
+    cls_key: str
+    data: ClassData
+    has_trampoline: bool
+    final: bool
+
+    full_cpp_name: str
+
+    #: Name of variable in initializer that this will attach to
+    scope_var: str
+
+    #: Name of variable in initializer for this class
+    varname: str
 
     # cls_using
     # - typealias
@@ -242,6 +266,8 @@ class ClassContext:
 
     # don't add protected things if trampoline not enabled
     # .. more nuance than that
+
+    classes: typing.List["ClassContext"] = field(default_factory=list)
 
     enums: typing.List[EnumContext] = field(default_factory=list)
 
@@ -276,6 +302,7 @@ class HeaderContext:
 
     using_ns: typing.List[str] = field(default_factory=list)
 
+    # subpackages??? or how is this different
     packages: typing.Dict[str, PackageContext] = field(default_factory=dict)
 
 

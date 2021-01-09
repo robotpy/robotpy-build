@@ -11,12 +11,19 @@ from cxxheaderparser.parserstate import (
 from cxxheaderparser.tokfmt import tokfmt
 from cxxheaderparser.types import (
     Array,
+    DecoratedType,
     EnumDecl,
     Field,
     ForwardDecl,
     FriendDecl,
     Function,
-    Method, Type,
+    FunctionType,
+    FundamentalSpecifier,
+    Method,
+    NameSpecifier,
+    PQName,
+    Reference,
+    Type,
     Typedef,
     UsingAlias,
     UsingDecl,
@@ -39,6 +46,7 @@ from ..config.autowrap_yml import (
 from .generator_data import GeneratorData, MissingReporter
 from .mangle import trampoline_signature
 from .tmplcontext import (
+    ClassContext,
     EnumContext,
     EnumeratorContext,
     FieldContext,
@@ -77,8 +85,19 @@ _operators = {
 # fmt: on
 
 
-def _is_fundamental(t: Type):
-    if isinstance(self.typename.segments[-1], FundamentalSpecifier)
+def _is_fundamental(dt: DecoratedType):
+    t = dt.get_type()
+    if isinstance(t, Type) and not t.typename.classkey:
+        last_segment = t.typename.segments[-1]
+        if isinstance(last_segment, FundamentalSpecifier):
+            return True
+        elif (
+            isinstance(last_segment, NameSpecifier)
+            and last_segment.name in _int32_types
+        ):
+            return True
+
+    return False
 
 
 class CxxParserVisitor:
@@ -97,7 +116,9 @@ class CxxParserVisitor:
 
         self.context = HeaderContext()
 
-        # self.data = CollectedHeaderData
+        self.path_stack = typing.Deque[str]()
+        self.cls_stack = typing.Deque[typing.Optional[ClassContext]]()
+        self.cls: typing.Optional[ClassContext] = None
 
     def report_missing(self, name: str, reporter: MissingReporter):
         self.gendata.report_missing(name, reporter)
@@ -106,40 +127,45 @@ class CxxParserVisitor:
     # Utility functions
     #
 
-    def _add_type_caster(self, typename: str):
-        # typename included the namespace, originally the specialization
-        # too but we don't need that anymore
+    def _add_type_caster_pqname(self, typename: PQName):
 
-        # still need to extract names from each element of the specialization
-        # and add those
+        segments = []
 
-        # variable[raw_type]
-        # fn[returns]
-        # parameter[x_type]
-        # force_type_casters
-        # cls[props][raw_type]
+        # Only add things that are entirely name specifiers, and always omit
+        # specializations from the name
+        for segment in typename.segments:
+            if not isinstance(segment, NameSpecifier):
+                return
 
-        # defer until the end since there's lots of duplication
-        self.types.add(typename)
+            segments.append(segment.name)
+            specialization = segment.specialization
+            if specialization:
+                for arg in specialization.args:
+                    argg = arg.arg
+                    if isinstance(argg, DecoratedType):
+                        self._add_type_caster(argg)
 
-    # def _get_type_caster_includes(self):
-    #     seps = re.compile(r"[<>\(\)]")
-    #     includes = set()
-    #     for typename in self.types:
-    #         tmpl_idx = typename.find("<")
-    #         if tmpl_idx == -1:
-    #             typenames = [typename]
-    #         else:
-    #             typenames = [typename[:tmpl_idx]] + seps.split(
-    #                 typename[tmpl_idx:].replace(" ", "")
-    #             )
+        # add the type name to the set to be resolved later
+        self.types.add("::".join(segments))
 
-    #         for typename in typenames:
-    #             if typename:
-    #                 header = self.casters.get(typename)
-    #                 if header:
-    #                     includes.add(header)
-    #     return sorted(includes)
+    def _add_type_caster(self, dtype: DecoratedType):
+        # convert to a string containing just the name of the type
+        t = dtype.get_type()
+        if isinstance(t, Type):
+            self._add_type_caster_pqname(t.typename)
+        elif isinstance(t, FunctionType):
+            self._add_type_caster(t.return_type)
+            for param in t.parameters:
+                self._add_type_caster(param.type)
+
+    def _get_type_caster_includes(self) -> typing.List[str]:
+        includes = []
+        for typename in self.types:
+            header = self.casters.get(typename)
+            if header:
+                includes.add(header)
+
+        return sorted(includes)
 
     # def _add_subpackage(self, v, data):
     #     if data.subpackage:
@@ -195,21 +221,21 @@ class CxxParserVisitor:
     # Parser visitor functions
     #
 
-    def on_namespace_start(self, state: NamespaceBlockState) -> None:
-        """
-        Called when a ``namespace`` directive is encountered
-        """
+    @property
+    def path(self) -> str:
+        return "::".join(self._path)
 
-        # update path
+    def on_namespace_start(self, state: NamespaceBlockState) -> None:
+        ns = "::".join(state.namespace.names)
+        self._path.append(ns)
 
     def on_namespace_end(self, state: NamespaceBlockState) -> None:
-        """
-        Called at the end of a ``namespace`` block
-        """
-
-        # unpop path
+        self._path.pop()
 
     def on_function(self, state: State, fn: Function) -> None:
+
+        # is this a function that belongs to a class? ignore it
+
         pass
 
     def on_using_namespace(self, state: State, namespace: typing.List[str]) -> None:
@@ -293,28 +319,94 @@ class CxxParserVisitor:
     #
 
     def on_class_start(self, state: ClassBlockState) -> None:
-        """
-        Called when a class/struct/union is encountered
 
-        When part of a typedef:
+        parent = self.cls
+        self.cls_stack.append(parent)
 
-        .. code-block:: c++
+        decl = state.class_decl
 
-            typedef struct { } X;
+        ignored = False
 
-        This is called first, followed by on_typedef for each typedef instance
-        encountered. The compound type object is passed as the type to the
-        typedef.
-        """
+        # if parent access is private or parent is ignored, set as ignored
+        if parent:
+            if parent.ignored:
+                ignored = True
+            elif (
+                isinstance(state.parent, ClassBlockState)
+                and state.parent.access == "private"
+            ):
+                ignored = True
 
-        # if ignored, return
+        # if ignored, no need to continue processing, but still need to store
+        # the context
 
-        # if parent access is private, return
+        # TODO
+        self.cls = ClassContext(ignored, cls_key, cls_userdata)
+
+        # scope var set via:
+        # {%- if cls.parent -%}
+        # {{ cls.parent.x_varname }}
+        # {%- elif cls.data.template_params -%}
+        # m
+        # {%- else -%}
+        # {{ cls.x_module_var }}
+        # {%- endif -%}
+
+        # for typename in class_data.force_type_casters:
+        #     self._add_type_caster(typename)
+
+        # has_constructor = False
+        # is_polymorphic = class_data.is_polymorphic
+
+        # # bad assumption? yep
+        # if cls["inherits"]:
+        #     is_polymorphic = True
+
+        # has_trampoline = (
+        #     is_polymorphic and not cls["final"] and not class_data.force_no_trampoline
+        # )
+
+        # TODO: if this is a nested class that has a template, don't add it
+        #       to the parent's list of children for some reason
+        #
+        #       .. probably need to add it to the parent's list of templates?
+
+    def _on_class_bases(self, bases):
+        pass
+
+        # for each base, construct a qualname for each base
+
+        # check for qualname override
+        #
+
+        # for each base parameter, add it to the list
+
+        # is it an ignored base
+
+        # ensure that any specified ignored bases actually existed
+        # if ignored_bases:
+        #     bases = ", ".join(base["class"] for base in cls["inherits"])
+        #     invalid_bases = ", ".join(ignored_bases.keys())
+        #     raise ValueError(
+        #         f"{cls_name}: ignored_bases contains non-existant bases "
+        #         + f"{invalid_bases}; valid bases are {bases}"
+        #     )
+
+        # .. x_inherits is what gets set
+
+        # cons
+
+    def on_class_end(self, state: ClassBlockState) -> None:
+        # this_cls = self.cls
+        self.cls = self.cls_stack.pop()
 
     def on_class_field(self, state: ClassBlockState, f: Field) -> None:
         """
         Called when a field of a class is encountered
         """
+
+        if self.cls.ignored:
+            return
 
         # if access in "private" or (
         #             access == "protected" and not has_trampoline
@@ -334,6 +426,8 @@ class CxxParserVisitor:
 
         cpp_type = f.type
 
+        is_reference = isinstance(cpp_type, Reference)
+
         array_size = None
         if isinstance(cpp_type, Array):
             # ignore arrays with incomplete size
@@ -351,7 +445,7 @@ class CxxParserVisitor:
         if userdata.ignore:
             return
 
-        cpp_typename = wtf
+        cpp_typename = str(cpp_type)
 
         if userdata.rename:
             py_name = userdata.rename
@@ -365,28 +459,39 @@ class CxxParserVisitor:
             # attributes regardless of type
             if state.class_decl.classkey != "class":
                 readonly = False
-            
+
             # Properties that aren't fundamental or a reference are readonly unless
             # overridden by the hook configuration
-            #elif isinstance(cpp_type, Funda)
             else:
-                
-                readonly = not v["fundamental"] and not v["reference"]
+                readonly = not (
+                    isinstance(cpp_type, Reference) or _is_fundamental(cpp_type)
+                )
+
         elif userdata.access == PropAccess.READONLY:
             readonly = True
         else:
             readonly = False
 
-        readonly = False
         doc = self._process_doc(f.doxygen, userdata)
 
         # do something with this
-        FieldContext()
+        FieldContext(
+            cpp_typename,
+            cpp_name,
+            py_name,
+            readonly,
+            f.static,
+            is_reference,
+            array_size,
+            doc,
+        )
 
     def on_class_method(self, state: ClassBlockState, method: Method) -> None:
         """
         Called when a method of a class is encountered
         """
+
+        # if class ignored
 
         # if ignored, return
 
@@ -428,7 +533,4 @@ class CxxParserVisitor:
         pass  # intentionally empty
 
     def on_class_friend(self, state: ClassBlockState, friend: FriendDecl) -> None:
-        pass  # intentionally empty
-
-    def on_class_end(self, state: ClassBlockState) -> None:
         pass  # intentionally empty

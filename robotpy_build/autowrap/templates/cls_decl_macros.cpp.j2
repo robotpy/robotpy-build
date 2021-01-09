@@ -1,0 +1,51 @@
+{# 
+    Class declaration and initialization
+#}
+
+{%- macro cls_decl(cls) -%}
+  py::class_<typename {{ cls.full_cpp_name }}
+    {%- if cls.data.nodelete -%}
+      , std::unique_ptr<typename {{ cls.full_cpp_name }}, py::nodelete>
+    {%- elif cls.data.shared_ptr -%}
+      , std::shared_ptr<typename {{ cls.full_cpp_name }}>
+    {%- endif -%}
+    {%- if cls.x_has_trampoline -%}
+      , {{ cls.x_trampoline_name }}
+    {%- endif -%}
+
+    {%- if cls.x_inherits -%}
+      , {{ cls.x_inherits | join(', ', attribute='class') }}
+    {%- endif -%}
+    > {{ cls.varname }};
+
+    {% for enum in cls.enums %}
+    {{ enum_decl(enum) }};
+    {% endfor %}
+
+    {# declare nested classes #}
+    {% for ncls in cls.nested_classes %}
+      {{ cls_decl(ncls) }}
+    {% endfor -%}
+
+{%- endmacro -%}
+
+{%- macro cls_init_args(cls) -%}
+    {{ cls.varname }}(
+      {{ cls.scope_var }}, "{{ cls.py_name }}"
+    
+    {%- if cls.final -%}
+      , py::is_final()
+    {%- endif -%}
+
+    ),
+
+    {% for enum in cls.enums %}
+    {{ enum_init_args(enum) }},
+    {% endfor %}
+
+  {# initialize nested classes #}
+  {% for ncls in cls.classes %}
+    {{ cls_init_args(ncls) }}
+  {% endfor -%}
+
+{%- endmacro -%}

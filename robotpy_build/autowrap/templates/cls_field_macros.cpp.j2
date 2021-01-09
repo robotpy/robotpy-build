@@ -15,7 +15,7 @@
         return py::memoryview::from_buffer(
           &inst.{{ field.cpp_name }}, sizeof({{ field.cpp_type }}),
           py::format_descriptor<{{ field.cpp_type }}>::value,
-          {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ field.cpp_type }})},
+          {{ "{" }}{{ field.array_size }}{{ "}" }}, {sizeof({{ field.cpp_type }})},
           {% if field.readonly %}true{% else %}false{% endif %}
         );
     }
@@ -25,7 +25,7 @@
     []({{ cls_qualname }}& inst, {{ field.cpp_type }} v) {inst.{{ field.cpp_name }} = v; }
     {%- endif %}
   {% else -%}
-    &{{ cls_qualname }}::{{ prop.name}}
+    &{{ cls_qualname }}::{{ field.cpp_name }}
   {%- endif -%}
   {{- docm.doc_arg(field) }})
 {%- endmacro -%}
