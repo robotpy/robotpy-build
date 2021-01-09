@@ -30,7 +30,6 @@ class WPILibMavenPlatform:
 
 
 X86_64 = "x86-64"
-OSX = WPILibMavenPlatform(X86_64, "osx", libext=".dylib")
 
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
@@ -40,6 +39,7 @@ _platforms = {
     "linux-aarch64": WPILibMavenPlatform("aarch64bionic"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
     "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib", ".lib"),
+    "macos-x86_64": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
 }
 
 
@@ -56,7 +56,7 @@ def get_platform() -> WPILibMavenPlatform:
 
     # Check for 64 bit x86 macOS (version agnostic)
     if re.fullmatch(r"macosx-.*-x86_64", pyplatform):
-        return OSX
+        return _platforms["macos-x86_64"]
 
     if pyplatform == "linux-armv7l":
         try:
