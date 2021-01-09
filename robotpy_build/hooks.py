@@ -226,6 +226,9 @@ class Hooks:
             v["data"] = var_data
             self._add_type_caster(v["raw_type"])
 
+        for _, u in header.using.items():
+            self._add_type_caster(u["raw_type"])
+
         data["type_caster_includes"] = self._get_type_caster_includes()
         data["class_hierarchy"] = self.class_hierarchy
         data["subpackages"] = self.subpackages
@@ -527,6 +530,9 @@ class Hooks:
 
         if class_data.ignore:
             return
+
+        for _, u in cls["using"].items():
+            self._add_type_caster(u["raw_type"])
 
         for typename in class_data.force_type_casters:
             self._add_type_caster(typename)
