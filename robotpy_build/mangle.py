@@ -36,7 +36,7 @@ _builtins = {
     "auto": "Da",
 }
 
-_type_bad_chars = ":<>=()&"
+_type_bad_chars = ":<>=()&,"
 _type_trans = str.maketrans(_type_bad_chars, "_" * len(_type_bad_chars))
 
 
