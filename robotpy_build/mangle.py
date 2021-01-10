@@ -66,6 +66,11 @@ def _encode_type(param):
     raw_type = param.get("enum", param["raw_type"])
     typ = _builtins.get(raw_type)
     if not typ:
+        # Only mangle the typename, ignore namespaces as children might have the types
+        # aliased or something. There are cases where this would fail, but hopefully
+        # that doesn't happen?
+        # TODO: do this better
+        raw_type = raw_type.split("::")[-1]
         # assert " " not in raw_type, raw_type
         typ = "T" + raw_type.replace(" ", "").translate(_type_trans)
 
