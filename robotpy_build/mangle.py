@@ -63,7 +63,7 @@ def _encode_type(param):
         names.append("P" * ptr)
 
     # actual type
-    raw_type = param["raw_type"]
+    raw_type = param.get("enum", param["raw_type"])
     typ = _builtins.get(raw_type)
     if not typ:
         # assert " " not in raw_type, raw_type
