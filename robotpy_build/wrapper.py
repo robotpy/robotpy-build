@@ -383,15 +383,12 @@ class Wrapper:
                                 )
 
                 if dl.dlopenlibs:
-                    libnames_full += [
+                    dlopen_libnames_full = [
                         f"{self.platform.libprefix}{lib}{libext}"
                         for lib in dl.dlopenlibs
                     ]
-                    if libext != linkext:
-                        extract_names += [
-                            f"{self.platform.libprefix}{lib}{linkext}"
-                            for lib in dl.dlopenlibs
-                        ]
+                    libnames_full += dlopen_libnames_full
+                    extract_names += dlopen_libnames_full
 
                 to = {
                     posixpath.join(dl.libdir, libname): join(libdir, libname)
