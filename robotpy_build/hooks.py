@@ -132,7 +132,8 @@ class Hooks:
         if iskeyword(name):
             return f"{name}_"
         if not name.isidentifier() and not is_operator:
-            raise ValueError(f"name {name!r} is not a valid identifier")
+            if not self.report_only:
+                raise ValueError(f"name {name!r} is not a valid identifier")
 
         return name
 
