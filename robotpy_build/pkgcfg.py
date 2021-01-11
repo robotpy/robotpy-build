@@ -17,6 +17,7 @@ def get_library_dirs() -> Optional[List[str]]:
 def get_type_casters(casters: Dict[str, str]) -> None:
     casters.update(
         {
+            # STL support
             "std::vector": "pybind11/stl.h",
             "std::deque": "pybind11/stl.h",
             "std::list": "pybind11/stl.h",
@@ -32,5 +33,20 @@ def get_type_casters(casters: Dict[str, str]) -> None:
             "std::complex": "pybind11/complex.h",
             "std::chrono::duration": "pybind11/chrono.h",
             "std::chrono::time_point": "pybind11/chrono.h",
+            # Eigen support (requires numpy)
+            "Eigen::Block": "pybind11/eigen.h",
+            "Eigen::DiagonalMatrix": "pybind11/eigen.h",
+            "Eigen::Matrix": "pybind11/eigen.h",
+            "Eigen::MatrixXd": "pybind11/eigen.h",
+            "Eigen::MatrixXdR": "pybind11/eigen.h",
+            "Eigen::MatrixXi": "pybind11/eigen.h",
+            "Eigen::MatrixXf": "pybind11/eigen.h",
+            "Eigen::Ref": "pybind11/eigen.h",
+            "Eigen::Matrix4d": "pybind11/eigen.h",
+            "Eigen::RowVectorXf": "pybind11/eigen.h",
+            "Eigen::SparseMatrix": "pybind11/eigen.h",
+            "Eigen::SparseView": "pybind11/eigen.h",
+            "Eigen::VectorXf": "pybind11/eigen.h",
+            "Eigen::VectorXcf": "pybind11/eigen.h",
         }
     )
