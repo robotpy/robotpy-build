@@ -38,7 +38,10 @@ def convert_maven_to_downloads(
         raise ValueError("patches must be None if use_sources is False!")
     else:
         # libs
-        dl_lib["libs"] = mcfg.libs if mcfg.libs else [mcfg.artifact_id]
+
+        dl_lib["libs"] = mcfg.libs
+        if mcfg.libs is mcfg.dlopenlibs is None:
+            dl_lib["libs"] = [mcfg.artifact_id]
         dl_lib["dlopenlibs"] = mcfg.dlopenlibs
         dl_lib["libexts"] = mcfg.libexts
         dl_lib["linkexts"] = mcfg.linkexts
