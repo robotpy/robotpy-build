@@ -66,9 +66,16 @@ def download_and_extract_zip(url, to=None, cache=None):
                 # if is directory, copy whole thing recursively
                 try:
                     info = z.getinfo(src)
-                except KeyError:
+                except KeyError as e:
+                    osrc = src
                     src = src + "/"
-                    info = z.getinfo(src)
+                    try:
+                        info = z.getinfo(src)
+                    except KeyError:
+                        info = None
+                    if info is None:
+                        msg = f"error extracting {osrc} from {zip_fname}"
+                        raise ValueError(msg) from e
                 if info.is_dir():
                     ilen = len(info.filename)
                     for minfo in z.infolist():
