@@ -86,7 +86,11 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
 {% endfor %}
 
 {% for typealias in cls.data.typealias %}
-    using {{ typealias.split('::')[-1] }} = {{ typealias }};
+    {%- if typealias.startswith("template") -%}
+      {{ typealias }};
+    {%- else -%}
+        using {{ typealias.split('::')[-1] }} = {{ typealias }};
+    {%- endif -%}
 {% endfor %}
 {% for constant in cls.data.constants %}
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
