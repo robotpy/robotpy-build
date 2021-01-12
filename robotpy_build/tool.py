@@ -3,6 +3,7 @@ import glob
 import inspect
 from os.path import basename, dirname, exists, join, relpath, splitext
 from pathlib import PurePosixPath
+import posixpath
 import pprint
 import subprocess
 import sys
@@ -169,6 +170,13 @@ class ImportCreator:
         parser.add_argument("compiled", nargs="?", help="Ex: wpiutil._impl.wpiutil")
         return parser
 
+    def _rel(self, base: str, compiled: str) -> str:
+        base = posixpath.join(*base.split("."))
+        compiled = posixpath.join(*compiled.split("."))
+        elems = posixpath.relpath(compiled, base).split("/")
+        elems = ["" if e == ".." else e for e in elems]
+        return f".{'.'.join(elems)}"
+
     def run(self, args):
         # Runtime Dependency Check
         try:
@@ -185,7 +193,7 @@ class ImportCreator:
         ctx = {}
         exec(f"from {compiled} import *", {}, ctx)
 
-        relimport = "." + ".".join(compiled.split(".")[len(args.base.split(".")) :])
+        relimport = self._rel(args.base, compiled)
 
         stmt_compiled = "" if not args.compiled else f" {args.compiled}"
 
