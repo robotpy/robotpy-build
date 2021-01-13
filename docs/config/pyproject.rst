@@ -99,7 +99,7 @@ For ARM linux distributions we support:
 
 * armv7l + nilrt (RoboRIO)
 * armv7l + raspbian (Raspbian 10)
-* aarch64 + bionic (??)
+* aarch64 + bionic (Ubuntu 18.04)
 
 Reference
 ---------
