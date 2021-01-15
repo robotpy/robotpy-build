@@ -16,6 +16,7 @@ class StaticLib:
         self.cfg = cfg
         self.static_lib = True
         self.libinit_import = None
+        self.pypi_package = None
         # TODO
         self.depends = []
 
