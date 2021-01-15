@@ -190,12 +190,12 @@ class Wrapper:
         return includes
 
     def get_library_dirs(self) -> Optional[List[str]]:
-        if self.get_library_names():
+        if self.get_library_full_names():
             return [join(self.root, "lib")]
         return []
 
     def get_library_dirs_rel(self) -> Optional[List[str]]:
-        if self.get_library_names():
+        if self.get_library_full_names():
             return ["lib"]
         return []
 
