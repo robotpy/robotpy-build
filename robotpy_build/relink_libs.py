@@ -31,7 +31,7 @@ from delocate.tools import get_install_names, set_install_name as _set_install_n
 
 from os import path
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .pkgcfg_provider import PkgCfg, PkgCfgProvider
 
@@ -59,7 +59,9 @@ def set_install_name(file: str, old_install_name: str, new_install_name: str):
 LibsDict = Dict[str, Tuple[str, str]]
 
 
-def _resolve_libs(libpaths: List[str], libname_full: str, libs: LibsDict):
+def _resolve_libs(libpaths: Optional[List[str]], libname_full: str, libs: LibsDict):
+    if not libpaths:
+        return
     for libpath in libpaths:
         p = path.join(libpath, libname_full)
         if path.exists(p):
@@ -69,7 +71,10 @@ def _resolve_libs(libpaths: List[str], libname_full: str, libs: LibsDict):
 
 def _resolve_libs_in_self(dep: PkgCfg, install_root: str, libs: LibsDict):
     pkgroot = path.join(install_root, *dep.package_name.split("."))
-    for libname_full in dep.get_library_full_names():
+    full_names = dep.get_library_full_names()
+    if not full_names:
+        return
+    for libname_full in full_names:
         for ld, ldr in zip(dep.get_library_dirs(), dep.get_library_dirs_rel()):
             p = path.join(ld, libname_full)
             if path.exists(p):
@@ -95,8 +100,10 @@ def _resolve_dependencies(
             _resolve_libs_in_self(dep, install_root, libs)
         else:
             libdirs = dep.get_library_dirs()
-            for libname_full in dep.get_library_full_names():
-                _resolve_libs(libdirs, libname_full, libs)
+            full_names = dep.get_library_full_names()
+            if full_names:
+                for libname_full in full_names:
+                    _resolve_libs(libdirs, libname_full, libs)
 
 
 def _fix_libs(to_fix: LibsDict, libs: LibsDict):
