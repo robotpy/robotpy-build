@@ -95,6 +95,10 @@ class BuildPyi(Command):
                 % (args,)
             ) from None
 
+        # Create a py.typed for PEP 561
+        with open(join(data["out"], "py.typed"), "w"):
+            pass
+
 
 class _PackageFinder:
     """
