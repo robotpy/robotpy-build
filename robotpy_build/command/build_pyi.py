@@ -17,6 +17,7 @@ class GeneratePyiError(DistutilsError):
 
 
 class BuildPyi(Command):
+    base_package: str
 
     command_name = "build_pyi"
     description = "Generates pyi files from built extensions"
@@ -96,7 +97,7 @@ class BuildPyi(Command):
             ) from None
 
         # Create a py.typed for PEP 561
-        with open(join(data["out"], "py.typed"), "w"):
+        with open(join(data["out"], *self.base_package.split("."), "py.typed"), "w"):
             pass
 
 

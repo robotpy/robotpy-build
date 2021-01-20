@@ -14,7 +14,7 @@ try:
 
 
 except ImportError:
-    bdist_wheel = None
+    bdist_wheel = None  # type: ignore
 
 
 from .command.build_py import BuildPy
@@ -122,6 +122,7 @@ class Setup:
             cls.wrappers = self.wrappers
             cls.static_libs = self.static_libs
             cls.rpybuild_pkgcfg = self.pkgcfg
+        BuildPyi.base_package = self.base_package
 
         # We already know some of our packages, so collect those in addition
         # to using find_packages()
