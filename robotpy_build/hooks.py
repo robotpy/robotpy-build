@@ -155,11 +155,14 @@ class Hooks:
 
         return doc_quoted
 
-    def _resolve_default(self, fn, name):
+    def _resolve_default(self, fn, p, name):
         if isinstance(name, (int, float)):
             return str(name)
         if name in ("NULL", "nullptr"):
             return name
+
+        if name and name[0] == "{" and name[-1] == "}":
+            return f"{p['x_type']}{name}"
 
         # if there's a parent, look there
         parent = fn["parent"]
@@ -321,7 +324,7 @@ class Hooks:
             p["x_pyarg"] = 'py::arg("%(name)s")' % p
 
             if "default" in p:
-                p["default"] = self._resolve_default(fn, p["default"])
+                p["default"] = self._resolve_default(fn, p, p["default"])
                 p["x_pyarg"] += "=" + p["default"]
 
             ptype = "in"
