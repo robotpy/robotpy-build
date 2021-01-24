@@ -231,12 +231,12 @@
   {% if cls.parent and '<' not in cls.x_qualname %}
   using {{ cls.name }} = {{ cls.x_qualname }};
   {% endif %}
-  {% for typealias in cls.data.typealias -%}
-    {%- if typealias.startswith("template") -%}
+  {% for typealias in cls.data.typealias %}
+    {% if typealias.startswith("template") %}
       {{ typealias }};
-    {%- else -%}
+    {% else %}
       using {% if '=' in typealias %}{{ typealias }}{% else %}{{ typealias.split('::')[-1] }} = {{ typealias }}{% endif %};
-    {%- endif -%}
+    {% endif %}
   {% endfor %}
   {% for constant in cls.data.constants -%}
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
