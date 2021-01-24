@@ -34,3 +34,21 @@ def test_ft_protection():
     assert isinstance(c, ft.PBase)
     assert isinstance(pyc, ft.PBase)
     assert isinstance(gc, ft.PBase)
+
+    # private final should not fail to compile, and children
+    # should still work
+    # .. oddly enough the method doesn't get hidden, must be
+    #    because of pybind11's inheritance. Probably should fix?
+
+    assert b.privateFinalTestC() == 1
+    assert b.privateFinalTestGC() == 10
+    assert b.privateOverrideTestC() == 100
+
+    assert c.privateFinalTestC() == 2
+    assert c.privateFinalTestGC() == 20
+    assert c.privateOverrideTestC() == 200
+
+    # Well, this is an unexpected result, but it works too
+    assert gc.privateFinalTestC() == 2
+    assert gc.privateFinalTestGC() == 30
+    assert gc.privateOverrideTestC() == 200
