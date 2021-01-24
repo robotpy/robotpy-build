@@ -33,6 +33,8 @@ bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) :
 
 void finish() {
 
+    {{ pybind11.cls_using(cls) }}
+
     {{ pybind11.cls_def(cls, cls.x_varname) }}
 
     {{ cls.data.template_inline_code }}
