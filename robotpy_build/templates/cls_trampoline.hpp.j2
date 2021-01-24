@@ -22,6 +22,11 @@
 #define RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
 {% endfor %}
 
+{# delete any final/overrides that are private #}
+{% for fn in cls.methods.private if fn.final or fn.override %}
+#define RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
+{% endfor %}
+
 {# include override files for each base -- TODO: exclude some bases? #}
 {% if cls.x_inherits %}
 {% for base in cls.x_inherits %}
