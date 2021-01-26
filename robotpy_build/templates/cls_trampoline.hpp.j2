@@ -48,32 +48,40 @@ using {{ using.raw_type }};
 {# 
     To avoid multiple inheritance here, we define a single base with bases that
     are all template bases.. 
+
+    CxxBase is the C++ base class we're wrapping
+    PyTrampolineBase is another trampoline or our base class
+
+    Note: CxxBase is last so that it can take PyTrampolineBase as a default parameter
 #}
-template <typename CxxBase{{ cls.x_pybase_params }}>
+template <typename PyTrampolineBase{{ cls.x_pybase_params }}, typename CxxBase = PyTrampolineBase>
 using PyBase{{ cls.x_qualname_ }} = 
 {% for base in cls.x_inherits %}
     Py{{ base.x_qualname_ }}<
 {% endfor %}
-        CxxBase
+        PyTrampolineBase
 {% for base in (cls.x_inherits | reverse) %}
     {{ base.x_params }}
+    , CxxBase
     >
 {% endfor %}
 ;
 
-template <typename CxxBase
+template <typename PyTrampolineBase
 {%- if cls.x_template_parameter_list -%}
     , {{ cls.x_template_parameter_list }}
-{%- endif %}>
-struct Py{{ cls.x_qualname_ }} : PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_args }}> {
-    using PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_args }}>::PyBase{{ cls.x_qualname_ }};
+{%- endif -%}
+    , typename CxxBase = PyTrampolineBase>
+struct Py{{ cls.x_qualname_ }} : PyBase{{ cls.x_qualname_ }}<PyTrampolineBase{{ cls.x_pybase_args }}, CxxBase> {
+    using PyBase{{ cls.x_qualname_ }}<PyTrampolineBase{{ cls.x_pybase_args }}, CxxBase>::PyBase{{ cls.x_qualname_ }};
 {% else %}
-template <typename CxxBase
+template <typename PyTrampolineBase
 {%- if cls.x_template_parameter_list -%}
     , {{ cls.x_template_parameter_list }}
-{%- endif %}>
-struct Py{{ cls.x_qualname_ }} : CxxBase {
-    using CxxBase::CxxBase;
+{%- endif -%}
+    , typename CxxBase = PyTrampolineBase>
+struct Py{{ cls.x_qualname_ }} : PyTrampolineBase {
+    using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
 
 {# protected constructors -- only used by the direct child #}
@@ -81,9 +89,9 @@ struct Py{{ cls.x_qualname_ }} : CxxBase {
 #ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
     Py{{ cls.x_qualname_ }}({{ fn.parameters | join(', ', attribute='x_decl') }}) :
         {% if cls.x_inherits -%}
-             PyBase{{ cls.x_qualname_ }}<CxxBase{{ cls.x_pybase_args }}>
+             PyBase{{ cls.x_qualname_ }}<PyTrampolineBase{{ cls.x_pybase_args }}, CxxBase>
         {%- else -%}
-            CxxBase
+            PyTrampolineBase
         {%- endif -%}
         ({{ fn.parameters | join(', ', attribute='x_callname') }})
     {}

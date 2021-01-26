@@ -1,4 +1,4 @@
-
+// clang-format off
 #pragma once
 
 #include "ibase.h"
@@ -10,9 +10,14 @@ struct IChild : IBase
 {
     IChild() : IBase(), i(42) {}
 
-    std::string baseAndChild() final
+    std::string baseAndChild() override
     {
         return "child::baseAndChild";
+    }
+
+    std::string baseAndChildFinal() final
+    {
+        return "child::baseAndChildFinal";
     }
 
     int getI() const
