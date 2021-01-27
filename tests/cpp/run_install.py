@@ -84,7 +84,10 @@ if __name__ == "__main__":
 
             cmd_args.append(root)
 
-        subprocess.check_call(cmd_args, cwd=cwd)
+        env = os.environ.copy()
+        env["SETUPTOOLS_SCM_PRETEND_VERSION"] = "0.0.1"
+
+        subprocess.check_call(cmd_args, cwd=cwd, env=env)
 
         # Windows fails if you try to delete the directory you're currently in
         os.chdir(root)

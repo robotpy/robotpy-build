@@ -1,4 +1,4 @@
-
+// clang-format off
 #pragma once
 
 #include <string>
@@ -26,6 +26,16 @@ struct IBase
         return "base::baseAndChild";
     }
 
+    virtual std::string baseAndPyChild()
+    {
+        return "base::baseAndPyChild";
+    }
+
+    virtual std::string baseAndChildFinal()
+    {
+        return "base::baseAndChildFinal";
+    }
+
     //
     // These static methods are for validating that python objects can override
     // the virtual methods correctly
@@ -44,6 +54,16 @@ struct IBase
     static std::string getBaseAndChild(IBase *base)
     {
         return base->baseAndChild();
+    }
+
+    static std::string getBaseAndPyChild(IBase *base)
+    {
+        return base->baseAndPyChild();
+    }
+
+    static std::string getBaseAndChildFinal(IBase *base)
+    {
+        return base->baseAndChildFinal();
     }
 
 protected:
