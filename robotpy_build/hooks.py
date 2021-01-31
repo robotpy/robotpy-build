@@ -304,7 +304,7 @@ class Hooks:
 
         for i, p in enumerate(fn["parameters"]):
 
-            if is_constructor and p["reference"]:
+            if is_constructor and p["reference"] == 1:
                 x_keepalives.append((1, i + 2))
 
             if p["raw_type"] in _int32_types:
