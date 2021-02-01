@@ -320,6 +320,10 @@ class ClassData(Model):
     #: into the template definition
     template_inline_code: str = ""
 
+    #: If this class has an associated trampoline, add this code inline at
+    #: the bottom of the trampoline class. This is rarely useful.
+    trampoline_inline_code: Optional[str] = None
+
     @validator("attributes", pre=True)
     def validate_attributes(cls, value):
         for k, v in value.items():
