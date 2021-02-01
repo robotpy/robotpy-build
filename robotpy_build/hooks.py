@@ -779,6 +779,7 @@ class Hooks:
             cls[
                 "x_trampoline_name"
             ] = f"rpygen::Py{cls['x_qualname_']}<typename {cls_qualname}{tmpl}>"
+            cls["x_trampoline_var"] = f"{cls_name}_Trampoline"
         cls["x_has_constructor"] = has_constructor
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)

@@ -407,6 +407,9 @@ class HooksDataYaml(Model):
     #: * ``cls_CLASSNAME`` are ``py::class`` instances
     #: * ... lots of other things too
     #:
+    #: The trampoline class (useful for accessing protected items) is available
+    #: at ``{CLASSNAME}_Trampoline``
+    #:
     #: To see the full list, run a build and look at the generated code at
     #: ``build/*/gensrc/**/*.cpp``
     #:
