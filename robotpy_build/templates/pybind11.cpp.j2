@@ -96,11 +96,7 @@
     {%- if fn.data.cpp_code -%}
       {{ fn.data.cpp_code }}
     {%- elif trampoline_qualname -%}
-      .def(py::init([]({{ ns.arg_params | join(', ', attribute='x_decl') }}) {
-        return std::make_unique<{{ trampoline_qualname }}>(
-          {{- ns.arg_params | join(', ', attribute='x_callname') -}}
-        );
-      })
+      .def(py::init_alias<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- else -%}
       .def(py::init<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- endif -%}
