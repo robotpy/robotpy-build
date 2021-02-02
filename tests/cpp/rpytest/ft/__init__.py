@@ -4,6 +4,7 @@ from . import _init_rpytest_ft
 from ._rpytest_ft import (
     Abstract,
     ClassWithIgnored,
+    ClassWithTrampoline,
     DocClass,
     DocEnum,
     EnumContainer,
@@ -60,6 +61,7 @@ from ._rpytest_ft import (
 __all__ = [
     "Abstract",
     "ClassWithIgnored",
+    "ClassWithTrampoline",
     "DocClass",
     "DocEnum",
     "EnumContainer",

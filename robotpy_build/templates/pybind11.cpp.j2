@@ -96,11 +96,7 @@
     {%- if fn.data.cpp_code -%}
       {{ fn.data.cpp_code }}
     {%- elif trampoline_qualname -%}
-      .def(py::init([]({{ ns.arg_params | join(', ', attribute='x_decl') }}) {
-        return std::make_unique<{{ trampoline_qualname }}>(
-          {{- ns.arg_params | join(', ', attribute='x_callname') -}}
-        );
-      })
+      .def(py::init_alias<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- else -%}
       .def(py::init<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- endif -%}
@@ -244,6 +240,9 @@
 {% endmacro -%}
 
 {%- macro cls_decl(cls) -%}
+  {%- if cls.x_has_trampoline %}
+  using {{ cls.x_trampoline_var }} = {{ cls.x_trampoline_name }};
+  {% endif -%}
   py::class_<typename {{ cls.x_qualname }}
     {%- if cls.data.nodelete -%}
       , std::unique_ptr<typename {{ cls.x_qualname }}, py::nodelete>
@@ -251,7 +250,7 @@
       , std::shared_ptr<typename {{ cls.x_qualname }}>
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
-      , {{ cls.x_trampoline_name }}
+      , {{ cls.x_trampoline_var }}
     {%- endif -%}
 
     {%- if cls.x_inherits -%}
@@ -320,7 +319,7 @@
 
   {%- if cls.x_has_trampoline -%}
   {%- for fn in cls.methods.protected if not fn.data.ignore and not fn.data.ignore_pure %}
-    {{ genmethod(cls.x_qualname, fn, cls.x_trampoline_name) }}
+    {{ genmethod(cls.x_qualname, fn, cls.x_trampoline_var) }}
   {% endfor -%}
   {%- endif -%}
 
@@ -328,7 +327,7 @@
     {{ genprop(cls.x_qualname, prop) }}
   {% endfor -%}
   {%- for prop in cls.properties.protected if not prop.data.ignore %}
-    {{ genprop(cls.x_trampoline_name, prop) }}
+    {{ genprop(cls.x_trampoline_var, prop) }}
   {%- endfor %};
 
   {{ unnamed_enum(varname, cls.enums.public) }}

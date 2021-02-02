@@ -156,6 +156,10 @@ struct Py{{ cls.x_qualname_ }} : PyTrampolineBase {
     {% for prop in cls.properties.protected if not prop.data.ignore %}
     using {{ cls.x_qualname }}::{{ prop.name }};
     {% endfor %}
+
+    {% if cls.data.trampoline_inline_code %}
+    {{ cls.data.trampoline_inline_code }}
+    {% endif %}
 };
 
 }; // namespace rpygen

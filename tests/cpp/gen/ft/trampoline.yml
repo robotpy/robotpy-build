@@ -1,0 +1,10 @@
+---
+classes:
+  ClassWithTrampoline:
+    trampoline_inline_code: | 
+      int get42() { return 42; }
+
+inline_code: |
+  cls_ClassWithTrampoline
+    .def("get42", [](ClassWithTrampoline_Trampoline * self) { return self->get42(); })
+  ;
