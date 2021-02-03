@@ -147,6 +147,9 @@ class Hooks:
             doc = thing["doxygen"]
             doc = sphinxify.process_raw(doc)
 
+        if data.doc_append is not None:
+            doc += "\n" + data.doc_append
+
         if doc:
             # TODO
             doc = doc.replace("\\", "\\\\").replace('"', '\\"')

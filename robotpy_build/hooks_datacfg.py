@@ -114,8 +114,11 @@ class FunctionData(Model):
     #: Use this code instead of the generated code
     cpp_code: Optional[str] = None
 
-    #: Docstring for the function
+    #: Docstring for the function, will attempt to convert Doxygen docs if omitted
     doc: Optional[str] = None
+
+    #: Text to append to the (autoconverted) docstring for the function
+    doc_append: Optional[str] = None
 
     #: If True, prepends an underscore to the python name
     internal: bool = False
@@ -218,6 +221,9 @@ class PropData(Model):
     #: Docstring for the property (only available on class properties)
     doc: Optional[str] = None
 
+    #: Text to append to the (autoconverted) docstring
+    doc_append: Optional[str] = None
+
 
 class EnumValue(Model):
 
@@ -230,11 +236,17 @@ class EnumValue(Model):
     #: Docstring for the enum value
     doc: Optional[str] = None
 
+    #: Text to append to the (autoconverted) docstring
+    doc_append: Optional[str] = None
+
 
 class EnumData(Model):
 
     #: Set your own docstring for the enum
     doc: Optional[str] = None
+
+    #: Text to append to the (autoconverted) docstring
+    doc_append: Optional[str] = None
 
     #: If set to True, this property is not made available to python
     ignore: bool = False
@@ -255,6 +267,9 @@ class ClassData(Model):
 
     #: Docstring for the class
     doc: Optional[str] = None
+
+    #: Text to append to the (autoconverted) docstring
+    doc_append: Optional[str] = None
 
     ignore: bool = False
     ignored_bases: List[str] = []
