@@ -65,7 +65,7 @@ if __name__ == "__main__":
         cwd = None
 
         if len(sys.argv) == 2 and sys.argv[1] == "wheel":
-            cmd_args = [sys.executable, "setup.py", "bdist_wheel"]
+            cmd_args = [sys.executable, "-m", "build", "--wheel", "--no-isolation"]
             cwd = root
         else:
             # run pip install
