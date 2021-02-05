@@ -76,3 +76,14 @@ def test_docstrings_append():
         Useful extra information about this sweet var
         """
     )
+
+
+def test_docstrings_template():
+    assert inspect.getdoc(ft.DocTemplateSet) == "Set docs to this"
+
+    assert inspect.getdoc(ft.DocTemplateAppend) == inspect.cleandoc(
+        """
+        A templated class
+        Extra appended docs
+    """
+    )

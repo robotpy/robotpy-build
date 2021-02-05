@@ -26,3 +26,9 @@ struct DocAppendClass
     /** An awesome variable, use it for something */
     int sweet_var;
 };
+
+/**
+    A templated class
+*/
+template <typename T>
+struct DocWithTemplate {};

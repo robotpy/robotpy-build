@@ -141,7 +141,6 @@ class Hooks:
         self, thing, data, append_prefix=""
     ) -> typing.Optional[typing.List[str]]:
         doc = ""
-        doc_quoted: typing.Optional[typing.List[str]] = None
 
         if data.doc is not None:
             doc = data.doc
@@ -154,6 +153,12 @@ class Hooks:
                 "\n", f"\n{append_prefix}"
             )
 
+        return self._quote_doc(doc)
+
+    def _quote_doc(
+        self, doc: typing.Optional[str]
+    ) -> typing.Optional[typing.List[str]]:
+        doc_quoted: typing.Optional[typing.List[str]] = None
         if doc:
             # TODO
             doc = doc.replace("\\", "\\\\").replace('"', '\\"')
@@ -251,6 +256,11 @@ class Hooks:
                 qualname = f"::{qualname}"
             tmpl_data_d = tmpl_data.dict()
             tmpl_data_d["x_qualname_"] = qualname.translate(self._qualname_trans)
+            tmpl_data_d["x_doc_set"] = self._quote_doc(tmpl_data.doc)
+            doc_add = tmpl_data.doc_append
+            if doc_add:
+                doc_add = f"\n{doc_add}"
+            tmpl_data_d["x_doc_add"] = self._quote_doc(doc_add)
             self._add_subpackage(tmpl_data_d, tmpl_data)
             templates[k] = tmpl_data_d
 

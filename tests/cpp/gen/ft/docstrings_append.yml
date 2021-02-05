@@ -20,3 +20,24 @@ classes:
       fn:
         doc_append: |
           Useful extra information about this fn
+  
+  DocWithTemplate:
+    shared_ptr: true
+    template_params:
+    - T
+
+templates:
+  DocTemplateSet:
+    qualname: DocWithTemplate
+    params:
+    - int
+    doc: |
+      Set docs to this
+  
+  DocTemplateAppend:
+    qualname: DocWithTemplate
+    params:
+    - double
+    doc_append: |
+      Extra appended docs
+    

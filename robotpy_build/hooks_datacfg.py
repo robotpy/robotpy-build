@@ -399,6 +399,12 @@ class TemplateData(Model):
     #: If specified, put the template instantiation in a sub.pack.age
     subpackage: Optional[str] = None
 
+    #: Set the docstring for the template instance
+    doc: Optional[str] = None
+
+    #: Text to append to the (autoconverted) docstring for the template instance
+    doc_append: Optional[str] = None
+
 
 class HooksDataYaml(Model):
     """

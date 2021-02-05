@@ -2,11 +2,15 @@
     Macros for binding things with pybind11
 #}
 
+{%- macro docv(value) -%}
+  {%- for dq in value -%}
+    {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
+  {%- endfor -%}
+{%- endmacro -%}
+
 {%- macro doc(o, pre, post) -%}
   {%- if o.x_doc_quoted %}{{ pre }}
-    {% for dq in o.x_doc_quoted -%}
-    {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
-    {%- endfor -%}{{ post }}
+    {{ docv(o.x_doc_quoted) }}{{ post }}
   {%- endif -%}
 {%- endmacro -%}
 

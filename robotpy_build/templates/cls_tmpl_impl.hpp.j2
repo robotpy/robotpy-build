@@ -31,9 +31,16 @@ bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) :
     clsName(clsName)
 {}
 
-void finish() {
+void finish(const char * set_doc = NULL, const char * add_doc = NULL) {
 
     {{ pybind11.cls_def(cls, cls.x_varname) }}
+
+    if (set_doc) {
+        {{ cls.x_varname }}.doc() = set_doc;
+    }
+    if (add_doc) {
+        {{ cls.x_varname }}.doc() = py::cast<std::string>({{ cls.x_varname }}.doc()) + add_doc;
+    }
 
     {{ cls.data.template_inline_code }}
 }

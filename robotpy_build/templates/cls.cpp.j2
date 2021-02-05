@@ -118,8 +118,11 @@ void finish() {
 {% endfor %}
 
 {# templates #}
-{% for _ in templates.items() %}
-  tmplCls{{ loop.index }}.finish();
+{% for tdata in templates.values() %}
+  tmplCls{{ loop.index }}.finish(
+    {% if tdata.x_doc_set %}{{ pybind11.docv(tdata.x_doc_set) }}{% else %}NULL{% endif %},
+    {% if tdata.x_doc_add %}{{ pybind11.docv(tdata.x_doc_add) }}{% else %}NULL{% endif %}
+  );
 {% endfor %}
 
 {# class methods #}
