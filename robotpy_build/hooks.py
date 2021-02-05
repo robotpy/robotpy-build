@@ -137,7 +137,9 @@ class Hooks:
 
         return name
 
-    def _process_doc(self, thing, data) -> typing.Optional[typing.List[str]]:
+    def _process_doc(
+        self, thing, data, append_prefix=""
+    ) -> typing.Optional[typing.List[str]]:
         doc = ""
         doc_quoted: typing.Optional[typing.List[str]] = None
 
@@ -148,7 +150,9 @@ class Hooks:
             doc = sphinxify.process_raw(doc)
 
         if data.doc_append is not None:
-            doc += "\n" + data.doc_append
+            doc += f"\n{append_prefix}" + data.doc_append.replace(
+                "\n", f"\n{append_prefix}"
+            )
 
         if doc:
             # TODO
@@ -213,7 +217,7 @@ class Hooks:
                 v_data = EnumValue()
             v["x_name"] = self._set_name(name, v_data, strip_prefixes)
             v["data"] = v_data
-            v["x_doc_quoted"] = self._process_doc(v, v_data)
+            v["x_doc_quoted"] = self._process_doc(v, v_data, append_prefix="  ")
 
     def header_hook(self, header, data):
         """Called for each header"""

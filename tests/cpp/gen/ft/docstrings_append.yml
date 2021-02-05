@@ -3,6 +3,10 @@ enums:
   DocAppendEnum:
     doc_append: |
       Useful extra information about this enum
+    values:
+      Value1:
+        doc_append: |
+          Useful extra information about this value
 classes:
   DocAppendClass:
     shared_ptr: true

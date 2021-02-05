@@ -48,6 +48,8 @@ def test_docstrings_append():
         Members:
 
           Value1 : value 1 doc
+          Useful extra information about this value
+          
         
           Value2 : value 2 doc??
         """
