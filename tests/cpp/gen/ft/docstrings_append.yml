@@ -1,0 +1,43 @@
+---
+enums:
+  DocAppendEnum:
+    doc_append: |
+      Useful extra information about this enum
+    values:
+      Value1:
+        doc_append: |
+          Useful extra information about this value
+classes:
+  DocAppendClass:
+    shared_ptr: true
+    doc_append: |
+      Useful extra information about this sweet class
+    attributes:
+      sweet_var:
+        doc_append: |
+          Useful extra information about this sweet var
+    methods:
+      fn:
+        doc_append: |
+          Useful extra information about this fn
+  
+  DocWithTemplate:
+    shared_ptr: true
+    template_params:
+    - T
+
+templates:
+  DocTemplateSet:
+    qualname: DocWithTemplate
+    params:
+    - int
+    doc: |
+      Set docs to this
+  
+  DocTemplateAppend:
+    qualname: DocWithTemplate
+    params:
+    - double
+    doc_append: |
+      Extra appended docs
+    
