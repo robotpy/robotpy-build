@@ -1,0 +1,18 @@
+---
+enums:
+  DocAppendEnum:
+    doc_append: |
+      Useful extra information about this enum
+classes:
+  DocAppendClass:
+    shared_ptr: true
+    doc_append: |
+      Useful extra information about this sweet class
+    attributes:
+      sweet_var:
+        doc_append: |
+          Useful extra information about this sweet var
+    methods:
+      fn:
+        doc_append: |
+          Useful extra information about this fn
