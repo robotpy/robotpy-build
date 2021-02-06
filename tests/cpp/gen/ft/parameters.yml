@@ -1,0 +1,7 @@
+---
+
+functions:
+  fnParamArrayOutWithDefault:
+    param_override:
+      x:
+        default: "{0, 1, 2}"
