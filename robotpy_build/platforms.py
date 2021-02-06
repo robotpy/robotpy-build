@@ -2,6 +2,7 @@ from distutils.util import get_platform as _get_platform
 from dataclasses import dataclass, field
 from typing import List
 import re
+import typing
 
 
 # wpilib platforms at https://github.com/wpilibsuite/native-utils/blob/master/src/main/java/edu/wpi/first/nativeutils/WPINativeUtilsExtension.java
@@ -43,7 +44,11 @@ _platforms = {
 }
 
 
-def get_platform() -> WPILibMavenPlatform:
+def get_platform_names() -> typing.List[str]:
+    return list(_platforms.keys())
+
+
+def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
     """
     Retrieve platform specific information
     """
@@ -52,30 +57,34 @@ def get_platform() -> WPILibMavenPlatform:
     #       and is returned directly from get_platform. Might
     #       be useful to note for the future.
 
-    pyplatform = _get_platform()
+    if not name:
 
-    # Check for 64 bit x86 macOS (version agnostic)
-    if re.fullmatch(r"macosx-.*-x86_64", pyplatform):
-        return _platforms["macos-x86_64"]
+        pyplatform = _get_platform()
 
-    if pyplatform == "linux-armv7l":
-        try:
-            import distro
+        # Check for 64 bit x86 macOS (version agnostic)
+        if re.fullmatch(r"macosx-.*-x86_64", pyplatform):
+            return _platforms["macos-x86_64"]
 
-            distro_id = distro.id()
+        if pyplatform == "linux-armv7l":
+            try:
+                import distro
 
-            if distro_id == "nilrt":
-                pyplatform = "linux-athena"
-            elif distro_id == "raspbian":
-                pyplatform = "linux-raspbian"
+                distro_id = distro.id()
 
-        except Exception:
-            pass
+                if distro_id == "nilrt":
+                    pyplatform = "linux-athena"
+                elif distro_id == "raspbian":
+                    pyplatform = "linux-raspbian"
+
+            except Exception:
+                pass
+
+        name = pyplatform
 
     try:
-        return _platforms[pyplatform]
+        return _platforms[name]
     except KeyError:
-        raise KeyError(f"platform {pyplatform} is not supported by robotpy-build!")
+        raise KeyError(f"platform {name} is not supported by robotpy-build!")
 
 
 def get_platform_override_keys(platform: WPILibMavenPlatform):

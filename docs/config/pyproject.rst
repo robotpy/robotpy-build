@@ -81,12 +81,24 @@ To get information about the current platform, you can run:
 
    robotpy-build platform-info
 
-There is a rudimentary tool that can be used to apply overrides to a TOML
-file and print the resulting TOML out:
+To show the available platforms:
 
 .. code-block:: sh
 
-   python3 -m robotpy_build.overrides FILENAME KEY
+   robotpy-build platform-info --list
+
+To process a pyproject.toml and see the result of applying various overrides,
+you can use this tool to process for the current platform:
+
+.. code-block:: sh
+
+   robotpy-build show-override
+
+To show what would be processed for a different platform:
+
+.. code-block:: sh
+
+   robotpy-build show-override -p linux-athena
 
 .. _platforms:
 

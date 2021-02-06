@@ -18,6 +18,7 @@ from .setup import Setup
 from .generator_data import MissingReporter
 from .command.util import get_build_temp_path
 
+from . import overrides
 from . import platforms
 
 
@@ -222,16 +223,53 @@ class PlatformInfo:
             help="Displays platform-specific information",
             parents=[parent_parser],
         )
+        parser.add_argument("--list", action="store_true", default=False)
+        parser.add_argument("platform", nargs="?", default=None)
         return parser
 
     def run(self, args):
-        p = platforms.get_platform()
-        print("platform:")
-        pprint.pprint(p)
-        print()
 
-        print("override keys:")
-        pprint.pprint(platforms.get_platform_override_keys(p))
+        if args.list:
+            for name in platforms.get_platform_names():
+                print(name)
+        else:
+
+            p = platforms.get_platform(args.platform)
+            print("platform:")
+            pprint.pprint(p)
+            print()
+
+            print("override keys:")
+            pprint.pprint(platforms.get_platform_override_keys(p))
+
+
+class ShowOverrides:
+    @classmethod
+    def add_subparser(cls, parent_parser, subparsers):
+        parser = subparsers.add_parser(
+            "show-override",
+            help="Displays pyproject.toml after override processing",
+            parents=[parent_parser],
+        )
+        parser.add_argument("toml", nargs="?", default="pyproject.toml")
+        parser.add_argument(
+            "-p",
+            "--platform",
+            default=None,
+            help="Use robotpy-build platform-info --list for available platforms",
+        )
+        return parser
+
+    def run(self, args):
+
+        p = platforms.get_platform(args.platform)
+        override_keys = platforms.get_platform_override_keys(p)
+
+        with open(args.toml) as fp:
+            d = toml.load(fp)
+
+        overrides.apply_overrides(d, override_keys)
+        print(toml.dumps(d))
 
 
 class MavenParser:
@@ -414,6 +452,7 @@ def main():
         HeaderScanner,
         ImportCreator,
         PlatformInfo,
+        ShowOverrides,
         MavenParser,
     ):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
