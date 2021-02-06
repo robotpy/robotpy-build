@@ -174,6 +174,8 @@ class Hooks:
             return name
 
         if name and name[0] == "{" and name[-1] == "}":
+            if p["array"]:
+                return name
             return f"{p['x_type']}{name}"
 
         # if there's a parent, look there
@@ -393,9 +395,12 @@ class Hooks:
                     ptype = "ignored"
 
             elif p.get("force_out") or (
-                p["pointer"] and not p["constant"] and p["fundamental"]
+                (p["pointer"] or p["reference"] == 1)
+                and not p["constant"]
+                and p["fundamental"]
             ):
-                p["x_callname"] = "&%(x_callname)s" % p
+                if p["pointer"]:
+                    p["x_callname"] = f"&{p['x_callname']}"
                 ptype = "out"
             elif p["array"]:
                 asz = p.get("array_size", 0)
