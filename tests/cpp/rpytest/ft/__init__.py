@@ -64,6 +64,8 @@ from ._rpytest_ft import (
     fnRenamedParam,
     fnSimpleDefaultParam,
     get123,
+    raise_from,
+    raise_from_already_set,
     subpkg,
 )
 
@@ -130,5 +132,7 @@ __all__ = [
     "fnRenamedParam",
     "fnSimpleDefaultParam",
     "get123",
+    "raise_from",
+    "raise_from_already_set",
     "subpkg",
 ]

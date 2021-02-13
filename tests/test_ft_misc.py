@@ -2,6 +2,25 @@ from rpytest import ft
 import pytest
 
 #
+# main module
+#
+
+
+def test_raise_from():
+    with pytest.raises(ValueError) as excinfo:
+        ft.raise_from()
+    assert str(excinfo.value) == "outer"
+    assert str(excinfo.value.__cause__) == "inner"
+
+
+def test_raise_from_already_set():
+    with pytest.raises(ValueError) as excinfo:
+        ft.raise_from_already_set()
+    assert str(excinfo.value) == "outer"
+    assert str(excinfo.value.__cause__) == "inner"
+
+
+#
 # abstract.h
 #
 
