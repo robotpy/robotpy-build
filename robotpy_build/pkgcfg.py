@@ -46,6 +46,7 @@ def get_type_casters(casters: Dict[str, str]) -> None:
             "Eigen::RowVectorXf": "pybind11/eigen.h",
             "Eigen::SparseMatrix": "pybind11/eigen.h",
             "Eigen::SparseView": "pybind11/eigen.h",
+            "Eigen::Vector": "pybind11/eigen.h",
             "Eigen::VectorXf": "pybind11/eigen.h",
             "Eigen::VectorXcf": "pybind11/eigen.h",
         }
