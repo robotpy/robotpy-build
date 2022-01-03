@@ -4,7 +4,6 @@ functions:
   check_impure_io:
 classes:
   VBase:
-    shared_ptr: true
     methods:
       pure_io:
         param_override:
@@ -41,7 +40,6 @@ classes:
           }
 
   VChild:
-    shared_ptr: true
     methods:
       pure_io:
         param_override:

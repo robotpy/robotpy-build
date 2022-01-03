@@ -2,12 +2,10 @@
 
 classes:
   Outer:
-    shared_ptr: true
     template_params:
     - T
   
   Outer::Inner:
-    shared_ptr: true
     attributes:
       t:
 

@@ -23,7 +23,6 @@ classes:
   IgnoredClass:
     ignore: true
   ClassWithIgnored:
-    shared_ptr: true
     attributes:
       ignoredProp:
         ignore: true

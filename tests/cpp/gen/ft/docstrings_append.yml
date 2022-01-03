@@ -9,7 +9,6 @@ enums:
           Useful extra information about this value
 classes:
   DocAppendClass:
-    shared_ptr: true
     doc_append: |
       Useful extra information about this sweet class
     attributes:
@@ -22,7 +21,6 @@ classes:
           Useful extra information about this fn
   
   DocWithTemplate:
-    shared_ptr: true
     template_params:
     - T
 

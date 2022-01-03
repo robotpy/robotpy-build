@@ -144,10 +144,7 @@ class GeneratorData:
                 "methods",
             )
             if result or cls_data["missing"]:
-                # show this first
-                r = {"shared_ptr": True}
-                r.update(result)
-                all_cls_data[str(cls_key)] = r
+                all_cls_data[str(cls_key)] = result
         if all_cls_data:
             data["classes"] = all_cls_data
 

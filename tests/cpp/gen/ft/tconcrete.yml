@@ -1,6 +1,5 @@
 classes:
   TConcrete:
-    shared_ptr: true
     methods:
       concrete:
 

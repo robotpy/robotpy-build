@@ -76,6 +76,7 @@ class BuildExt(build_ext):
         elif ct == "msvc":
             opts.append(cpp_flag(self.compiler, "/", ":"))
         for ext in self.extensions:
+            ext.define_macros.append(("PYBIND11_USE_SMART_HOLDER_AS_DEFAULT", "1"))
             ext.extra_compile_args = opts
             ext.extra_link_args = link_opts
 

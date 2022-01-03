@@ -248,8 +248,6 @@
   py::class_<typename {{ cls.x_qualname }}
     {%- if cls.data.nodelete -%}
       , std::unique_ptr<typename {{ cls.x_qualname }}, py::nodelete>
-    {%- elif cls.data.shared_ptr -%}
-      , std::shared_ptr<typename {{ cls.x_qualname }}>
     {%- endif -%}
     {%- if cls.x_has_trampoline -%}
       , {{ cls.x_trampoline_var }}

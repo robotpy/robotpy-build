@@ -1,7 +1,6 @@
 ---
 classes:
   TBase:
-    shared_ptr: true
     methods:
       get:
       baseFn:

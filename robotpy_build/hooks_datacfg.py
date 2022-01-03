@@ -302,13 +302,7 @@ class ClassData(Model):
     #: Set the python name of the class to this
     rename: Optional[str] = None
 
-    #: If the type was created as a shared_ptr (such as via std::make_shared)
-    #: then pybind11 needs to be informed of this.
-    #:
-    #: https://github.com/pybind/pybind11/issues/1215
-    #:
-    #: One way you can tell we messed this up is if there's a double-free
-    #: error and the stack trace involves a unique_ptr destructor
+    #: This is deprecated and has no effect
     shared_ptr: bool = True
 
     #: If specified, put the class in a sub.pack.age. Ignored

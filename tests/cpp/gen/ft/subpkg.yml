@@ -4,11 +4,9 @@ functions:
     subpackage: subpkg
 classes:
   SPClass:
-    shared_ptr: true
     subpackage: subpkg
   
   SPTemplate:
-    shared_ptr: true
     template_params:
     - T
 
