@@ -2,7 +2,7 @@ import os
 from os.path import abspath, exists, join
 from setuptools import find_packages, setup as _setup
 from setuptools_scm import get_version
-import toml
+import tomli
 
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -48,8 +48,8 @@ class Setup:
         project_fname = join(self.root, "pyproject.toml")
 
         try:
-            with open(project_fname) as fp:
-                self.pyproject = toml.load(fp)
+            with open(project_fname, "rb") as fp:
+                self.pyproject = tomli.load(fp)
         except FileNotFoundError as e:
             raise ValueError("current directory is not a robotpy-build project") from e
 

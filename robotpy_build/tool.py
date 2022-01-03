@@ -11,7 +11,8 @@ import re
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from collections import defaultdict
-import toml
+import tomli
+import tomli_w
 from contextlib import suppress
 
 from .setup import Setup
@@ -265,11 +266,11 @@ class ShowOverrides:
         p = platforms.get_platform(args.platform)
         override_keys = platforms.get_platform_override_keys(p)
 
-        with open(args.toml) as fp:
-            d = toml.load(fp)
+        with open(args.toml, "rb") as fp:
+            d = tomli.load(fp)
 
         overrides.apply_overrides(d, override_keys)
-        print(toml.dumps(d))
+        print(tomli_w.dumps(d))
 
 
 class MavenParser:
@@ -313,8 +314,8 @@ class MavenParser:
             self.os_names.add(plat.os)
             self.arch_names.add(plat.arch)
 
-        with open(args.toml_link) as fp:
-            config = toml.load(fp)["tool"]["robotpy-build"]
+        with open(args.toml_link, "rb") as fp:
+            config = tomli.load(fp)["tool"]["robotpy-build"]
 
             wrappers = {}
             if "wrappers" in config:

@@ -48,18 +48,19 @@ def apply_overrides(d: Dict, override_keys: List[str]):
 
 def _main():
     import argparse
-    import toml
+    import tomli
+    import tomli_w
 
     parser = argparse.ArgumentParser()
     parser.add_argument("fname")
     parser.add_argument("key")
     args = parser.parse_args()
 
-    with open(args.fname) as fp:
-        d = toml.load(fp)
+    with open(args.fname, "rb") as fp:
+        d = tomli.load(fp)
 
     apply_overrides(d, [args.key])
-    print(toml.dumps(d))
+    print(tomli_w.dumps(d))
 
 
 if __name__ == "__main__":
