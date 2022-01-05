@@ -96,6 +96,25 @@ class:
      X:
        force_no_trampoline: true
 
+build_pyi errors
+----------------
+
+Sometimes when running the ``build_pyi`` step, you'll see errors that look
+like this.
+
+.. code-block::
+
+    ERROR - def fn(arg: frc::LinearPlantInversionFeedforward<1, 1>) -> None: ...
+    ERROR -               ^-- Invalid syntax
+
+What this means is the argument 'arg' is not currently wrapped by pybind11 -- or
+if it is, it hasn't been imported by the current python package.
+
+* If it hasn't been wrapped, wrap it
+* If it hasn't been imported, you can just add the other package to the wrapper's
+  ``depends`` list. 
+
+
 Runtime errors
 --------------
 
