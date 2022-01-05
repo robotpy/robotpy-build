@@ -160,18 +160,16 @@
 {%- macro genprop(qualname, prop) -%}
   {%- if prop.array_size is defined -%}
     .def_property_readonly("{{ prop.x_name }}", []({{ qualname }}& inst) {
-        return py::memoryview(py::buffer_info(
+        return py::memoryview::from_buffer(
           &inst.{{ prop.name }}, sizeof({{ prop.type }}),
-          py::format_descriptor<{{ prop.type }}>::format(),
-          1, {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.type }})}
-        ));
+          py::format_descriptor<{{ prop.type }}>::value,
+          {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.type }})},
+          {% if prop.x_readonly %}true{% else %}false{% endif %}
+        );
     }
     {{- doc(prop, ', py::doc(', ')') }})
   {%- elif prop.array -%}
-    .def_property("{{ prop.x_name }}",
-      [](const {{ qualname }}& inst) { return inst.{{ prop.name}}; },
-      []({{ qualname }}& inst, const {{ prop.type }} v) {inst.{{ prop.name}} = v; }
-      {{- doc(prop, ', py::doc(', ')') }})
+    {# cannot sensibly autowrap an array of incomplete size #}
   {%- elif prop.reference -%}
     .def_property
     {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
