@@ -103,14 +103,17 @@ jobs:
         submodules: true
 
     - name: Install build
-      run: /build/venv/bin/cross-pip --disable-pip-version-check install build
+      run: /build/venv/bin/build-pip --disable-pip-version-check install build
 
     - name: Build wheel
-      run: /build/venv/bin/cross-python -m build --wheel
+      run: /build/venv/bin/build-python -m build --wheel
 
     - name: Install
       working-directory: dist
-      run: /build/venv/bin/cross-pip --disable-pip-version-check install *.whl
+      run: |
+        # install to both cross and build in case things get mixed up
+        /build/venv/bin/build-pip --disable-pip-version-check install *.whl
+        /build/venv/bin/cross-pip --disable-pip-version-check install *.whl
 
     - name: Build cross wheel
       env:
