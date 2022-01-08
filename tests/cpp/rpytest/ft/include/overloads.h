@@ -21,6 +21,14 @@ struct OverloadedObject
         return 0x2;
     }
 
+    constexpr int overloaded_constexpr(int a, int b) {
+        return a + b;
+    }
+
+    constexpr int overloaded_constexpr(int a, int b, int c) {
+        return a + b + c;
+    }
+
     static int overloaded_static(int i)
     {
         return 0x3;
