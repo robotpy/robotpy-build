@@ -1,17 +1,14 @@
 ---
 classes:
   TBaseGetN:
-    shared_ptr: true
     template_params:
     - int N
     methods:
       getIt:
   
   TChildGetN4:
-    shared_ptr: true
   
   TChildGetN:
-    shared_ptr: true
     template_params:
     - int N
     

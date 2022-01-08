@@ -1,7 +1,6 @@
 ---
 classes:
   TDependentUsing:
-    shared_ptr: true
     template_params:
     - T
     typealias:

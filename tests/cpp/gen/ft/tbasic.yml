@@ -1,7 +1,6 @@
 ---
 classes:
   TBasic:
-    shared_ptr: true
     template_params:
     - T
     attributes:

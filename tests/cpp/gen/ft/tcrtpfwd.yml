@@ -1,6 +1,5 @@
 classes:
   TCrtpFwd:
-    shared_ptr: true
     force_no_default_constructor: true
     template_params:
     - T

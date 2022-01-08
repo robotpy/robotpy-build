@@ -80,7 +80,7 @@ template <typename PyTrampolineBase
     , {{ cls.x_template_parameter_list }}
 {%- endif -%}
     , typename CxxBase = PyTrampolineBase>
-struct Py{{ cls.x_qualname_ }} : PyTrampolineBase {
+struct Py{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampoline_self_life_support {
     using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
 

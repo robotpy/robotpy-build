@@ -15,7 +15,6 @@ functions:
         name: y
 classes:
   OriginalClass:
-    shared_ptr: true
     rename: RenamedClass
     attributes:
       originalProp:
