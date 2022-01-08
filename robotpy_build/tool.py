@@ -472,3 +472,7 @@ def main():
         retval = 0
 
     exit(retval)
+
+
+if __name__ == "__main__":
+    main()
