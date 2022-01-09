@@ -251,13 +251,14 @@ class WrapperConfig(Model):
     #:
     #: .. code-block:: toml
     #:
-    #:    [tool.robotpy-build.wrappers."PACKAGENAME"]
-    #:    generate = [
-    #:      { Name = "header.h" },
-    #:    ]
+    #:    [tool.robotpy-build.wrappers."PACKAGENAME".autogen_headers]
+    #:    Name = "header.h"
     #:
     #: .. seealso:: :ref:`autowrap`
     #:
+    autogen_headers: Optional[Dict[str, str]] = None
+
+    #: DEPRECATED: Same as autogen_headers, but more complicated
     generate: Optional[List[Dict[str, str]]] = None
 
     #: Path to a single data.yml to use during code generation, or a directory

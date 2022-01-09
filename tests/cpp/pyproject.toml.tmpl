@@ -22,9 +22,9 @@ sources = [
 ]
 
 generation_data = "gen/dl"
-generate = [
-    { downloaded = "downloaded.h" }
-]
+
+[tool.robotpy-build.wrappers."rpytest.dl".autogen_headers]
+downloaded = "downloaded.h"
 
 [tool.robotpy-build.wrappers."rpytest.ft"]
 name = "rpytest_ft"

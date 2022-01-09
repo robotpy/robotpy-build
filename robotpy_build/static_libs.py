@@ -12,6 +12,7 @@ class StaticLib:
     # implements pkgcfg
 
     def __init__(self, name: str, cfg: StaticLibConfig, setup):
+        self.package_name = name
         self.name = name
         self.cfg = cfg
         self.static_lib = True
