@@ -91,7 +91,7 @@ class Wrapper:
         self._gen_includes = []
 
         self.extension = None
-        if self.cfg.sources or self.cfg.generate:
+        if self.cfg.sources or self.cfg.autogen_headers:
             define_macros = [("RPYBUILD_MODULE_NAME", extname)] + [
                 tuple(d.split(" ")) for d in self.platform.defines
             ]
@@ -114,9 +114,9 @@ class Wrapper:
             # Used if the maven download fails
             self.supported_platforms = setup.project.supported_platforms
 
-        if self.cfg.generate and not self.cfg.generation_data:
+        if self.cfg.autogen_headers and not self.cfg.generation_data:
             raise ValueError(
-                "generation_data must be specified when generate is specified"
+                "generation_data must be specified when autogen_headers/generate is specified"
             )
 
         # Setup an entry point (written during build_clib)
@@ -550,7 +550,7 @@ class Wrapper:
         self, cxx_gen_dir, missing_reporter: Optional[MissingReporter] = None
     ):
 
-        if not self.cfg.generate:
+        if not self.cfg.autogen_headers:
             return
 
         cxx_gen_dir = join(cxx_gen_dir, self.name)
@@ -607,75 +607,74 @@ class Wrapper:
 
         generation_search_path = [self.root] + self._all_includes(False)
 
-        for gen in self.cfg.generate:
-            for name, header in gen.items():
+        for name, header in self.cfg.autogen_headers.items():
 
-                header = normpath(header)
-                for path in generation_search_path:
-                    header_path = join(path, header)
-                    if exists(header_path):
-                        break
+            header = normpath(header)
+            for path in generation_search_path:
+                header_path = join(path, header)
+                if exists(header_path):
+                    break
+            else:
+                import pprint
+
+                pprint.pprint(generation_search_path)
+                raise ValueError("could not find " + header)
+
+            if report_only:
+                templates = []
+                class_templates = []
+            else:
+                cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
+                self.extension.sources.append(cpp_dst)
+                classdeps_dst = join(cxx_gen_dir, f"{name}.json")
+                classdeps[name] = classdeps_dst
+
+                hpp_dst = join(
+                    hppoutdir,
+                    "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
+                )
+
+                templates = [
+                    {"src": cpp_tmpl, "dst": cpp_dst},
+                    {"src": classdeps_tmpl, "dst": classdeps_dst},
+                ]
+                class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
+
+            if only_generate is not None and not only_generate.pop(name, False):
+                continue
+
+            if per_header:
+                data_fname = join(datapath, name + ".yml")
+                if not exists(data_fname):
+                    print("WARNING: could not find", data_fname)
+                    data = HooksDataYaml()
                 else:
-                    import pprint
+                    data = self._load_generation_data(data_fname)
 
-                    pprint.pprint(generation_search_path)
-                    raise ValueError("could not find " + header)
+            # for each thing, create a h2w configuration dictionary
+            cfgd = {
+                # generation code depends on this being just one header!
+                "headers": [header_path],
+                "templates": templates,
+                "class_templates": class_templates,
+                "preprocess": True,
+                "pp_retain_all_content": False,
+                "pp_include_paths": pp_includes,
+                "pp_defines": pp_defines,
+                "vars": {"mod_fn": name},
+            }
 
-                if report_only:
-                    templates = []
-                    class_templates = []
-                else:
-                    cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                    self.extension.sources.append(cpp_dst)
-                    classdeps_dst = join(cxx_gen_dir, f"{name}.json")
-                    classdeps[name] = classdeps_dst
+            cfg = Config(cfgd)
+            cfg.validate()
+            cfg.root = self.incdir
 
-                    hpp_dst = join(
-                        hppoutdir,
-                        "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
-                    )
+            hooks = Hooks(data, casters, report_only)
+            try:
+                processor.process_config(cfg, data, hooks)
+            except Exception as e:
+                raise ValueError(f"processing {header}") from e
 
-                    templates = [
-                        {"src": cpp_tmpl, "dst": cpp_dst},
-                        {"src": classdeps_tmpl, "dst": classdeps_dst},
-                    ]
-                    class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
-
-                if only_generate is not None and not only_generate.pop(name, False):
-                    continue
-
-                if per_header:
-                    data_fname = join(datapath, name + ".yml")
-                    if not exists(data_fname):
-                        print("WARNING: could not find", data_fname)
-                        data = HooksDataYaml()
-                    else:
-                        data = self._load_generation_data(data_fname)
-
-                # for each thing, create a h2w configuration dictionary
-                cfgd = {
-                    # generation code depends on this being just one header!
-                    "headers": [header_path],
-                    "templates": templates,
-                    "class_templates": class_templates,
-                    "preprocess": True,
-                    "pp_retain_all_content": False,
-                    "pp_include_paths": pp_includes,
-                    "pp_defines": pp_defines,
-                    "vars": {"mod_fn": name},
-                }
-
-                cfg = Config(cfgd)
-                cfg.validate()
-                cfg.root = self.incdir
-
-                hooks = Hooks(data, casters, report_only)
-                try:
-                    processor.process_config(cfg, data, hooks)
-                except Exception as e:
-                    raise ValueError(f"processing {header}") from e
-
-                hooks.report_missing(data_fname, missing_reporter)
+            hooks.report_missing(data_fname, missing_reporter)
 
         if only_generate:
             unused = ", ".join(sorted(only_generate))

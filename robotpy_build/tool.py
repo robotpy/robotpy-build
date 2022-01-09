@@ -132,6 +132,10 @@ class HeaderScanner:
     def run(self, args):
         s = get_setup()
         for wrapper in s.wrappers + s.static_libs:
+            print(
+                f'[tool.robotpy-build.wrappers."{wrapper.package_name}".autogen_headers]'
+            )
+
             for incdir in wrapper.get_include_dirs():
                 files = list(
                     sorted(
@@ -140,24 +144,23 @@ class HeaderScanner:
                     )
                 )
 
-                print("generate = [")
                 lastdir = None
                 for f in files:
                     if "rpygen" not in f:
                         thisdir = dirname(f)
                         if lastdir is None:
                             if thisdir:
-                                print("    #", PurePosixPath(thisdir))
+                                print("#", PurePosixPath(thisdir))
                         elif lastdir != thisdir:
                             print()
                             if thisdir:
-                                print("    #", PurePosixPath(thisdir))
+                                print("#", PurePosixPath(thisdir))
                         lastdir = thisdir
 
                         base = splitext(basename(f))[0]
                         f = PurePosixPath(f)
-                        print(f'    {{ {base} = "{f}" }},')
-                print("]")
+                        print(f'{base} = "{f}"')
+                print()
 
 
 class ImportCreator:

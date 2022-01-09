@@ -41,14 +41,13 @@ intervention:
 * C++ :ref:`class <class_templates>` and :ref:`function <function_templates>`
   templates
 
-To tell the autogenerator to parse headers, you need to add a ``generate``
+To tell the autogenerator to parse headers, you need to add a ``autogen_headers``
 to your package in ``pyproject.toml``:
 
 .. code-block:: toml
 
-    generate = [
-      { demo = "demo.h" }
-    ]
+    [tool.robotpy-build.wrappers."MYPACKAGE".autogen_headers]
+    demo = "demo.h"
 
 That causes ``demo.h`` to be parsed and wrapped.
 
