@@ -65,7 +65,7 @@ using {{ using.raw_type }};
 template <typename PyTrampolineBase{{ precomma(cls.x_pybase_params) }}, typename CxxBase = PyTrampolineBase>
 using PyTrampolineBase_{{ cls.x_qualname_ }} =
 {% for base in cls.x_inherits %}
-    Py{{ base.x_qualname_ }}<
+    PyTrampoline_{{ base.x_qualname_ }}<
 {% endfor %}
         PyTrampolineBase
 {% for base in (cls.x_inherits | reverse) %}
@@ -76,18 +76,18 @@ using PyTrampolineBase_{{ cls.x_qualname_ }} =
 ;
 
 template <typename PyTrampolineBase{{ precomma(cls.x_template_parameter_list) }}, typename CxxBase = PyTrampolineBase>
-struct Py{{ cls.x_qualname_ }} : PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase> {
+struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase> {
     using PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase>::PyTrampolineBase_{{ cls.x_qualname_ }};
 {% else %}
 template <typename PyTrampolineBase{{ precomma(cls.x_template_parameter_list) }}, typename CxxBase = PyTrampolineBase>
-struct Py{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampoline_self_life_support {
+struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampoline_self_life_support {
     using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
 
 {# protected constructors -- only used by the direct child #}
 {% for fn in cls.methods.protected if not fn.data.ignore and fn.constructor %}
 #ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
-    Py{{ cls.x_qualname_ }}({{ fn.parameters | join(', ', attribute='x_decl') }}) :
+    PyTrampoline_{{ cls.x_qualname_ }}({{ fn.parameters | join(', ', attribute='x_decl') }}) :
         {% if cls.x_inherits -%}
              PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase>
         {%- else -%}
