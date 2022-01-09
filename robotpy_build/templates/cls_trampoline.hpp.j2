@@ -17,6 +17,14 @@
     Trampoline functions can be disabled via RPY_DISABLE_name_[type_type..]
 #}
 
+{%- macro precomma(v) -%}
+  {%- if v %}, {{ v }}{%- endif -%}
+{%- endmacro -%}
+
+{%- macro postcomma(v) -%}
+  {%- if v %}{{ v }}, {% endif -%}
+{%- endmacro -%}
+
 {# delete any finals #}
 {% for fn in cls.methods.public + cls.methods.protected if fn.final %}
 #define RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
@@ -54,32 +62,24 @@ using {{ using.raw_type }};
 
     Note: CxxBase is last so that it can take PyTrampolineBase as a default parameter
 #}
-template <typename PyTrampolineBase{{ cls.x_pybase_params }}, typename CxxBase = PyTrampolineBase>
+template <typename PyTrampolineBase{{ precomma(cls.x_pybase_params) }}, typename CxxBase = PyTrampolineBase>
 using PyTrampolineBase_{{ cls.x_qualname_ }} =
 {% for base in cls.x_inherits %}
     Py{{ base.x_qualname_ }}<
 {% endfor %}
         PyTrampolineBase
 {% for base in (cls.x_inherits | reverse) %}
-    {{ base.x_params }}
-    , CxxBase
+        {{ precomma(base.x_params) }}
+        , CxxBase
     >
 {% endfor %}
 ;
 
-template <typename PyTrampolineBase
-{%- if cls.x_template_parameter_list -%}
-    , {{ cls.x_template_parameter_list }}
-{%- endif -%}
-    , typename CxxBase = PyTrampolineBase>
-struct Py{{ cls.x_qualname_ }} : PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ cls.x_pybase_args }}, CxxBase> {
-    using PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ cls.x_pybase_args }}, CxxBase>::PyTrampolineBase_{{ cls.x_qualname_ }};
+template <typename PyTrampolineBase{{ precomma(cls.x_template_parameter_list) }}, typename CxxBase = PyTrampolineBase>
+struct Py{{ cls.x_qualname_ }} : PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase> {
+    using PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase>::PyTrampolineBase_{{ cls.x_qualname_ }};
 {% else %}
-template <typename PyTrampolineBase
-{%- if cls.x_template_parameter_list -%}
-    , {{ cls.x_template_parameter_list }}
-{%- endif -%}
-    , typename CxxBase = PyTrampolineBase>
+template <typename PyTrampolineBase{{ precomma(cls.x_template_parameter_list) }}, typename CxxBase = PyTrampolineBase>
 struct Py{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampoline_self_life_support {
     using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
@@ -89,7 +89,7 @@ struct Py{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampoline_self_l
 #ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
     Py{{ cls.x_qualname_ }}({{ fn.parameters | join(', ', attribute='x_decl') }}) :
         {% if cls.x_inherits -%}
-             PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ cls.x_pybase_args }}, CxxBase>
+             PyTrampolineBase_{{ cls.x_qualname_ }}<PyTrampolineBase{{ precomma(cls.x_pybase_args) }}, CxxBase>
         {%- else -%}
             PyTrampolineBase
         {%- endif -%}

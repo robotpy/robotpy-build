@@ -598,7 +598,7 @@ class Hooks:
             if base_decl_params:
                 for decl_param in base_decl_params:
                     pybase_params.add(decl_param["param"])
-                base["x_params"] = ", " + ", ".join(
+                base["x_params"] = ", ".join(
                     decl_param["param"] for decl_param in base_decl_params
                 )
             else:
@@ -674,8 +674,8 @@ class Hooks:
             base_template_args = None
 
         if base_template_params:
-            cls["x_pybase_args"] = f", {', '.join(base_template_args)}"
-            cls["x_pybase_params"] = f", {', '.join(base_template_params)}"
+            cls["x_pybase_args"] = ", ".join(base_template_args)
+            cls["x_pybase_params"] = ", ".join(base_template_params)
         else:
             cls["x_pybase_args"] = ""
             cls["x_pybase_params"] = ""
