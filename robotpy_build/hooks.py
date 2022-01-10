@@ -612,7 +612,7 @@ class Hooks:
             if not ignored_bases.pop(base["class"], None)
             and base["access"] != "private"
         ]
-        if ignored_bases:
+        if not self.report_only and ignored_bases:
             bases = ", ".join(base["class"] for base in cls["inherits"])
             invalid_bases = ", ".join(ignored_bases.keys())
             raise ValueError(
