@@ -798,9 +798,11 @@ class Hooks:
             tmpl = ""
             if template_argument_list:
                 tmpl = f", {template_argument_list}"
+
+            trampoline_cfg = f"rpygen::PyTrampolineCfg_{cls['x_qualname_']}<{template_argument_list}>"
             cls[
                 "x_trampoline_name"
-            ] = f"rpygen::PyTrampoline_{cls['x_qualname_']}<typename {cls_qualname}{tmpl}>"
+            ] = f"rpygen::PyTrampoline_{cls['x_qualname_']}<typename {cls_qualname}{tmpl}, typename {trampoline_cfg}>"
             cls["x_trampoline_var"] = f"{cls_name}_Trampoline"
         elif class_data.trampoline_inline_code is not None:
             raise HookError(
