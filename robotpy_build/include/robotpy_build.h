@@ -9,6 +9,11 @@ namespace py = pybind11;
 // Use this to release the gil
 typedef py::call_guard<py::gil_scoped_release> release_gil;
 
+// empty trampoline configuration base
+namespace rpygen {
+struct EmptyTrampolineCfg {};
+};
+
 // robotpy-build specific extensions waiting for inclusion into pybind11
 namespace rpybuild_ext {
 
