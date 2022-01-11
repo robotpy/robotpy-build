@@ -83,8 +83,13 @@ else:
 html_static_path = []
 
 
+import inspect
 import sphinx
 import sphinx_autodoc_typehints
+
+format_annotation_needs_config = (
+    "config" in inspect.signature(sphinx_autodoc_typehints.format_annotation).parameters
+)
 
 
 class Processor:
@@ -96,8 +101,12 @@ class Processor:
             name = name.split(".")[-1]
             hint = self.hints.get(name)
             if hint:
-
-                typename = sphinx_autodoc_typehints.format_annotation(hint)
+                if format_annotation_needs_config:
+                    typename = sphinx_autodoc_typehints.format_annotation(
+                        hint, app.config
+                    )
+                else:
+                    typename = sphinx_autodoc_typehints.format_annotation(hint)
                 lines.append(":type: " + typename)
                 lines.append("")
 
