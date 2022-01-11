@@ -29,7 +29,9 @@ bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) :
     {{ pybind11.cls_init(cls, "clsName") }}
     m(m),
     clsName(clsName)
-{}
+{
+    {{ pybind11.cls_def_enum(cls, cls.x_varname) }}
+}
 
 void finish(const char * set_doc = NULL, const char * add_doc = NULL) {
 

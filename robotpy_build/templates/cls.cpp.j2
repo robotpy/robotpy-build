@@ -112,14 +112,21 @@ struct rpybuild_{{ mod_fn }}_initializer {
   {% endfor %}
 
     m(m)
-  {}
+  {
+    {#
+      enums can go in the initializer because they cant have dependencies,
+      and then we dont need to figure out class dependencies for enum arguments
+    #}
+    {% for enum in header.enums if "name" in enum and not enum.data.ignore %}
+      enum{{ loop.index }}{{ pybind11.enum_def(enum.x_module_var, enum) }}
+    {% endfor %}
+
+    {% for cls in header.classes %}
+    {{ pybind11.cls_def_enum(cls, cls.x_varname) }}
+    {% endfor %}
+  }
 
 void finish() {
-
-{# enums #}
-{% for enum in header.enums if "name" in enum and not enum.data.ignore %}
-  enum{{ loop.index }}{{ pybind11.enum_def(enum.x_module_var, enum) }}
-{% endfor %}
 
 {# templates #}
 {% for tdata in templates.values() %}

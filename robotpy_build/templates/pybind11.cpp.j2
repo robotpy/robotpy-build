@@ -300,11 +300,13 @@
 
 {%- endmacro -%}
 
-{%- macro cls_def(cls, varname) -%}
-
+{%- macro cls_def_enum(cls, varname) %}
   {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
     {{ cls.x_varname }}_enum{{ loop.index }}{{ enum_def(cls.x_varname, enum) }}
   {% endfor %}
+{% endmacro -%}
+
+{%- macro cls_def(cls, varname) -%}
 
   {{ doc(cls, varname + '.doc() =', ';') }}
 
