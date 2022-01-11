@@ -1,36 +1,65 @@
 import atexit
+import contextlib
 import os
 from os.path import dirname, exists, join, normpath
 import posixpath
 import shutil
 import sys
+import urllib.request
 import tempfile
 import zipfile
 
+from .version import version
 
-from urllib.request import urlretrieve, urlcleanup
+
+USER_AGENT = f"robotpy-build/{version}"
+SHOW_PROGRESS = "CI" not in os.environ
 
 
-def _download(url):
+def _download(url: str, dst_fname: str):
     """
-    Downloads a file to a temporary directory
+    Downloads a file to a specified directory
     """
+
+    def _reporthook(count, blocksize, totalsize):
+        if SHOW_PROGRESS:
+            percent = int(count * blocksize * 100 / totalsize)
+            sys.stdout.write("\r%02d%%" % percent)
+            sys.stdout.flush()
 
     print("Downloading", url)
 
-    def _reporthook(count, blocksize, totalsize):
-        percent = int(count * blocksize * 100 / totalsize)
-        sys.stdout.write("\r%02d%%" % percent)
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+
+    with contextlib.closing(urllib.request.urlopen(request)) as fp:
+        headers = fp.info()
+
+        with open(dst_fname, "wb") as tfp:
+
+            # copied from urlretrieve source code, Python license
+            bs = 1024 * 8
+            size = -1
+            blocknum = 0
+            read = 0
+            if "content-length" in headers:
+                size = int(headers["Content-Length"])
+
+            while True:
+                block = fp.read(bs)
+                if not block:
+                    break
+                read += len(block)
+                tfp.write(block)
+                blocknum += 1
+                if _reporthook:
+                    _reporthook(blocknum, bs, size)
+
+    if SHOW_PROGRESS:
+        sys.stdout.write("\n")
         sys.stdout.flush()
 
-    filename, _ = urlretrieve(url, reporthook=_reporthook)
-    sys.stdout.write("\n")
-    sys.stdout.flush()
-    atexit.register(urlcleanup)
-    return filename
 
-
-def download_and_extract_zip(url, to=None, cache=None):
+def download_and_extract_zip(url, to, cache):
     """
     Utility method intended to be useful for downloading/extracting
     third party source zipfiles
@@ -38,22 +67,10 @@ def download_and_extract_zip(url, to=None, cache=None):
     :param to: is either a string or a dict of {src: dst}
     """
 
-    if to is None:
-        # generate temporary directory
-        tod = tempfile.TemporaryDirectory()
-        to = tod.name
-        atexit.register(tod.cleanup)
-
-    zip_fname = None
-    if cache:
-        os.makedirs(cache, exist_ok=True)
-        cache_fname = join(cache, posixpath.basename(url))
-        if not exists(cache_fname):
-            zip_fname = _download(url)
-            shutil.copy(zip_fname, cache_fname)
-        zip_fname = cache_fname
-    else:
-        zip_fname = _download(url)
+    os.makedirs(cache, exist_ok=True)
+    zip_fname = join(cache, posixpath.basename(url))
+    if not exists(zip_fname):
+        _download(url, zip_fname)
 
     with zipfile.ZipFile(zip_fname) as z:
         if isinstance(to, str):
