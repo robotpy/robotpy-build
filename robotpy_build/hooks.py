@@ -49,6 +49,8 @@ _operators = {
 }
 # fmt: on
 
+_type_caster_seps = re.compile(r"[<>\(\)]")
+
 
 class HookError(Exception):
     pass
@@ -67,7 +69,10 @@ class Hooks:
     _qualname_trans = str.maketrans(_qualname_bad, "_" * len(_qualname_bad))
 
     def __init__(
-        self, data: HooksDataYaml, casters: typing.Dict[str, str], report_only: bool
+        self,
+        data: HooksDataYaml,
+        casters: typing.Dict[str, typing.Dict[str, typing.Any]],
+        report_only: bool,
     ):
         self.gendata = GeneratorData(data)
         self.rawdata = data
@@ -95,23 +100,25 @@ class Hooks:
         else:
             v["x_module_var"] = "m"
 
+    def _get_type_caster_cfgs(self, typename: str):
+        tmpl_idx = typename.find("<")
+        if tmpl_idx == -1:
+            typenames = [typename]
+        else:
+            typenames = [typename[:tmpl_idx]] + _type_caster_seps.split(
+                typename[tmpl_idx:].replace(" ", "")
+            )
+        for typename in typenames:
+            if typename:
+                ccfg = self.casters.get(typename)
+                if ccfg:
+                    yield ccfg
+
     def _get_type_caster_includes(self):
-        seps = re.compile(r"[<>\(\)]")
         includes = set()
         for typename in self.types:
-            tmpl_idx = typename.find("<")
-            if tmpl_idx == -1:
-                typenames = [typename]
-            else:
-                typenames = [typename[:tmpl_idx]] + seps.split(
-                    typename[tmpl_idx:].replace(" ", "")
-                )
-
-            for typename in typenames:
-                if typename:
-                    header = self.casters.get(typename)
-                    if header:
-                        includes.add(header)
+            for ccfg in self._get_type_caster_cfgs(typename):
+                includes.add(ccfg["hdr"])
         return sorted(includes)
 
     def _set_name(self, name, data, strip_prefixes=None, is_operator=False):
@@ -184,6 +191,20 @@ class Hooks:
             for prop in parent["properties"]["public"]:
                 if prop["name"] == name:
                     name = f"{parent['namespace']}::{parent['name']}::{name}"
+        return name
+
+    def _maybe_add_default_arg_cast(self, p, name):
+        if not p.get("disable_type_caster_default_cast", False):
+            found_typename = None
+            for ccfg in self._get_type_caster_cfgs(p["x_type"]):
+                if ccfg.get("darg"):
+                    if found_typename and found_typename != ccfg["typename"]:
+                        raise HookError(
+                            f"multiple type casters found for {p['name']} ({p['x_type']}), use disable_type_caster_default_cast"
+                        )
+                    found_typename = ccfg["typename"]
+                    name = f"({found_typename}){name}"
+
         return name
 
     def _get_function_signature(self, fn):
@@ -343,7 +364,9 @@ class Hooks:
             p["x_pyarg"] = 'py::arg("%(name)s")' % p
 
             if "default" in p:
-                p["default"] = self._resolve_default(fn, p, p["default"])
+                default = self._resolve_default(fn, p, p["default"])
+                default = self._maybe_add_default_arg_cast(p, default)
+                p["default"] = default
                 p["x_pyarg"] += "=" + p["default"]
 
             ptype = "in"

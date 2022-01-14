@@ -101,11 +101,34 @@ class PkgCfg:
 
     def get_type_casters(self, casters: Dict[str, str]) -> None:
         """
-        Type caster headers provided
+        Legacy type caster information
         """
-        fn = getattr(self.module, "get_type_casters", None)
+        t = {}
+        r = self.get_type_casters_cfg(t)
+        for k, v in t.items():
+            if "hdr" in v:
+                casters[k] = v["hdr"]
+        return r
+
+    def get_type_casters_cfg(self, casters: Dict[str, str]) -> None:
+        """
+        Type caster headers provided
+
+        key: type name
+        value: a dict with keys:
+            hdr: header file
+            darg: force default arg
+
+        """
+        fn = getattr(self.module, "get_type_casters_cfg", None)
         if fn:
             return fn(casters)
+        fn = getattr(self.module, "get_type_casters", None)
+        if fn:
+            t = {}
+            r = fn(t)
+            casters.update({k: {"hdr": v} for k, v in t.items()})
+            return r
 
 
 class PkgCfgProvider:
