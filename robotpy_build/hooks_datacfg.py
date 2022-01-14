@@ -22,6 +22,9 @@ class ParamData(Model):
     #: Default value for parameter
     default: Optional[str] = None
 
+    #: Disables a default cast caused by ``default_arg_cast``
+    disable_type_caster_default_cast: bool = False
+
     #: Force this to be an 'out' parameter
     #:
     #: .. seealso:: :ref:`autowrap_out_params`

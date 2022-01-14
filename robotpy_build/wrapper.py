@@ -17,7 +17,7 @@ from os.path import (
 import posixpath
 import shutil
 import toposort
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 import yaml
 
 from header2whatever.config import Config
@@ -239,10 +239,14 @@ class Wrapper:
     def get_extra_objects(self) -> Optional[List[str]]:
         pass
 
-    def get_type_casters(self, casters: Dict):
-        for header, types in self.cfg.type_casters.items():
-            for typ in types:
-                casters[typ] = header
+    def get_type_casters_cfg(self, casters: Dict[str, Dict[str, Any]]) -> None:
+        for ccfg in self.cfg.type_casters:
+            cfg = {"hdr": ccfg.header}
+            if ccfg.default_arg_cast:
+                cfg["darg"] = True
+
+            for typ in ccfg.types:
+                casters[typ] = cfg
 
     def all_deps(self):
         if self._all_deps is None:
@@ -288,9 +292,15 @@ class Wrapper:
     def _all_casters(self):
         casters = {}
         for dep in self.all_deps():
-            dep.get_type_casters(casters)
-        self.pkgcfg.get_pkg("robotpy-build").get_type_casters(casters)
-        self.get_type_casters(casters)
+            dep.get_type_casters_cfg(casters)
+        self.pkgcfg.get_pkg("robotpy-build").get_type_casters_cfg(casters)
+        self.get_type_casters_cfg(casters)
+
+        # make each configuration unique
+        for k, v in list(casters.items()):
+            v = v.copy()
+            v["typename"] = k
+            casters[k] = v
 
         # add non-namespaced versions of all casters
         # -> in theory this could lead to a conflict, but
@@ -525,11 +535,22 @@ class Wrapper:
         pkgcfg = pkgcfg.replace("##EXTRAINCLUDES##", extraincludes)
 
         type_casters = {}
-        self.get_type_casters(type_casters)
+        self.get_type_casters_cfg(type_casters)
         if type_casters:
-            pkgcfg += (
-                f"\n\ndef get_type_casters(casters):\n"
-                f"    casters.update({repr(type_casters)})\n"
+            pkgcfg += "\n\n"
+            pkgcfg += inspect.cleandoc(
+                f"""
+
+            def get_type_casters_cfg(casters):
+                casters.update({repr(type_casters)})
+
+            def get_type_casters(casters):
+                t = {{}}
+                get_type_casters_cfg(t)
+                for k, v in t.items():
+                    if "hdr" in v:
+                        casters[k] = v["hdr"]
+            """
             )
 
         with open(fname, "w") as fp:

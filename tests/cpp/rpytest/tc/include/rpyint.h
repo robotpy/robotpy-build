@@ -19,6 +19,8 @@ private:
 struct rpyint {
 
   rpyint() = default;
+
+  // this implicit conversion causes issues without `default_arg_cast`
   rpyint(const rpyint_plus_5 &o) : int_value(o.get() + 5) {}
 
   int get() const { return int_value; }

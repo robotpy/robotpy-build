@@ -185,6 +185,35 @@ class StaticLibConfig(Model):
     ignore: bool = False
 
 
+class TypeCasterConfig(Model):
+    """
+    Specifies type casters that this package exports. robotpy-build
+    will attempt to detect these types at generation time and include
+    them in generated wrappers.
+
+    .. code-block:: toml
+
+       [[tool.robotpy-build.wrappers."PACKAGENAME".type_casters]]
+       header = "my_type_caster.h"
+       types = ["foo_t", "ns::ins::bar_t"]
+
+    .. seealso:: :ref:`type_casters`
+    """
+
+    #: Header file to include when one of the types are detected in a wrapper
+    header: str
+
+    #: Types to look for to indicate that this type caster header should be
+    #: included.
+    types: List[str]
+
+    #: If a parameter type that requires this type caster requires a default
+    #: argument, a C-style ``(type)`` cast is used on the default argument.
+    #:
+    #: The default cast can be disabled via param_override's ``disable_type_caster_default_cast``
+    default_arg_cast: bool = False
+
+
 class WrapperConfig(Model):
     """
     Configuration for building a C++ python extension module, optionally
@@ -275,18 +304,8 @@ class WrapperConfig(Model):
     #:
     generation_data: Optional[str] = None
 
-    #: Specifies type casters that this package exports. robotpy-build
-    #: will attempt to detect these types at generation time and include
-    #: them in generated wrappers.
-    #:
-    #: .. code-block:: toml
-    #:
-    #:    [tool.robotpy-build.wrappers."package-name".type_casters]
-    #:    "namespace_type1_type_caster.h" = ["namespace::type1", .. ]
-    #:
-    #: .. seealso:: :ref:`type_casters`
-    #:
-    type_casters: Dict[str, List[str]] = {}
+    #: Specifies type casters that this package exports.
+    type_casters: List[TypeCasterConfig] = []
 
     #: Preprocessor definitions to apply when compiling this wrapper.
     pp_defines: List[str] = []

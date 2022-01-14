@@ -2,7 +2,7 @@ import os
 from os.path import join
 import posixpath
 import shutil
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .download import download_and_extract_zip
 from .pyproject_configs import Download, StaticLibConfig
@@ -62,7 +62,7 @@ class StaticLib:
 
         return [join(self.libdir, lib) for lib in self._get_libnames()]
 
-    def get_type_casters(self, casters: Dict[str, str]) -> None:
+    def get_type_casters_cfg(self, casters: Dict[str, Dict[str, Any]]) -> None:
         pass
 
     def _get_dl_libnames(self, dl: Download, useext=True):

@@ -93,8 +93,14 @@ sources = [
 [tool.robotpy-build.wrappers."rpytest.tc"]
 name = "rpytest_tc"
 
-[tool.robotpy-build.wrappers."rpytest.tc".type_casters]
-"rpyint_type_caster.h" = ["rpy::rpyint", "rpy::rpyint_plus_5"]
+[[tool.robotpy-build.wrappers."rpytest.tc".type_casters]]
+header = "rpyint_type_caster.h"
+types = ["rpy::rpyint"]
+default_arg_cast = true
+
+[[tool.robotpy-build.wrappers."rpytest.tc".type_casters]]
+header = "rpyint_type_caster.h"
+types = ["rpyint_plus_5"]
 
 
 [tool.robotpy-build.metadata]

@@ -45,8 +45,9 @@ automatically include it in a robotpy-build project.
 
    .. code-block:: toml
 
-      [tool.robotpy-build.wrappers."package_name".type_casters]
-      "header_name.h" =    ["somens::SomeType"]
+      [[tool.robotpy-build.wrappers."package_name".type_casters]]
+      header = "header_name.h"
+      types = ["somens::SomeType"]
 
    This directive will cause robotpy-build's autogenerator to automatically
    include ``header_name.h`` whenever it notices ``SomeType`` in a file. This
