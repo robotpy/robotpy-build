@@ -28,6 +28,7 @@ downloaded = "downloaded.h"
 
 [tool.robotpy-build.wrappers."rpytest.ft"]
 name = "rpytest_ft"
+depends = ["rpytest_tc"]
 
 sources = [
     "rpytest/ft/src/fields.cpp",
@@ -37,6 +38,7 @@ sources = [
 generation_data = "gen/ft"
 generate = [
     { abstract = "abstract.h" },
+    { custom_type_caster = "custom_type_caster.h" },
     { defaults = "defaults.h" },
     { docstrings = "docstrings.h" },
     { docstrings_append = "docstrings_append.h" },
@@ -87,6 +89,13 @@ name = "rpytest_srconly"
 sources = [
     "rpytest/srconly/srconly.cpp"
 ]
+
+[tool.robotpy-build.wrappers."rpytest.tc"]
+name = "rpytest_tc"
+
+[tool.robotpy-build.wrappers."rpytest.tc".type_casters]
+"rpyint_type_caster.h" = ["rpy::rpyint"]
+
 
 [tool.robotpy-build.metadata]
 name = "robotpy-build-test"

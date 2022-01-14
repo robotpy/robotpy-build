@@ -30,3 +30,6 @@ py.typed
 /rpytest/srconly/pkgcfg.py
 /rpytest/srconly/include
 /rpytest/srconly/rpy-include
+
+/rpytest/tc/_init_rpytest_tc.py
+/rpytest/tc/pkgcfg.py

@@ -1,6 +1,14 @@
 from rpytest import ft
 import pytest
 
+#
+# custom_type_caster.h
+#
+
+
+def test_custom_type_caster():
+    assert ft.convertRpyintToInt(5) == 5
+
 
 #
 # type_caster.h
