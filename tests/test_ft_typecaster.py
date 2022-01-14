@@ -7,7 +7,9 @@ import pytest
 
 
 def test_custom_type_caster():
+    assert ft.checkConvertRpyintToInt() == 6
     assert ft.convertRpyintToInt(5) == 5
+    assert ft.convertRpyintToInt() == 6
 
 
 #

@@ -3,6 +3,11 @@
 
 #include <rpyint.h>
 
-int convertRpyintToInt(rpy::rpyint &i) {
-    return i.int_value;
+
+int convertRpyintToInt(rpy::rpyint i = rpy::rpyint_plus_5(1)) {
+    return i.get();
+}
+
+int checkConvertRpyintToInt() {
+    return convertRpyintToInt();
 }
