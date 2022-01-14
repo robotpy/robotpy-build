@@ -49,6 +49,8 @@ _operators = {
 }
 # fmt: on
 
+_type_caster_seps = re.compile(r"[<>\(\)]")
+
 
 class HookError(Exception):
     pass
@@ -96,14 +98,13 @@ class Hooks:
             v["x_module_var"] = "m"
 
     def _get_type_caster_includes(self):
-        seps = re.compile(r"[<>\(\)]")
         includes = set()
         for typename in self.types:
             tmpl_idx = typename.find("<")
             if tmpl_idx == -1:
                 typenames = [typename]
             else:
-                typenames = [typename[:tmpl_idx]] + seps.split(
+                typenames = [typename[:tmpl_idx]] + _type_caster_seps.split(
                     typename[tmpl_idx:].replace(" ", "")
                 )
 
