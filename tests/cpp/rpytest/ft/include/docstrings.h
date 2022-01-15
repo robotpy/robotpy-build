@@ -25,4 +25,15 @@ struct DocClass
 
     /** An awesome variable, use it for something */
     int sweet_var;
+
+  /**
+   * Construct a Ramsete unicycle controller.
+   *
+   * Tuning parameter (b > 0 rad²/m²) for which larger values make
+   *
+   *             convergence more aggressive like a proportional term.
+   * Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger
+   *             values provide more damping in response.
+   */
+    void utf8_docstring() {}
 };
