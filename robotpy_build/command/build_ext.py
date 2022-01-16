@@ -30,11 +30,16 @@ def has_flag(compiler, flagname):
 
 
 def cpp_flag(compiler, pfx, sep="="):
-    """Return the -std=c++[11/14/17] compiler flag.
+    """Return the -std=c++[11/14/17/20] compiler flag.
     The newer version is prefered over c++11 (when it is available).
     """
 
-    flags = [f"{pfx}std{sep}c++17", f"{pfx}std{sep}c++14", f"{pfx}std{sep}c++11"]
+    flags = [
+        f"{pfx}std{sep}c++20",
+        f"{pfx}std{sep}c++17",
+        f"{pfx}std{sep}c++14",
+        f"{pfx}std{sep}c++11",
+    ]
 
     for flag in flags:
         if has_flag(compiler, flag):
@@ -75,6 +80,7 @@ class BuildExt(build_ext):
                 opts.append("-fvisibility=hidden")
         elif ct == "msvc":
             opts.append(cpp_flag(self.compiler, "/", ":"))
+            opts.append("/Zc:__cplusplus")
         for ext in self.extensions:
             ext.define_macros.append(("PYBIND11_USE_SMART_HOLDER_AS_DEFAULT", "1"))
             ext.extra_compile_args = opts
