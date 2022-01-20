@@ -288,6 +288,13 @@ class ClassData(Model):
     force_no_trampoline: bool = False
     force_no_default_constructor: bool = False
 
+    #: pybind11 will detect multiple inheritance automatically if a
+    #: class directly derives from multiple classes. However,
+    #: If the class derives from classes that participate in multiple
+    #: inheritance, pybind11 won't detect it automatically, so this
+    #: flag is needed.
+    force_multiple_inheritance: bool = False
+
     #: If there are circular dependencies, this will help you resolve them
     #: manually. TODO: make it so we don't need this
     force_depends: List[str] = []
