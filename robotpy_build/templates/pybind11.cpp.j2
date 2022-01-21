@@ -289,6 +289,9 @@
     {%- if cls.final -%}
       , py::is_final()
     {%- endif -%}
+    {%- if cls.data.force_multiple_inheritance -%}
+      , py::multiple_inheritance()
+    {%- endif -%}
 
     ),
 

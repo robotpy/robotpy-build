@@ -1,0 +1,54 @@
+classes:
+  MVIBase:
+    force_multiple_inheritance: true
+    force_no_trampoline: true
+    attributes:
+      i:
+    methods:
+      base_getI:
+  MVIChild:
+    force_multiple_inheritance: true
+    force_no_trampoline: true
+    attributes:
+      ci:
+    methods:
+      child_getI:
+      child_getCI:
+  MVIGChildA:
+    force_multiple_inheritance: true
+    force_no_trampoline: true
+    attributes:
+      cia:
+    methods:
+      gchildA_getI:
+      gchildA_getCI:
+      gchildA_getCIA:
+  MVIGChildB:
+    force_multiple_inheritance: true
+    force_no_trampoline: true
+    attributes:
+      cib:
+    methods:
+      gchildB_getI:
+      gchildB_getCI:
+      gchildB_getCIB:
+  MVIGGChild:
+    force_multiple_inheritance: true
+    force_no_trampoline: true
+    attributes:
+      gi:
+    methods:
+      ggchild_getI:
+      ggchild_getCI:
+      ggchild_getCIA:
+      ggchild_getCIB:
+      ggchild_getGI:
+  MVIGGGChild:
+    force_multiple_inheritance: true
+    force_no_trampoline: true
+    methods:
+      gggchild_getI:
+      gggchild_getCI:
+      gggchild_getCIA:
+      gggchild_getCIB:
+      gggchild_getGI:
