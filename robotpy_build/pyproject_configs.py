@@ -91,6 +91,9 @@ class MavenLibDownload(Model):
     #: must be in unified diff format.
     patches: Optional[List[PatchInfo]] = None
 
+    #: Patches to downloaded header files. Patches must be in unified diff format.
+    header_patches: Optional[List[PatchInfo]] = None
+
 
 class Download(Model):
     """
@@ -146,6 +149,10 @@ class Download(Model):
     #: If :attr:`sources` is set, apply the following patches to the sources. Patches
     #: must be in unified diff format.
     patches: Optional[List[PatchInfo]] = None
+
+    #: Patches to downloaded header files in incdir. Patches must be in unified
+    #: diff format.
+    header_patches: Optional[List[PatchInfo]] = None
 
     def _update_with_platform(self, platform):
         for n in ("url", "incdir", "libdir"):

@@ -56,6 +56,7 @@ def convert_maven_to_downloads(
     # headers
     dl_header["incdir"] = ""
     dl_header["url"] = _get_artifact_url(mcfg, "headers")
+    dl_header["header_patches"] = mcfg.header_patches
 
     # Construct downloads and return it
     downloads = []

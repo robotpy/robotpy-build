@@ -1,0 +1,10 @@
+--- downloaded.h.old	2022-02-23 23:09:51.053000000 -0500
++++ downloaded.h	2022-02-23 23:10:13.861277275 -0500
+@@ -1,4 +1,6 @@
+ 
+-#pragma once 
++#pragma once
++
++inline bool extra_content() { return true; }
+ 
+ int downloaded_fn(int val);

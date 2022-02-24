@@ -30,7 +30,7 @@ from setuptools import Extension
 
 from .devcfg import get_dev_config
 from .download import download_and_extract_zip
-from .pyproject_configs import WrapperConfig, Download
+from .pyproject_configs import PatchInfo, WrapperConfig, Download
 from .generator_data import MissingReporter
 from .hooks import Hooks
 from .hooks_datacfg import HooksDataYaml
@@ -333,6 +333,19 @@ class Wrapper:
         self._write_libinit_py(libnames_full)
         self._write_pkgcfg_py(pkgcfgpy, libnames_full)
 
+    def _apply_patches(self, patches: List[PatchInfo], root: str):
+        import patch
+
+        for p in patches:
+            patch_path = join(self.setup_root, normpath(p.patch))
+            ps = patch.PatchSet()
+            with open(patch_path, "rb") as fp:
+                if not ps.parse(fp):
+                    raise ValueError(f"Error parsing patch '{patch_path}'")
+
+            if not ps.apply(strip=p.strip, root=root):
+                raise ValueError(f"Error applying patch '{patch_path}' to '{root}'")
+
     def _clean_and_download(
         self, downloads: List[Download], cache: str, srcdir: str
     ) -> List[str]:
@@ -358,17 +371,7 @@ class Wrapper:
                 sources = [join(srcdir, normpath(s)) for s in dl.sources]
                 self.extension.sources.extend(sources)
                 if dl.patches:
-                    import patch
-
-                    for p in dl.patches:
-                        patch_path = join(self.setup_root, normpath(p.patch))
-                        ps = patch.PatchSet()
-                        with open(patch_path, "rb") as fp:
-                            if not ps.parse(fp):
-                                raise ValueError(f"Error parsing patch '{patch_path}'")
-
-                        if not ps.apply(strip=p.strip, root=srcdir):
-                            raise ValueError(f"Error applying patch '{patch_path}")
+                    self._apply_patches(dl.patches, srcdir)
             elif dl.sources is not None:
                 raise ValueError("sources must be None if use_sources is False!")
             elif dl.patches is not None:
@@ -412,6 +415,9 @@ class Wrapper:
                 add_incdir = True
 
             download_and_extract_zip(dl.url, to, cache)
+
+            if dl.header_patches:
+                self._apply_patches(dl.header_patches, incdir)
 
         if add_incdir:
             for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
