@@ -491,7 +491,12 @@ class Hooks:
         if x_temps:
             for out in reversed(x_temps):
                 odef = out.get("default", "0")
-                x_lambda_pre.insert(0, f"{out['x_type']} {out['name']} = {odef}")
+                if not odef:
+                    x_lambda_pre.insert(0, f"{out['x_type']} {out['name']}")
+                elif odef.startswith("{"):
+                    x_lambda_pre.insert(0, f"{out['x_type']} {out['name']}{odef}")
+                else:
+                    x_lambda_pre.insert(0, f"{out['x_type']} {out['name']} = {odef}")
 
         # Rename functions
         if data.rename:
