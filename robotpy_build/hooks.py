@@ -367,7 +367,8 @@ class Hooks:
                 default = self._resolve_default(fn, p, p["default"])
                 default = self._maybe_add_default_arg_cast(p, default)
                 p["default"] = default
-                p["x_pyarg"] += "=" + p["default"]
+                if default:
+                    p["x_pyarg"] += "=" + p["default"]
 
             ptype = "in"
 
