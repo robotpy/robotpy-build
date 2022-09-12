@@ -44,6 +44,7 @@ jobs:
         - '3.8'
         - '3.9'
         - '3.10'
+        - '3.11-dev'
         architecture: [x86, x64]
         exclude:
         - os: macos-latest
@@ -56,7 +57,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python_version }}
         architecture: ${{ matrix.architecture }}
@@ -91,8 +92,8 @@ jobs:
     strategy:
       matrix:
         container:
-        - robotpy/roborio-cross-ubuntu:2022.2
-        - robotpy/raspbian-cross-ubuntu:2022.1
+        - robotpy/roborio-cross-ubuntu:2022.4
+        - robotpy/raspbian-cross-ubuntu:2022.2
 
     container:
       image: "${{ matrix.container }}"

@@ -85,7 +85,10 @@ template <class T> py::handle __get_handle(const T *this_ptr) {
     catch (std::exception &)                                                                                                           \
     {                                                                                                                                  \
     }                                                                                                                                  \
-    py::pybind11_fail(__msg)
+    {                                                                                                                                  \
+        py::gil_scoped_acquire gil;                                                                                                    \
+        py::pybind11_fail(__msg);                                                                                                       \
+    }
 
 #define RPYBUILD_OVERRIDE_PURE_CUSTOM_NAME(pyname, ret_type, cname, name, fn, ...)                      \
     {                                                                                                   \
