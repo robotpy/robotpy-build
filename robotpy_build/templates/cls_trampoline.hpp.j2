@@ -132,12 +132,8 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
 #endif
 {% endfor %}
 
-{% for typealias in cls.data.typealias %}
-    {% if typealias.startswith("template") -%}
-      {{ typealias }};
-    {%- else -%}
-        using {% if '=' in typealias %}{{ typealias }}{% else %}{{ typealias.split('::')[-1] }} = {{ typealias }}{% endif %};
-    {%- endif %}
+{% for typealias in cls.x_typealias %}
+    {{ typealias }};
 {% endfor %}
 {% for constant in cls.data.constants %}
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};

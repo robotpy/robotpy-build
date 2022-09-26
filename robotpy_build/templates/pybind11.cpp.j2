@@ -229,12 +229,8 @@
   {% if cls.parent and '<' not in cls.x_qualname %}
   using {{ cls.name }} = {{ cls.x_qualname }};
   {% endif %}
-  {% for typealias in cls.data.typealias %}
-    {% if typealias.startswith("template") %}
-      {{ typealias }};
-    {% else %}
-      using {% if '=' in typealias %}{{ typealias }}{% else %}{{ typealias.split('::')[-1] }} = {{ typealias }}{% endif %};
-    {% endif %}
+  {% for typealias in cls.x_typealias %}
+    {{ typealias }};
   {% endfor %}
 {% endmacro -%}
 

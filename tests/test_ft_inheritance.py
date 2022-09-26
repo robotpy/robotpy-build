@@ -179,3 +179,13 @@ def test_inheritance_pymchild():
     assert getBaseAndPyChild(pyc) == "pymchild::baseAndPyChild"
     assert getBaseAndChildFinal(pyc) == "mchild::baseAndChildFinal"
     assert getBaseAndGrandchild(pyc) == "base::baseAndGrandchild"
+
+
+def test_inheritance_usingparent():
+    base = ft.UPBase()
+    assert base.get5() == 5
+
+    child = ft.UPChild()
+    # not automatically added, but at least it's not a compile error either
+    # assert child.get5() == 5
+    assert child.get6() == 6

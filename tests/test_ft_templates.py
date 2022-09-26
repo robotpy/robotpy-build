@@ -15,6 +15,11 @@ def test_dependent_using():
     assert du.getThird([1, 2, 3]) == 3
 
 
+def test_dependent_using2():
+    du = ft.TDependentUsing2Int()
+    assert du.getThird([1, 2, 3]) == 3
+
+
 def test_classwithfn():
     assert ft.TClassWithFn.getT(1) == 1
     assert ft.TClassWithFn.getT(False) is False

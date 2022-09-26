@@ -842,3 +842,34 @@ class Hooks:
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)
         cls["x_doc_quoted"] = self._process_doc(cls, class_data)
+
+        # do logic for extracting user defined typealiases here
+        typealias_names = set()
+        x_typealias = []
+        for typealias in class_data.typealias:
+            if typealias.startswith("template"):
+                x_typealias.append(typealias)
+            else:
+                teq = typealias.find("=")
+                if teq != -1:
+                    ta_name = typealias[:teq].strip()
+                    x_typealias.append(f"using {typealias}")
+                else:
+                    ta_name = typealias.split("::")[-1]
+                    x_typealias.append(f"using {ta_name} = {typealias}")
+                typealias_names.add(ta_name)
+
+        # autodetect embedded using directives, but don't override anything
+        # the user specifies
+        for name, using in cls["using"].items():
+            if (
+                using["access"] == "public"
+                and name not in typealias_names
+                and not using["template"]
+                and using["using_type"] == "typealias"
+            ):
+                x_typealias.append(
+                    f"using {name} = typename {cls['x_qualname']}::{name}"
+                )
+
+        cls["x_typealias"] = x_typealias
