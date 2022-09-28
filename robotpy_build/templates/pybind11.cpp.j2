@@ -64,7 +64,10 @@
     py::overload_cast fails in some obscure cases, so we don't use it here
     https://github.com/pybind/pybind11/issues/1153
   -#}
-  {{- fn.rtnType }} (
+  {% if fn.returns_const is defined and fn.returns_const %}const{% endif %}
+  {{ fn.returns }} 
+  {%- if fn.returns_pointer %}*{% endif -%}
+  {%- if fn.returns_reference %}&{% endif -%}(
   {%- if cls_qualname and not fn.static -%}
     {{ cls_qualname }}::
   {%- endif -%}
