@@ -30,7 +30,7 @@
     {%- else -%}
       {{ fn.namespace }}
     {%- endif -%}
-    {{ fn.name }}{{ tmpl }}
+    {% if tmpl %}template {% endif %}{{ fn.name }}{{ tmpl }}
   {%- else -%}
     [](
       {%- if cls_qualname -%}
