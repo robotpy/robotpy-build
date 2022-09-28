@@ -361,7 +361,11 @@ class Hooks:
             if po:
                 p.update(po.dict(exclude_unset=True))
 
-            p["x_pyarg"] = 'py::arg("%(name)s")' % p
+            py_pname = p["name"]
+            if iskeyword(py_pname):
+                py_pname = f"{py_pname}_"
+
+            p["x_pyarg"] = f'py::arg("{py_pname}")'
 
             if "default" in p:
                 default = self._resolve_default(fn, p, p["default"])

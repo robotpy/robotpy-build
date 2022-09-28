@@ -19,6 +19,8 @@ struct OriginalClass {
     // class function parameter
     int fnRenamedParam(int x) { return x; }
 
+    int fnAutoRenamed(int from) { return from; }
+
     int getProp() { return originalProp; }
     void setProp(int p) { originalProp = p; }
 
