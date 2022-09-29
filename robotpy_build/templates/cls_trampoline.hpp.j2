@@ -118,6 +118,13 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
     using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
 
+{% for typealias in cls.x_typealias %}
+    {{ typealias }};
+{% endfor %}
+{% for constant in cls.data.constants %}
+    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
+{% endfor %}
+
 {# protected constructors -- only used by the direct child #}
 {% for fn in cls.methods.protected if not fn.data.ignore and fn.constructor %}
 #ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
@@ -130,13 +137,6 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
         ({{ fn.parameters | join(', ', attribute='x_callname') }})
     {}
 #endif
-{% endfor %}
-
-{% for typealias in cls.x_typealias %}
-    {{ typealias }};
-{% endfor %}
-{% for constant in cls.data.constants %}
-    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
 {% endfor %}
 
     {# virtual methods (disabled for buffer overrides for now) #}
