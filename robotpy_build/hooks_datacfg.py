@@ -277,7 +277,8 @@ class ClassData(Model):
     ignore: bool = False
     ignored_bases: List[str] = []
 
-    #: Specify fully qualified names for the bases
+    #: Specify fully qualified names for the bases. If the base has a template
+    #: parameter, you must include it
     base_qualnames: Dict[str, str] = {}
 
     attributes: Dict[str, PropData] = {}

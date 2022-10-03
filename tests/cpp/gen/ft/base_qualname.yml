@@ -1,0 +1,27 @@
+classes:
+  BaseQualname:
+    base_qualnames:
+      Hidden: bq::Hidden
+    methods:
+      BaseQualname:
+  
+  THBaseQualname:
+    base_qualnames:
+      THiddenBase1: bq::THiddenBase1<bq::THiddenBase2<int>>
+      # parse with _parse_template_decl ... or split it out
+
+    methods:
+      BaseQualname:
+
+  TVisibleBase1:
+    template_params:
+    - T
+  TVisibleBase2:
+    template_params:
+    - T
+
+templates:
+  TVisibleBase:
+    qualname: bq::detail::TVisibleBase1
+    params:
+    - TVisibleBase2<int>

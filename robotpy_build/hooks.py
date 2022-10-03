@@ -221,6 +221,27 @@ class Hooks:
 
         return param_sig
 
+    def _process_base_param(self, decl_param):
+        params = decl_param.get("params")
+        if params:
+            # recurse
+            params = [self._process_base_param(param) for param in params]
+            return f"{decl_param['param']}<{', '.join(params)}>"
+        else:
+            return decl_param["param"]
+
+    def _make_base_params(
+        self, base_decl_params, pybase_params: typing.Set[str]
+    ) -> str:
+        base_params = [
+            self._process_base_param(decl_param) for decl_param in base_decl_params
+        ]
+
+        for decl_param in base_params:
+            pybase_params.add(decl_param)
+
+        return ", ".join(base_params)
+
     def _enum_hook(self, en, enum_data):
         ename = en.get("name")
         value_prefix = None
@@ -617,25 +638,36 @@ class Hooks:
         pybase_params = set()
 
         for base in cls["inherits"]:
-            bqual = class_data.base_qualnames.get(base["class"])
+            bqual = class_data.base_qualnames.get(base["decl_name"])
             if bqual:
-                base["x_qualname"] = bqual
-            elif "::" not in base["decl_name"]:
-                base["x_qualname"] = f'{cls["namespace"]}::{base["decl_name"]}'
+                base["x_class"] = bqual
+                # TODO: sometimes need to add this to pybase_params, but
+                # that would require parsing this more. Seems sufficiently
+                # obscure, going to omit it for now.
+                tp = bqual.find("<")
+                if tp == -1:
+                    base["x_qualname"] = bqual
+                    base["x_params"] = ""
+                else:
+                    base["x_qualname"] = bqual[:tp]
+                    base["x_params"] = bqual[tp + 1 : -1]
             else:
-                base["x_qualname"] = base["decl_name"]
+                if "::" not in base["decl_name"]:
+                    base["x_qualname"] = f'{cls["namespace"]}::{base["decl_name"]}'
+                else:
+                    base["x_qualname"] = base["decl_name"]
+
+                base_decl_params = base.get("decl_params")
+                if base_decl_params:
+                    base["x_params"] = self._make_base_params(
+                        base_decl_params, pybase_params
+                    )
+                    base["x_class"] = f"{base['x_qualname']}<{base['x_params']}>"
+                else:
+                    base["x_params"] = ""
+                    base["x_class"] = base["x_qualname"]
 
             base["x_qualname_"] = base["x_qualname"].translate(self._qualname_trans)
-
-            base_decl_params = base.get("decl_params")
-            if base_decl_params:
-                for decl_param in base_decl_params:
-                    pybase_params.add(decl_param["param"])
-                base["x_params"] = ", ".join(
-                    decl_param["param"] for decl_param in base_decl_params
-                )
-            else:
-                base["x_params"] = ""
 
         ignored_bases = {ib: True for ib in class_data.ignored_bases}
 

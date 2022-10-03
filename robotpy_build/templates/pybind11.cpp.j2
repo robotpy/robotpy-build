@@ -256,7 +256,7 @@
     {%- endif -%}
 
     {%- if cls.x_inherits -%}
-      , {{ cls.x_inherits | join(', ', attribute='class') }}
+      , {{ cls.x_inherits | join(', ', attribute='x_class') }}
     {%- endif -%}
     > {{ cls.x_varname }};
 
