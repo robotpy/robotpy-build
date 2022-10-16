@@ -236,6 +236,9 @@
       using {% if '=' in typealias %}{{ typealias }}{% else %}{{ typealias.split('::')[-1] }} = {{ typealias }}{% endif %};
     {% endif %}
   {% endfor %}
+{% endmacro -%}
+
+{%- macro cls_consts(cls) -%}
   {% for constant in cls.data.constants -%}
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
   {% endfor %}

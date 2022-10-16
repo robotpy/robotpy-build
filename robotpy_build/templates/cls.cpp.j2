@@ -67,6 +67,7 @@ struct rpybuild_{{ mod_fn }}_initializer {
 {# namespaces/typealiases #}
 {% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
   {{ pybind11.cls_using(cls) }}
+  {{ pybind11.cls_consts(cls) }}
 {% endfor %}
 
 {% for pkg, vname in subpackages.items() %}
