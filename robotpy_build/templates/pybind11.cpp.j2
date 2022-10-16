@@ -335,7 +335,7 @@
   {% endfor -%}
   {%- for prop in cls.properties.protected if not prop.data.ignore %}
     {{ genprop(cls.x_trampoline_var, prop) }}
-  {%- endfor %};
+  {%- endfor %}{{ cls.x_inline_code }};
 
   {{ unnamed_enum(varname, cls.enums.public) }}
 

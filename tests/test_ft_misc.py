@@ -47,6 +47,17 @@ def test_good_abstract():
 
 
 #
+# inline_code.h
+#
+
+
+def test_inline_code():
+    o = ft.InlineCode()
+    assert o.get2() == 2
+    assert o.get4() == 4
+
+
+#
 # static_only.h
 #
 

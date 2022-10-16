@@ -878,6 +878,7 @@ class Hooks:
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)
         cls["x_doc_quoted"] = self._process_doc(cls, class_data)
+        cls["x_inline_code"] = class_data.inline_code or ""
 
         # do logic for extracting user defined typealiases here
         typealias_names = set()

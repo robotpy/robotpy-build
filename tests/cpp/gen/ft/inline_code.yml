@@ -1,0 +1,11 @@
+---
+
+classes:
+  InlineCode:
+    methods:
+      get2:
+    inline_code: |
+      // you can even start with a comment
+      .def("get4", [](InlineCode *self) {
+        return 4;
+      })
