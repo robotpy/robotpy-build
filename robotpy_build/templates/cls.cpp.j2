@@ -64,9 +64,7 @@ PYBIND11_TYPE_CASTER_BASE_HOLDER(typename {{ cls.x_qualname }}, std::unique_ptr<
 
 struct rpybuild_{{ mod_fn }}_initializer {
 
-{# namespaces/typealiases #}
 {% for cls in header.classes if not cls.data.ignore and cls.template is not defined %}
-  {{ pybind11.cls_using(cls) }}
   {{ pybind11.cls_consts(cls) }}
 {% endfor %}
 
@@ -140,7 +138,11 @@ void finish() {
 {# class methods #}
 {%- for cls in header.classes
    if not cls.parent and not cls.data.ignore and cls.template is not defined %}
+  {
+  {{ pybind11.cls_using(cls) }}
+
   {{ pybind11.cls_def(cls, cls.x_varname) }}
+  }
 {% endfor %}
 
 {# global methods #}

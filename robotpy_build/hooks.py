@@ -906,7 +906,7 @@ class Hooks:
                 and using["using_type"] == "typealias"
             ):
                 x_typealias.append(
-                    f"using {name} = typename {cls['x_qualname']}::{name}"
+                    f"using {name} [[maybe_unused]] = typename {cls['x_qualname']}::{name}"
                 )
 
         cls["x_typealias"] = x_typealias
