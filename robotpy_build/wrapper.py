@@ -261,6 +261,9 @@ class Wrapper:
             includes.extend(self.pkgcfg.get_pkg("robotpy-build").get_include_dirs())
         return includes
 
+    def _generation_search_path(self):
+        return [self.root] + self._all_includes(False)
+
     def _all_library_dirs(self):
         libs = self.get_library_dirs()
         for dep in self.cfg.depends:
@@ -632,7 +635,7 @@ class Wrapper:
         else:
             only_generate = None
 
-        generation_search_path = [self.root] + self._all_includes(False)
+        generation_search_path = self._generation_search_path()
 
         for name, header in self.cfg.autogen_headers.items():
 
