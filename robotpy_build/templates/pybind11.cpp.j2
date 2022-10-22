@@ -229,9 +229,10 @@
 {% endmacro -%}
 
 {%- macro cls_using(cls) -%}
-  {% if cls.parent and '<' not in cls.x_qualname %}
-  using {{ cls.name }} = {{ cls.x_qualname }};
-  {% endif %}
+  {% for ncls in cls.nested_classes 
+      if not ncls.data.ignore and ncls.template is not defined %}
+  using {{ ncls.name }} [[maybe_unused]] = typename {{ ncls.x_qualname }};
+  {% endfor %}
   {% for typealias in cls.x_typealias %}
     {{ typealias }};
   {% endfor %}
