@@ -265,6 +265,11 @@ class EnumData(Model):
 
     values: Dict[str, EnumValue] = {}
 
+    #: This will insert code right before the semicolon ending the enum py
+    #: definition. You can use this to easily insert additional custom values
+    #: without using the global inline_code mechanism.
+    inline_code: Optional[str] = None
+
 
 class ClassData(Model):
 

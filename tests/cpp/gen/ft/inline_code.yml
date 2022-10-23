@@ -2,6 +2,10 @@
 
 classes:
   InlineCode:
+    enums:
+      MyE:
+        inline_code: |
+          .value("Value2", (InlineCode::MyE)2)
     methods:
       get2:
     inline_code: |
