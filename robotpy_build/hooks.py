@@ -79,6 +79,7 @@ class Hooks:
         self.casters = casters
         self.report_only = report_only
         self.has_operators = False
+        self.has_vcheck = False
 
         self.types: typing.Set[str] = set()
         self.class_hierarchy: typing.Dict[str, typing.List[str]] = {}
@@ -314,6 +315,7 @@ class Hooks:
         data["templates"] = templates
 
         data["type_caster_includes"] = self._get_type_caster_includes()
+        data["has_vcheck"] = self.has_vcheck
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -773,6 +775,8 @@ class Hooks:
 
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
+        vcheck_fns = []
+        cls["x_vcheck_fns"] = vcheck_fns
 
         # bad assumption? yep
         if cls["inherits"]:
@@ -812,10 +816,25 @@ class Hooks:
                 )
 
                 if not is_private:
-
                     if method_data.ignore:
                         fn["data"] = method_data
                         continue
+
+                    # If the method has cpp_code defined, it must either match the function
+                    # signature of the method, or virtual_xform must be defined with an
+                    # appropriate conversion. If neither of these are true, it will lead
+                    # to difficult to diagnose errors at runtime. We add a static assert
+                    # to try and catch these errors at compile time
+                    need_vcheck = (
+                        (fn["override"] or fn["virtual"])
+                        and method_data.cpp_code
+                        and not method_data.virtual_xform
+                        and not cls["final"]
+                        and not class_data.force_no_trampoline
+                    )
+                    if need_vcheck:
+                        vcheck_fns.append(fn)
+                        self.has_vcheck = True
 
                     if operator:
                         self.has_operators = True

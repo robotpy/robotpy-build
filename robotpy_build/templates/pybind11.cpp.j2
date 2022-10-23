@@ -59,15 +59,19 @@
   {%- endif -%}
 {%- endmacro -%}
 
+{%- macro fn_retval(fn) -%}
+  {% if fn.returns_const is defined and fn.returns_const %}const{% endif %}
+  {{ fn.returns }} 
+  {%- if fn.returns_pointer %}*{% endif -%}
+  {%- if fn.returns_reference %}&{% endif -%}
+{%- endmacro -%}
+
 {%- macro gensig(cls_qualname, fn) -%}
   {#-
     py::overload_cast fails in some obscure cases, so we don't use it here
     https://github.com/pybind/pybind11/issues/1153
   -#}
-  {% if fn.returns_const is defined and fn.returns_const %}const{% endif %}
-  {{ fn.returns }} 
-  {%- if fn.returns_pointer %}*{% endif -%}
-  {%- if fn.returns_reference %}&{% endif -%}(
+  {{ fn_retval(fn) }}(
   {%- if cls_qualname and not fn.static -%}
     {{ cls_qualname }}::
   {%- endif -%}
@@ -313,6 +317,19 @@
 {% endmacro -%}
 
 {%- macro cls_def(cls, varname) -%}
+
+  {% if cls.x_vcheck_fns -%}
+  {%- for fn in cls.x_vcheck_fns %}
+  {
+    auto vcheck = {{ fn.data.cpp_code.strip() }};
+    static_assert(std::is_convertible<decltype(vcheck), std::function<
+    {{- fn_retval(fn) }}({{ cls.x_qualname }}*
+    {%- if fn.x_all_params %}, {{ fn.x_all_params | join(', ', attribute='x_type_full') }}{% endif -%}
+      ) >>::value,
+      "{{ cls.x_qualname }}::{{ fn.name }} must have virtual_xform if cpp_code signature doesn't match original function");
+  }
+  {% endfor -%}
+  {%- endif %}
 
   {{ doc(cls, varname + '.doc() =', ';') }}
 
