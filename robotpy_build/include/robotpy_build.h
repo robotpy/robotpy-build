@@ -16,39 +16,7 @@ struct EmptyTrampolineCfg {};
 
 // robotpy-build specific extensions waiting for inclusion into pybind11
 namespace rpybuild_ext {
-
-/// Replaces the current Python error indicator with the chosen error, performing a
-/// 'raise from' to indicate that the chosen error was caused by the original error
-inline void raise_from(PyObject *type, const char *message) {
-    // from cpython/errors.c _PyErr_FormatVFromCause
-    PyObject *exc, *val, *val2, *tb;
-    PyErr_Fetch(&exc, &val, &tb);
-
-    PyErr_NormalizeException(&exc, &val, &tb);
-    if (tb != nullptr) {
-        PyException_SetTraceback(val, tb);
-        Py_DECREF(tb);
-    }
-    Py_DECREF(exc);
-
-    PyErr_SetString(type, message);
-    PyErr_Fetch(&exc, &val2, &tb);
-    PyErr_NormalizeException(&exc, &val2, &tb);
-    Py_INCREF(val);
-    PyException_SetCause(val2, val);
-    PyException_SetContext(val2, val);
-    PyErr_Restore(exc, val2, tb);
-}
-
-/// Sets the current Python error indicator with the chosen error, performing a 'raise from'
-/// from the error contained in error_already_set to indicate that the chosen error was
-/// caused by the original error. After this function is called error_already_set will
-/// no longer contain an error.
-inline void raise_from(py::error_already_set& err, PyObject *type, const char *message) {
-    err.restore();
-    raise_from(type, message);
-}
-
+using py::raise_from;
 } // namespace rpybuild_ext
 
 // Use this to define your module instead of PYBIND11_MODULE
