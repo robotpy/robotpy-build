@@ -79,6 +79,7 @@ class Hooks:
         self.casters = casters
         self.report_only = report_only
         self.has_operators = False
+        self.has_vcheck = False
 
         self.types: typing.Set[str] = set()
         self.class_hierarchy: typing.Dict[str, typing.List[str]] = {}
@@ -221,6 +222,27 @@ class Hooks:
 
         return param_sig
 
+    def _process_base_param(self, decl_param):
+        params = decl_param.get("params")
+        if params:
+            # recurse
+            params = [self._process_base_param(param) for param in params]
+            return f"{decl_param['param']}<{', '.join(params)}>"
+        else:
+            return decl_param["param"]
+
+    def _make_base_params(
+        self, base_decl_params, pybase_params: typing.Set[str]
+    ) -> str:
+        base_params = [
+            self._process_base_param(decl_param) for decl_param in base_decl_params
+        ]
+
+        for decl_param in base_params:
+            pybase_params.add(decl_param)
+
+        return ", ".join(base_params)
+
     def _enum_hook(self, en, enum_data):
         ename = en.get("name")
         value_prefix = None
@@ -293,6 +315,7 @@ class Hooks:
         data["templates"] = templates
 
         data["type_caster_includes"] = self._get_type_caster_includes()
+        data["has_vcheck"] = self.has_vcheck
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -354,14 +377,28 @@ class Hooks:
             if p["name"] == "":
                 p["name"] = "param%s" % i
             p["x_type"] = p.get("enum", p["raw_type"])
-            p["x_callname"] = p["name"]
+
+            if p["pointer"]:
+                p["x_callname"] = p["name"]
+            elif p["reference"]:
+                p["x_callname"] = f"std::forward<decltype({p['name']})>({p['name']})"
+            else:
+                p["x_callname"] = f"std::move({p['name']})"
+            # this is used in trampoline functions
+            # - separate from x_callname because it's just a passthrough
+            p["x_virtual_callname"] = p["x_callname"]
+
             p["x_retname"] = p["name"]
 
             po = param_override.get(p["name"])
             if po:
                 p.update(po.dict(exclude_unset=True))
 
-            p["x_pyarg"] = 'py::arg("%(name)s")' % p
+            py_pname = p["name"]
+            if iskeyword(py_pname):
+                py_pname = f"{py_pname}_"
+
+            p["x_pyarg"] = f'py::arg("{py_pname}")'
 
             if "default" in p:
                 default = self._resolve_default(fn, p, p["default"])
@@ -425,6 +462,8 @@ class Hooks:
             ):
                 if p["pointer"]:
                     p["x_callname"] = f"&{p['x_callname']}"
+                else:
+                    p["x_callname"] = p["name"]
                 ptype = "out"
             elif p["array"]:
                 asz = p.get("array_size", 0)
@@ -613,25 +652,36 @@ class Hooks:
         pybase_params = set()
 
         for base in cls["inherits"]:
-            bqual = class_data.base_qualnames.get(base["class"])
+            bqual = class_data.base_qualnames.get(base["decl_name"])
             if bqual:
-                base["x_qualname"] = bqual
-            elif "::" not in base["decl_name"]:
-                base["x_qualname"] = f'{cls["namespace"]}::{base["decl_name"]}'
+                base["x_class"] = bqual
+                # TODO: sometimes need to add this to pybase_params, but
+                # that would require parsing this more. Seems sufficiently
+                # obscure, going to omit it for now.
+                tp = bqual.find("<")
+                if tp == -1:
+                    base["x_qualname"] = bqual
+                    base["x_params"] = ""
+                else:
+                    base["x_qualname"] = bqual[:tp]
+                    base["x_params"] = bqual[tp + 1 : -1]
             else:
-                base["x_qualname"] = base["decl_name"]
+                if "::" not in base["decl_name"]:
+                    base["x_qualname"] = f'{cls["namespace"]}::{base["decl_name"]}'
+                else:
+                    base["x_qualname"] = base["decl_name"]
+
+                base_decl_params = base.get("decl_params")
+                if base_decl_params:
+                    base["x_params"] = self._make_base_params(
+                        base_decl_params, pybase_params
+                    )
+                    base["x_class"] = f"{base['x_qualname']}<{base['x_params']}>"
+                else:
+                    base["x_params"] = ""
+                    base["x_class"] = base["x_qualname"]
 
             base["x_qualname_"] = base["x_qualname"].translate(self._qualname_trans)
-
-            base_decl_params = base.get("decl_params")
-            if base_decl_params:
-                for decl_param in base_decl_params:
-                    pybase_params.add(decl_param["param"])
-                base["x_params"] = ", ".join(
-                    decl_param["param"] for decl_param in base_decl_params
-                )
-            else:
-                base["x_params"] = ""
 
         ignored_bases = {ib: True for ib in class_data.ignored_bases}
 
@@ -725,6 +775,8 @@ class Hooks:
 
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
+        vcheck_fns = []
+        cls["x_vcheck_fns"] = vcheck_fns
 
         # bad assumption? yep
         if cls["inherits"]:
@@ -764,10 +816,25 @@ class Hooks:
                 )
 
                 if not is_private:
-
                     if method_data.ignore:
                         fn["data"] = method_data
                         continue
+
+                    # If the method has cpp_code defined, it must either match the function
+                    # signature of the method, or virtual_xform must be defined with an
+                    # appropriate conversion. If neither of these are true, it will lead
+                    # to difficult to diagnose errors at runtime. We add a static assert
+                    # to try and catch these errors at compile time
+                    need_vcheck = (
+                        (fn["override"] or fn["virtual"])
+                        and method_data.cpp_code
+                        and not method_data.virtual_xform
+                        and not cls["final"]
+                        and not class_data.force_no_trampoline
+                    )
+                    if need_vcheck:
+                        vcheck_fns.append(fn)
+                        self.has_vcheck = True
 
                     if operator:
                         self.has_operators = True
@@ -842,3 +909,39 @@ class Hooks:
         cls["x_varname"] = "cls_" + cls_name
         cls["x_name"] = self._set_name(cls_name, class_data)
         cls["x_doc_quoted"] = self._process_doc(cls, class_data)
+        cls["x_inline_code"] = class_data.inline_code or ""
+
+        # do logic for extracting user defined typealiases here
+        # - these are at class scope, so they can include template
+        typealias_names = set()
+        x_user_typealias = []
+        for typealias in class_data.typealias:
+            if typealias.startswith("template"):
+                x_user_typealias.append(typealias)
+            else:
+                teq = typealias.find("=")
+                if teq != -1:
+                    ta_name = typealias[:teq].strip()
+                    x_user_typealias.append(f"using {typealias}")
+                else:
+                    ta_name = typealias.split("::")[-1]
+                    x_user_typealias.append(f"using {ta_name} = {typealias}")
+                typealias_names.add(ta_name)
+
+        # autodetect embedded using directives, but don't override anything
+        # the user specifies
+        # - these are in block scope, so they cannot include templates
+        x_auto_typealias = []
+        for name, using in cls["using"].items():
+            if (
+                using["access"] == "public"
+                and name not in typealias_names
+                and not using["template"]
+                and using["using_type"] == "typealias"
+            ):
+                x_auto_typealias.append(
+                    f"using {name} [[maybe_unused]] = typename {cls['x_qualname']}::{name}"
+                )
+
+        cls["x_user_typealias"] = x_user_typealias
+        cls["x_auto_typealias"] = x_auto_typealias

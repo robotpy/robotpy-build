@@ -1,0 +1,9 @@
+classes:
+  OuterNested:
+    methods:
+      OuterNested:
+  OuterNested::InnerNested:
+    methods:
+      fn:
+  OuterNested::IgnoredNested:
+    ignore: true

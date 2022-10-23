@@ -1,0 +1,13 @@
+classes:
+  THiddenBase1:
+    template_params:
+    - T
+  THiddenBase2:
+    template_params:
+    - T
+
+templates:
+  THiddenBase:
+    qualname: bq::THiddenBase1
+    params:
+    - THiddenBase2<int>

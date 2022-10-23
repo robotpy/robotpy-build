@@ -1,0 +1,11 @@
+---
+classes:
+  TDependentUsing2:
+    template_params:
+    - T
+  
+templates:
+  TDependentUsing2Int:
+    qualname: whatever::TDependentUsing2
+    params:
+    - int

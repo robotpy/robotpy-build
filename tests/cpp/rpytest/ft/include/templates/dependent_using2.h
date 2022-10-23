@@ -4,13 +4,13 @@
 #include <vector>
 
 // Testcase: using directive that depends on the template parameter
-// - specified manually
+// - but we autodetect it
 
 namespace whatever
 {
 
     template <typename T>
-    struct TDependentUsing
+    struct TDependentUsing2
     {
         using VectorType = std::vector<T>;
 

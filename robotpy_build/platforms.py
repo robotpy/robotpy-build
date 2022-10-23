@@ -62,7 +62,11 @@ def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
         pyplatform = _get_platform()
 
         # Check for 64 bit x86 macOS (version agnostic)
-        if re.fullmatch(r"macosx-.*-x86_64", pyplatform):
+        # - See https://github.com/pypa/setuptools/issues/2520 for universal2
+        #   related questions? Sorta.
+        if re.fullmatch(r"macosx-.*-x86_64", pyplatform) or re.fullmatch(
+            r"macosx-.*-universal2", pyplatform
+        ):
             return _platforms["macos-x86_64"]
 
         if pyplatform == "linux-armv7l":

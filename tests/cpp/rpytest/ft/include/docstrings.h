@@ -37,3 +37,7 @@ struct DocClass
    */
     void utf8_docstring() {}
 };
+
+/// This function returns something very important
+[[nodiscard]]
+int important_retval() { return 42; }

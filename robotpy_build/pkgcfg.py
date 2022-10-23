@@ -47,6 +47,7 @@ def get_type_casters_cfg(casters: Dict[str, Dict[str, Any]]) -> None:
             "Eigen::SparseMatrix": {"hdr": "pybind11/eigen.h"},
             "Eigen::SparseView": {"hdr": "pybind11/eigen.h"},
             "Eigen::Vector": {"hdr": "pybind11/eigen.h"},
+            "Eigen::Vector3d": {"hdr": "pybind11/eigen.h"},
             "Eigen::VectorXf": {"hdr": "pybind11/eigen.h"},
             "Eigen::VectorXcf": {"hdr": "pybind11/eigen.h"},
         }

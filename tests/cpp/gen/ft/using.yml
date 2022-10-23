@@ -1,0 +1,5 @@
+
+classes:
+  ProtectedUsing:
+    typealias:
+    - cr::CantResolve

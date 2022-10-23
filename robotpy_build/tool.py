@@ -1,8 +1,8 @@
 import argparse
 import glob
 import inspect
-from os.path import basename, dirname, exists, join, relpath, splitext
-from pathlib import PurePosixPath
+from os.path import basename, dirname, exists, join, relpath
+from pathlib import Path, PurePosixPath
 import posixpath
 import pprint
 import subprocess
@@ -127,39 +127,67 @@ class HeaderScanner:
             help="Generate a list of headers in TOML form",
             parents=[parent_parser],
         )
+        parser.add_argument("--only-missing", default=False, action="store_true")
         return parser
 
     def run(self, args):
         s = get_setup()
-        for wrapper in s.wrappers + s.static_libs:
+
+        already_present = {}
+        if args.only_missing:
+            for i, wrapper in enumerate(s.project.wrappers.values()):
+                files = set()
+                if wrapper.autogen_headers:
+                    files |= {
+                        PurePosixPath(f) for f in wrapper.autogen_headers.values()
+                    }
+                if wrapper.type_casters:
+                    files |= {PurePosixPath(tc.header) for tc in wrapper.type_casters}
+                if not files:
+                    continue
+                for incdir in s.wrappers[i]._generation_search_path():
+                    ifiles = already_present.setdefault(incdir, set())
+                    incdir = Path(incdir)
+                    for f in files:
+                        if (incdir / f).exists():
+                            ifiles.add(f)
+
+        for wrapper in s.wrappers:
             print(
                 f'[tool.robotpy-build.wrappers."{wrapper.package_name}".autogen_headers]'
             )
 
+            # This uses the direct include directories instead of the generation
+            # search path as we only want to output a file once
             for incdir in wrapper.get_include_dirs():
+
+                wpresent = already_present.get(incdir, set())
+
                 files = list(
                     sorted(
-                        relpath(f, incdir)
+                        PurePosixPath(relpath(f, incdir))
                         for f in glob.glob(join(incdir, "**", "*.h"), recursive=True)
+                        if "rpygen" not in f
                     )
                 )
 
                 lastdir = None
                 for f in files:
-                    if "rpygen" not in f:
-                        thisdir = dirname(f)
-                        if lastdir is None:
-                            if thisdir:
-                                print("#", PurePosixPath(thisdir))
-                        elif lastdir != thisdir:
-                            print()
-                            if thisdir:
-                                print("#", PurePosixPath(thisdir))
-                        lastdir = thisdir
+                    if f in wpresent:
+                        continue
 
-                        base = splitext(basename(f))[0]
-                        f = PurePosixPath(f)
-                        print(f'{base} = "{f}"')
+                    thisdir = f.parent
+                    if lastdir is None:
+                        if thisdir:
+                            print("#", thisdir)
+                    elif lastdir != thisdir:
+                        print()
+                        if thisdir:
+                            print("#", thisdir)
+                    lastdir = thisdir
+
+                    base = f.stem
+                    print(f'{base} = "{f}"')
                 print()
 
 

@@ -17,8 +17,9 @@ using {{ using.raw_type }};
 template <{{ cls.x_template_parameter_list }}>
 struct bind_{{ cls.x_qualname_ }} {
 
-    {{ pybind11.cls_using(cls) }}
-
+    {{ pybind11.cls_user_using(cls) }}
+    {{ pybind11.cls_auto_using(cls) }}
+    {{ pybind11.cls_consts(cls) }}
     {{ pybind11.cls_decl(cls) }}
 
     py::module &m;

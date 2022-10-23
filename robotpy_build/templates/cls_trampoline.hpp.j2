@@ -118,6 +118,16 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
     using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
 
+{% for typealias in cls.x_user_typealias %}
+    {{ typealias }};
+{% endfor %}
+{% for typealias in cls.x_auto_typealias %}
+    {{ typealias }};
+{% endfor %}
+{% for constant in cls.data.constants %}
+    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
+{% endfor %}
+
 {# protected constructors -- only used by the direct child #}
 {% for fn in cls.methods.protected if not fn.data.ignore and fn.constructor %}
 #ifdef RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
@@ -130,17 +140,6 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
         ({{ fn.parameters | join(', ', attribute='x_callname') }})
     {}
 #endif
-{% endfor %}
-
-{% for typealias in cls.data.typealias %}
-    {% if typealias.startswith("template") -%}
-      {{ typealias }};
-    {%- else -%}
-        using {% if '=' in typealias %}{{ typealias }}{% else %}{{ typealias.split('::')[-1] }} = {{ typealias }}{% endif %};
-    {%- endif %}
-{% endfor %}
-{% for constant in cls.data.constants %}
-    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
 {% endfor %}
 
     {# virtual methods (disabled for buffer overrides for now) #}
@@ -175,12 +174,12 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
         using CxxCallBase = typename PyTrampolineCfg::override_base_{{ trampoline_signature(fn) }};
         RPYBUILD_OVERRIDE_CUSTOM_IMPL(PYBIND11_TYPE({{ fn.rtnType }}), LookupBase,
             "{{ fn.x_name }}", {{ fn.name }}, {{ fn.parameters | join(', ', attribute='name') }});
-        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='name') }});
+        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_virtual_callname') }});
     {% else %}
         using CxxCallBase = typename PyTrampolineCfg::override_base_{{ trampoline_signature(fn) }};
         PYBIND11_OVERRIDE_IMPL(PYBIND11_TYPE({{ fn.rtnType }}), LookupBase,
             "{{ fn.x_name }}", {{ fn.parameters | join(', ', attribute='name') }});
-        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='name') }});
+        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_virtual_callname') }});
     {% endif %}
     {% endif %}
     }

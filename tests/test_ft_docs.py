@@ -35,6 +35,14 @@ def test_docstrings():
         == "An awesome variable, use it for something"
     )
 
+    assert inspect.getdoc(ft.important_retval) == inspect.cleandoc(
+        """
+        important_retval() -> int
+
+        This function returns something very important
+        """
+    )
+
 
 def test_docstrings_append():
 

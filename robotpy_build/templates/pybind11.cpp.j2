@@ -30,7 +30,7 @@
     {%- else -%}
       {{ fn.namespace }}
     {%- endif -%}
-    {{ fn.name }}{{ tmpl }}
+    {% if tmpl %}template {% endif %}{{ fn.name }}{{ tmpl }}
   {%- else -%}
     [](
       {%- if cls_qualname -%}
@@ -59,12 +59,19 @@
   {%- endif -%}
 {%- endmacro -%}
 
+{%- macro fn_retval(fn) -%}
+  {% if fn.returns_const is defined and fn.returns_const %}const{% endif %}
+  {{ fn.returns }} 
+  {%- if fn.returns_pointer %}*{% endif -%}
+  {%- if fn.returns_reference %}&{% endif -%}
+{%- endmacro -%}
+
 {%- macro gensig(cls_qualname, fn) -%}
   {#-
     py::overload_cast fails in some obscure cases, so we don't use it here
     https://github.com/pybind/pybind11/issues/1153
   -#}
-  {{- fn.rtnType }} (
+  {{ fn_retval(fn) }}(
   {%- if cls_qualname and not fn.static -%}
     {{ cls_qualname }}::
   {%- endif -%}
@@ -98,7 +105,7 @@
   {%- elif fn.constructor -%}
     {%- set ns.arg_params = fn.x_all_params -%}
     {%- if fn.data.cpp_code -%}
-      {{ fn.data.cpp_code }}
+      .def(py::init({{ fn.data.cpp_code }})
     {%- elif trampoline_qualname -%}
       .def(py::init_alias<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- else -%}
@@ -225,21 +232,28 @@
 {% endfor %}
 {% endmacro -%}
 
-{%- macro cls_using(cls) -%}
-  {% if cls.parent and '<' not in cls.x_qualname %}
-  using {{ cls.name }} = {{ cls.x_qualname }};
-  {% endif %}
-  {% for typealias in cls.data.typealias %}
-    {% if typealias.startswith("template") %}
-      {{ typealias }};
-    {% else %}
-      using {% if '=' in typealias %}{{ typealias }}{% else %}{{ typealias.split('::')[-1] }} = {{ typealias }}{% endif %};
-    {% endif %}
+{%- macro cls_user_using(cls) -%}
+  {% for typealias in cls.x_user_typealias %}
+    {{ typealias }};
   {% endfor %}
+{% endmacro -%}
+
+{%- macro cls_auto_using(cls) -%}
+  {% for ncls in cls.nested_classes 
+      if not ncls.data.ignore and ncls.template is not defined %}
+  using {{ ncls.name }} [[maybe_unused]] = typename {{ ncls.x_qualname }};
+  {% endfor %}
+  {% for typealias in cls.x_auto_typealias %}
+    {{ typealias }};
+  {% endfor %}
+{% endmacro -%}
+
+{%- macro cls_consts(cls) -%}
   {% for constant in cls.data.constants -%}
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
   {% endfor %}
 {% endmacro -%}
+
 
 {%- macro cls_decl(cls) -%}
   {%- if cls.x_has_trampoline %}
@@ -254,7 +268,7 @@
     {%- endif -%}
 
     {%- if cls.x_inherits -%}
-      , {{ cls.x_inherits | join(', ', attribute='class') }}
+      , {{ cls.x_inherits | join(', ', attribute='x_class') }}
     {%- endif -%}
     > {{ cls.x_varname }};
 
@@ -311,6 +325,19 @@
 
 {%- macro cls_def(cls, varname) -%}
 
+  {% if cls.x_vcheck_fns -%}
+  {%- for fn in cls.x_vcheck_fns %}
+  {
+    auto vcheck = {{ fn.data.cpp_code.strip() }};
+    static_assert(std::is_convertible<decltype(vcheck), std::function<
+    {{- fn_retval(fn) }}({{ cls.x_qualname }}*
+    {%- if fn.x_all_params %}, {{ fn.x_all_params | join(', ', attribute='x_type_full') }}{% endif -%}
+      ) >>::value,
+      "{{ cls.x_qualname }}::{{ fn.name }} must have virtual_xform if cpp_code signature doesn't match original function");
+  }
+  {% endfor -%}
+  {%- endif %}
+
   {{ doc(cls, varname + '.doc() =', ';') }}
 
   {{ varname }}
@@ -333,7 +360,7 @@
   {% endfor -%}
   {%- for prop in cls.properties.protected if not prop.data.ignore %}
     {{ genprop(cls.x_trampoline_var, prop) }}
-  {%- endfor %};
+  {%- endfor %}{{ cls.x_inline_code }};
 
   {{ unnamed_enum(varname, cls.enums.public) }}
 
