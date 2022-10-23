@@ -105,7 +105,7 @@
   {%- elif fn.constructor -%}
     {%- set ns.arg_params = fn.x_all_params -%}
     {%- if fn.data.cpp_code -%}
-      {{ fn.data.cpp_code }}
+      .def(py::init({{ fn.data.cpp_code }})
     {%- elif trampoline_qualname -%}
       .def(py::init_alias<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
     {%- else -%}

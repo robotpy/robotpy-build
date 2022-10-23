@@ -47,6 +47,16 @@ def test_good_abstract():
 
 
 #
+# factory.h
+#
+
+
+def test_factory():
+    o = ft.HasFactory(4)
+    assert o.m_x == 5
+
+
+#
 # inline_code.h
 #
 

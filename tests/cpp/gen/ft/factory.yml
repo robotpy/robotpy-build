@@ -1,0 +1,9 @@
+---
+classes:
+  HasFactory:
+    methods:
+      HasFactory:
+        cpp_code: |
+          [](int x) {
+            return std::make_unique<HasFactory>(x + 1);
+          }
