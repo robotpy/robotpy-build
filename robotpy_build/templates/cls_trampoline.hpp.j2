@@ -118,7 +118,10 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
     using PyTrampolineBase::PyTrampolineBase;
 {% endif %}
 
-{% for typealias in cls.x_typealias %}
+{% for typealias in cls.x_user_typealias %}
+    {{ typealias }};
+{% endfor %}
+{% for typealias in cls.x_auto_typealias %}
     {{ typealias }};
 {% endfor %}
 {% for constant in cls.data.constants %}

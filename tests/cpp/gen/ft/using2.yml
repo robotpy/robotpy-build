@@ -1,0 +1,14 @@
+
+classes:
+  fancy_list:
+    template_params:
+    - T
+  Using3:
+    typealias:
+    - template <typename T> using fancy_list = u::fancy_list<T>
+  
+templates:
+  fancy_int_list:
+    qualname: u::fancy_list
+    params:
+    - int

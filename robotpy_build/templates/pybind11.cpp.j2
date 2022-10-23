@@ -232,12 +232,18 @@
 {% endfor %}
 {% endmacro -%}
 
-{%- macro cls_using(cls) -%}
+{%- macro cls_user_using(cls) -%}
+  {% for typealias in cls.x_user_typealias %}
+    {{ typealias }};
+  {% endfor %}
+{% endmacro -%}
+
+{%- macro cls_auto_using(cls) -%}
   {% for ncls in cls.nested_classes 
       if not ncls.data.ignore and ncls.template is not defined %}
   using {{ ncls.name }} [[maybe_unused]] = typename {{ ncls.x_qualname }};
   {% endfor %}
-  {% for typealias in cls.x_typealias %}
+  {% for typealias in cls.x_auto_typealias %}
     {{ typealias }};
   {% endfor %}
 {% endmacro -%}
@@ -247,6 +253,7 @@
     static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
   {% endfor %}
 {% endmacro -%}
+
 
 {%- macro cls_decl(cls) -%}
   {%- if cls.x_has_trampoline %}

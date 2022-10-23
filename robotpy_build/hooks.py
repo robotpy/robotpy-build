@@ -912,23 +912,26 @@ class Hooks:
         cls["x_inline_code"] = class_data.inline_code or ""
 
         # do logic for extracting user defined typealiases here
+        # - these are at class scope, so they can include template
         typealias_names = set()
-        x_typealias = []
+        x_user_typealias = []
         for typealias in class_data.typealias:
             if typealias.startswith("template"):
-                x_typealias.append(typealias)
+                x_user_typealias.append(typealias)
             else:
                 teq = typealias.find("=")
                 if teq != -1:
                     ta_name = typealias[:teq].strip()
-                    x_typealias.append(f"using {typealias}")
+                    x_user_typealias.append(f"using {typealias}")
                 else:
                     ta_name = typealias.split("::")[-1]
-                    x_typealias.append(f"using {ta_name} = {typealias}")
+                    x_user_typealias.append(f"using {ta_name} = {typealias}")
                 typealias_names.add(ta_name)
 
         # autodetect embedded using directives, but don't override anything
         # the user specifies
+        # - these are in block scope, so they cannot include templates
+        x_auto_typealias = []
         for name, using in cls["using"].items():
             if (
                 using["access"] == "public"
@@ -936,8 +939,9 @@ class Hooks:
                 and not using["template"]
                 and using["using_type"] == "typealias"
             ):
-                x_typealias.append(
+                x_auto_typealias.append(
                     f"using {name} [[maybe_unused]] = typename {cls['x_qualname']}::{name}"
                 )
 
-        cls["x_typealias"] = x_typealias
+        cls["x_user_typealias"] = x_user_typealias
+        cls["x_auto_typealias"] = x_auto_typealias
