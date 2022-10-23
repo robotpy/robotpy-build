@@ -375,7 +375,17 @@ class Hooks:
             if p["name"] == "":
                 p["name"] = "param%s" % i
             p["x_type"] = p.get("enum", p["raw_type"])
-            p["x_callname"] = p["name"]
+
+            if p["pointer"]:
+                p["x_callname"] = p["name"]
+            elif p["reference"]:
+                p["x_callname"] = f"std::forward<decltype({p['name']})>({p['name']})"
+            else:
+                p["x_callname"] = f"std::move({p['name']})"
+            # this is used in trampoline functions
+            # - separate from x_callname because it's just a passthrough
+            p["x_virtual_callname"] = p["x_callname"]
+
             p["x_retname"] = p["name"]
 
             po = param_override.get(p["name"])
@@ -450,6 +460,8 @@ class Hooks:
             ):
                 if p["pointer"]:
                     p["x_callname"] = f"&{p['x_callname']}"
+                else:
+                    p["x_callname"] = p["name"]
                 ptype = "out"
             elif p["array"]:
                 asz = p.get("array_size", 0)

@@ -171,12 +171,12 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
         using CxxCallBase = typename PyTrampolineCfg::override_base_{{ trampoline_signature(fn) }};
         RPYBUILD_OVERRIDE_CUSTOM_IMPL(PYBIND11_TYPE({{ fn.rtnType }}), LookupBase,
             "{{ fn.x_name }}", {{ fn.name }}, {{ fn.parameters | join(', ', attribute='name') }});
-        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='name') }});
+        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_virtual_callname') }});
     {% else %}
         using CxxCallBase = typename PyTrampolineCfg::override_base_{{ trampoline_signature(fn) }};
         PYBIND11_OVERRIDE_IMPL(PYBIND11_TYPE({{ fn.rtnType }}), LookupBase,
             "{{ fn.x_name }}", {{ fn.parameters | join(', ', attribute='name') }});
-        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='name') }});
+        return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_virtual_callname') }});
     {% endif %}
     {% endif %}
     }
