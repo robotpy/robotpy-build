@@ -1,0 +1,18 @@
+functions:
+  refquals_fn1:
+  refquals_fn2:
+classes:
+  RefQuals:
+    methods:
+      fn1:
+      fn2:
+        ignore_py: true
+        trampoline_cpp_code: |
+          // not useful, but shows we can specify whatever we want here
+          return 42;
+      fn3:
+        cpp_code: |
+          [](RefQuals *self) {
+            // not useful, but shows we can specify whatever we want here
+            return 43;
+          }

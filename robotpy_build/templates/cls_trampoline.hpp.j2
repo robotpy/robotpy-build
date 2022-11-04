@@ -148,7 +148,10 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
 #ifndef RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
     {{ fn.rtnType }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_decl') }}){%
         if fn.const %} const{% endif
-    %} override {
+    %}{{ fn.ref_qualifiers }} override {
+    {% if fn.data.trampoline_cpp_code %}
+    {{ fn.data.trampoline_cpp_code }}
+    {% else %}
     {# TODO: probably will break for things like out parameters, etc #}
     {% if fn.data.ignore_pure %}
         throw std::runtime_error("not implemented");
@@ -180,6 +183,7 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
         PYBIND11_OVERRIDE_IMPL(PYBIND11_TYPE({{ fn.rtnType }}), LookupBase,
             "{{ fn.x_name }}", {{ fn.parameters | join(', ', attribute='name') }});
         return CxxCallBase::{{ fn.name }}({{ fn.parameters | join(', ', attribute='x_virtual_callname') }});
+    {% endif %}
     {% endif %}
     {% endif %}
     }

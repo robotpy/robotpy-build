@@ -97,6 +97,12 @@ def trampoline_signature(fn):
 
     if fn["const"]:
         names.append("K")
+    refqual = fn["ref_qualifiers"]
+    if refqual:
+        if refqual == "&":
+            names.append("R")
+        if refqual == "&&":
+            names.append("O")
 
     names.append(fn["name"])
 

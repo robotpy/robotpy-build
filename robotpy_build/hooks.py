@@ -567,6 +567,23 @@ class Hooks:
                     f"{fn['name']}: cannot specify ignore_pure for function that isn't pure"
                 )
 
+            if data.trampoline_cpp_code and (not fn["override"] and not fn["virtual"]):
+                raise ValueError(
+                    f"{fn['name']}: cannot specify trampoline_cpp_code for a non-virtual method"
+                )
+
+            if data.virtual_xform and (not fn["override"] and not fn["virtual"]):
+                raise ValueError(
+                    f"{fn['name']}: cannot specify virtual_xform for a non-virtual method"
+                )
+
+            if fn.get("ref_qualifiers", "") == "&&":
+                # pybind11 doesn't support this, user must fix it
+                if not data.ignore_py and not data.cpp_code:
+                    raise ValueError(
+                        f"{fn['name']}: has && ref-qualifier which cannot be directly bound by pybind11, must specify cpp_code or ignore_py"
+                    )
+
         # if "hook" in data:
         #     eval(data["hook"])(fn, data)
 
@@ -829,6 +846,7 @@ class Hooks:
                         (fn["override"] or fn["virtual"])
                         and method_data.cpp_code
                         and not method_data.virtual_xform
+                        and not method_data.trampoline_cpp_code
                         and not cls["final"]
                         and not class_data.force_no_trampoline
                     )
