@@ -49,8 +49,6 @@ Then run your build like so:
 Use ccache
 ----------
 
-.. note:: ccache does not support Visual Studio
-
 If you create a large robotpy-build based project, you'll notice that your
 build times can be *really* long. This occurs because robotpy-build uses
 pybind11 for connecting C++ and Python code, and pybind11 relies heaviliy
@@ -71,11 +69,10 @@ Once you install ccache, define these environment variables:
 .. code-block:: bash
 
     export RPYBUILD_PARALLEL=1
-    export CC="ccache gcc"
-    export CXX="ccache g++"
+    export RPYBUILD_CC_LAUNCHER=ccache
     export GCC_COLORS=1
 
 The first one will make robotpy-build compile in parallel. The second tells
-setuptools to use ccache, and the third makes error output nice when using
+robotpy-build to use ccache, and the third makes error output nice when using
 ccache.
 
