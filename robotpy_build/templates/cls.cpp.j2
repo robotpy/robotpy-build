@@ -151,7 +151,7 @@ void finish() {
 
 {# global methods #}
 {%- if header.functions %}
-  {% for fn in header.functions if not fn.data.ignore -%}
+  {% for fn in header.functions if not fn.data.ignore and not fn.data.ignore_py -%}
     {{ fn.x_module_var }}{{ pybind11.genmethod(None, fn, None) }};
   {% endfor %};
 {% endif %}

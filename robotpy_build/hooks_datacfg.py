@@ -109,6 +109,13 @@ class FunctionData(Model):
     #: If True, don't wrap this, but provide a pure virtual implementation
     ignore_pure: bool = False
 
+    #: Most of the time, you will want to specify ``ignore`` instead.
+    #:
+    #: If True, don't expose this function to python. If a trampoline is supposed
+    #: to be generated, it will still be generated. You will likely want to use
+    #: ``trampoline_cpp_code`` if you specify this.
+    ignore_py: bool = False
+
     #: Generate this in an `#ifdef`
     ifdef: Optional[str] = None
     #: Generate this in an `#ifndef`
@@ -156,6 +163,9 @@ class FunctionData(Model):
     #: list is the template parameters for that function
     template_impls: Optional[List[List[str]]] = None
 
+    #: Specify custom C++ code for the virtual function trampoline
+    trampoline_cpp_code: Optional[str] = None
+
     #: Specify a transformation lambda to be used when this virtual function
     #: is called from C++. This inline code should be a lambda that has the same
     #: arguments as the original C++ virtual function, except the first argument
@@ -186,6 +196,14 @@ class FunctionData(Model):
             if v is None:
                 value[k] = FunctionData()
         return value
+
+    @validator("virtual_xform")
+    def validate_virtual_xform(cls, v, values):
+        if v and values.get("trampoline_cpp_code"):
+            raise ValueError(
+                f"cannot specify trampoline_cpp_code and virtual_xform for the same method"
+            )
+        return v
 
 
 if not _generating_documentation:
