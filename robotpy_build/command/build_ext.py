@@ -68,6 +68,9 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts, link_opts = get_opts(ct)
 
+        # To support ccache on windows
+        cc_launcher = os.environ.get("RPYBUILD_CC_LAUNCHER")
+
         if ct == "unix":
             opts.append("-s")  # strip
             if debug:
@@ -78,9 +81,25 @@ class BuildExt(build_ext):
             opts.append(cpp_flag(self.compiler, "-"))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
+
+            if cc_launcher:
+                self.compiler.compiler.insert(0, cc_launcher)
+                self.compiler.compiler_so.insert(0, cc_launcher)
+                # compiler_cxx is only used for linking, so we don't mess with it
+                # .. distutils is so weird
+                # self.compiler.compiler_cxx.insert(0, cc_launcher)
         elif ct == "msvc":
             opts.append(cpp_flag(self.compiler, "/", ":"))
             opts.append("/Zc:__cplusplus")
+            if cc_launcher:
+                # yes, this is terrible. There's really no other way with distutils
+                def _spawn(cmd):
+                    if cmd[0] == self.compiler.cc:
+                        cmd.insert(0, cc_launcher)
+                    self.compiler._rpy_spawn(cmd)
+
+                self.compiler._rpy_spawn = self.compiler.spawn
+                self.compiler.spawn = _spawn
         for ext in self.extensions:
             ext.define_macros.append(("PYBIND11_USE_SMART_HOLDER_AS_DEFAULT", "1"))
             ext.extra_compile_args = opts

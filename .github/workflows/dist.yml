@@ -62,6 +62,22 @@ jobs:
         python-version: ${{ matrix.python_version }}
         architecture: ${{ matrix.architecture }}
 
+    - name: Set ccache variant
+      shell: bash
+      id: ccache
+      run: |
+        if [[ "${{ matrix.os }}" == windows-* ]]; then
+          echo "VARIANT=sccache" >> $GITHUB_OUTPUT
+        else
+          echo "VARIANT=ccache" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+          key: ${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.python_version }}
+          variant: ${{ steps.ccache.outputs.variant }}
+
     - name: Install build
       run: python -m pip --disable-pip-version-check install build
 
@@ -83,6 +99,7 @@ jobs:
       env:
         RPYBUILD_PARALLEL: 1
         RPYBUILD_STRIP_LIBPYTHON: 1
+        RPYBUILD_CC_LAUNCHER: ${{ steps.ccache.outputs.variant }}
       working-directory: tests
       run: |
         python run_tests.py
@@ -103,6 +120,12 @@ jobs:
       with:
         submodules: true
 
+    - run: apt-get update
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+          key: ${{ matrix.container }}
+
     - name: Install build
       run: /build/venv/bin/build-pip --disable-pip-version-check install build
 
@@ -120,6 +143,7 @@ jobs:
       env:
         RPYBUILD_PARALLEL: 1
         RPYBUILD_STRIP_LIBPYTHON: 1
+        RPYBUILD_CC_LAUNCHER: ccache
       working-directory: tests/cpp
       run: /build/venv/bin/cross-python run_install.py wheel
 
