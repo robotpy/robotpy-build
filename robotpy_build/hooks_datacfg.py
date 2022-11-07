@@ -537,6 +537,10 @@ class HooksDataYaml(Model):
     #:
     templates: Dict[str, TemplateData] = {}
 
+    #: Extra 'using' directives to insert into the trampoline and the
+    #: wrapping scope
+    typealias: List[str] = []
+
     @validator("attributes", pre=True)
     def validate_attributes(cls, value):
         for k, v in value.items():

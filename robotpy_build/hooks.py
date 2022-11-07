@@ -243,6 +243,25 @@ class Hooks:
 
         return ", ".join(base_params)
 
+    def _extract_typealias(
+        self,
+        in_ta: typing.List[str],
+        out_ta: typing.List[str],
+        ta_names: typing.Set[str],
+    ):
+        for typealias in in_ta:
+            if typealias.startswith("template"):
+                out_ta.append(typealias)
+            else:
+                teq = typealias.find("=")
+                if teq != -1:
+                    ta_name = typealias[:teq].strip()
+                    out_ta.append(f"using {typealias}")
+                else:
+                    ta_name = typealias.split("::")[-1]
+                    out_ta.append(f"using {ta_name} = {typealias}")
+                ta_names.add(ta_name)
+
     def _enum_hook(self, en, enum_data):
         ename = en.get("name")
         value_prefix = None
@@ -316,6 +335,10 @@ class Hooks:
 
         data["type_caster_includes"] = self._get_type_caster_includes()
         data["has_vcheck"] = self.has_vcheck
+
+        user_typealias = []
+        self._extract_typealias(self.rawdata.typealias, user_typealias, set())
+        data["user_typealias"] = user_typealias
 
     def _function_hook(self, fn, data: FunctionData, internal: bool = False):
         """shared with methods/functions"""
@@ -933,18 +956,7 @@ class Hooks:
         # - these are at class scope, so they can include template
         typealias_names = set()
         x_user_typealias = []
-        for typealias in class_data.typealias:
-            if typealias.startswith("template"):
-                x_user_typealias.append(typealias)
-            else:
-                teq = typealias.find("=")
-                if teq != -1:
-                    ta_name = typealias[:teq].strip()
-                    x_user_typealias.append(f"using {typealias}")
-                else:
-                    ta_name = typealias.split("::")[-1]
-                    x_user_typealias.append(f"using {ta_name} = {typealias}")
-                typealias_names.add(ta_name)
+        self._extract_typealias(class_data.typealias, x_user_typealias, typealias_names)
 
         # autodetect embedded using directives, but don't override anything
         # the user specifies

@@ -1,4 +1,7 @@
 
+typealias:
+- cr::AlsoCantResolve
+
 classes:
   ProtectedUsing:
     typealias:

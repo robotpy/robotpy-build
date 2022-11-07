@@ -38,6 +38,10 @@ using {{ using.raw_type }};
 #include <{{ inc }}>
 {% endfor %}
 
+{%- for typealias in user_typealias %}
+{{ typealias }};
+{% endfor %}
+
 {#
   Ordering of the initialization function
 
