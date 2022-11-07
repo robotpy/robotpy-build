@@ -15,4 +15,7 @@ protected:
   ProtectedUsing(CantResolve t) {}
 };
 
+void fn_using(AlsoCantResolve t) {}
+void fn_using(std::string t) {}
+
 }
