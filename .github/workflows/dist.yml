@@ -109,8 +109,8 @@ jobs:
     strategy:
       matrix:
         container:
-        - robotpy/roborio-cross-ubuntu:2022.4
-        - robotpy/raspbian-cross-ubuntu:2022.2
+        - robotpy/roborio-cross-ubuntu:2023.1
+        - robotpy/raspbian-cross-ubuntu:2023.1
 
     container:
       image: "${{ matrix.container }}"
