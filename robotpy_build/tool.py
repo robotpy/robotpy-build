@@ -42,7 +42,10 @@ class BuildDep:
         )
         parser.add_argument("--install", help="Actually do it", action="store_true")
         parser.add_argument(
-            "--pre", help="Include pre-release and development versions."
+            "--pre",
+            action="store_true",
+            default=False,
+            help="Include pre-release and development versions.",
         )
         parser.add_argument("--find-links", help="Find links arg", default=None)
         return parser
