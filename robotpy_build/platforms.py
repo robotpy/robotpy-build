@@ -35,7 +35,7 @@ X86_64 = "x86-64"
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
     "linux-athena": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
-    "linux-raspbian": WPILibMavenPlatform("raspbian", defines=["__RASPBIAN__"]),
+    "linux-raspbian": WPILibMavenPlatform("arm32", defines=["__RASPBIAN__"]),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
     "linux-aarch64": WPILibMavenPlatform("aarch64bionic"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
