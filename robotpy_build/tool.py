@@ -41,6 +41,9 @@ class BuildDep:
             "build-dep", help="Install build dependencies", parents=[parent_parser]
         )
         parser.add_argument("--install", help="Actually do it", action="store_true")
+        parser.add_argument(
+            "--pre", help="Include pre-release and development versions."
+        )
         parser.add_argument("--find-links", help="Find links arg", default=None)
         return parser
 
@@ -57,6 +60,8 @@ class BuildDep:
             "--disable-pip-version-check",
             "install",
         ]
+        if args.pre:
+            pipargs.append("--pre")
         if args.find_links:
             pipargs.extend(
                 [
