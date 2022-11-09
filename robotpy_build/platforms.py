@@ -75,11 +75,22 @@ def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
 
                 distro_id = distro.id()
 
-                if distro_id == "nilrt":
+                if distro_id in ("nilrt", "nilrt-academic"):
                     pyplatform = "linux-athena"
                 elif distro_id == "raspbian":
                     pyplatform = "linux-raspbian"
 
+            except Exception:
+                pass
+
+        elif pyplatform == "linux-armv6":
+            try:
+                import distro
+
+                distro_id = distro.id()
+
+                if distro_id == "raspbian":
+                    pyplatform = "linux-raspbian"
             except Exception:
                 pass
 
