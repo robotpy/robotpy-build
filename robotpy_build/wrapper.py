@@ -84,7 +84,7 @@ class Wrapper:
         self.depends = self.cfg.depends
 
         # Files that are generated AND need to be in the final wheel. Used by build_py
-        self.generated_files: List[str] = []
+        self.additional_data_files: List[str] = []
 
         self._all_deps = None
 
@@ -131,6 +131,8 @@ class Wrapper:
 
         self.dev_config = get_dev_config(self.name)
 
+        self._update_addl_data_files()
+
     def _extract_zip_to(self, dl: Download, dst, cache):
         try:
             download_and_extract_zip(dl.url, dst, cache)
@@ -174,9 +176,9 @@ class Wrapper:
                     raise OSError(err_msg)
                 raise e
 
-    def _add_generated_file(self, fullpath):
+    def _add_addl_data_file(self, fullpath):
         if not isdir(fullpath):
-            self.generated_files.append(relpath(fullpath, self.root))
+            self.additional_data_files.append(relpath(fullpath, self.root))
 
     # pkgcfg interface
     def get_include_dirs(self) -> Optional[List[str]]:
@@ -247,6 +249,20 @@ class Wrapper:
 
             for typ in ccfg.types:
                 casters[typ] = cfg
+
+    def _update_addl_data_files(self) -> List[str]:
+        headers = set()
+        for ccfg in self.cfg.type_casters:
+            headers.add(ccfg.header)
+
+        if headers:
+            includes = self.get_include_dirs()
+            if includes:
+                for hdr in headers:
+                    for p in includes:
+                        fpath = join(p, hdr)
+                        if exists(fpath):
+                            self._add_addl_data_file(fpath)
 
     def all_deps(self):
         if self._all_deps is None:
@@ -424,11 +440,11 @@ class Wrapper:
 
         if add_incdir:
             for f in glob.glob(join(glob.escape(incdir), "**"), recursive=True):
-                self._add_generated_file(f)
+                self._add_addl_data_file(f)
 
         if add_libdir:
             for f in glob.glob(join(glob.escape(libdir), "**"), recursive=True):
-                self._add_generated_file(f)
+                self._add_addl_data_file(f)
 
         return libnames_full
 
@@ -484,7 +500,7 @@ class Wrapper:
         with open(self.libinit_import_py, "w") as fp:
             fp.write(init)
 
-        self._add_generated_file(self.libinit_import_py)
+        self._add_addl_data_file(self.libinit_import_py)
 
     def _write_pkgcfg_py(self, fname, libnames_full):
 
@@ -565,7 +581,7 @@ class Wrapper:
         with open(fname, "w") as fp:
             fp.write(pkgcfg)
 
-        self._add_generated_file(fname)
+        self._add_addl_data_file(fname)
 
     def _load_generation_data(self, datafile):
         with open(datafile) as fp:
@@ -726,7 +742,7 @@ class Wrapper:
         self._gen_includes = gen_includes
 
         for f in glob.glob(join(glob.escape(hppoutdir), "*.hpp")):
-            self._add_generated_file(f)
+            self._add_addl_data_file(f)
 
     def finalize_extension(self):
         if self.extension is None:
