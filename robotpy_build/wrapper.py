@@ -131,6 +131,8 @@ class Wrapper:
 
         self.dev_config = get_dev_config(self.name)
 
+        self._update_addl_data_files()
+
     def _extract_zip_to(self, dl: Download, dst, cache):
         try:
             download_and_extract_zip(dl.url, dst, cache)
@@ -247,6 +249,20 @@ class Wrapper:
 
             for typ in ccfg.types:
                 casters[typ] = cfg
+
+    def _update_addl_data_files(self) -> List[str]:
+        headers = set()
+        for ccfg in self.cfg.type_casters:
+            headers.add(ccfg.header)
+
+        if headers:
+            includes = self.get_include_dirs()
+            if includes:
+                for hdr in headers:
+                    for p in includes:
+                        fpath = join(p, hdr)
+                        if exists(fpath):
+                            self._add_addl_data_file(fpath)
 
     def all_deps(self):
         if self._all_deps is None:
