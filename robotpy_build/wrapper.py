@@ -612,6 +612,8 @@ class Wrapper:
         hppoutdir = join(self.rpy_incdir, "rpygen")
         tmpl_dir = join(thisdir, "templates")
         cpp_tmpl = join(tmpl_dir, "cls.cpp.j2")
+        cls_tmpl_inst_cpp = join(tmpl_dir, "cls_tmpl_inst.cpp.j2")
+        cls_tmpl_inst_hpp = join(tmpl_dir, "cls_tmpl_inst.hpp.j2")
         hpp_tmpl = join(tmpl_dir, "cls_rpy_include.hpp.j2")
         classdeps_tmpl = join(tmpl_dir, "clsdeps.json.j2")
 
@@ -686,9 +688,6 @@ class Wrapper:
                 ]
                 class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
 
-            if only_generate is not None and not only_generate.pop(name, False):
-                continue
-
             if per_header:
                 data_fname = join(datapath, name + ".yml")
                 if not exists(data_fname):
@@ -696,6 +695,30 @@ class Wrapper:
                     data = HooksDataYaml()
                 else:
                     data = self._load_generation_data(data_fname)
+
+                # split instantiation of each template to separate cpp files to reduce
+                # compiler memory for really obscene objects
+                if data.templates:
+                    class_templates.append(
+                        {
+                            "src": cls_tmpl_inst_hpp,
+                            "dst": join(cxx_gen_dir, f"{name}_tmpl.hpp"),
+                        }
+                    )
+
+                    for i, k in enumerate(data.templates.keys(), start=1):
+                        tmpl_cpp_dst = join(cxx_gen_dir, f"{name}_tmpl{i}.cpp")
+                        class_templates.append(
+                            {
+                                "src": cls_tmpl_inst_cpp,
+                                "dst": tmpl_cpp_dst,
+                                "vars": {"index": i, "key": k},
+                            }
+                        )
+                        self.extension.sources.append(tmpl_cpp_dst)
+
+            if only_generate is not None and not only_generate.pop(name, False):
+                continue
 
             # for each thing, create a h2w configuration dictionary
             cfgd = {
