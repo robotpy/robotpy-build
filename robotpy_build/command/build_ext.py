@@ -1,8 +1,14 @@
+#
+# Portions copied from pybind11's setup_helpers.py
+#
+
 import os
 from os.path import join
 from setuptools.command.build_ext import build_ext
+import platform
 import setuptools
 import sys
+import sysconfig
 import tempfile
 
 from .util import get_install_root
@@ -10,6 +16,10 @@ from ..platforms import get_platform
 
 # TODO: only works for GCC
 debug = os.environ.get("RPYBUILD_DEBUG") == "1"
+
+WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
+MACOS = sys.platform.startswith("darwin")
+STD_TMPL = "/std:c++{}" if WIN else "-std=c++{}"
 
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
@@ -29,32 +39,43 @@ def has_flag(compiler, flagname):
     return True
 
 
-def cpp_flag(compiler, pfx, sep="="):
+def cxx_std(compiler) -> int:
     """Return the -std=c++[11/14/17/20] compiler flag.
     The newer version is prefered over c++11 (when it is available).
     """
 
-    flags = [
-        f"{pfx}std{sep}c++20",
-        f"{pfx}std{sep}c++17",
-        f"{pfx}std{sep}c++14",
-        f"{pfx}std{sep}c++11",
-    ]
-
-    for flag in flags:
-        if has_flag(compiler, flag):
-            return flag
+    for level in (20, 17, 17, 11):
+        if has_flag(compiler, STD_TMPL.format(level)):
+            return level
 
     raise RuntimeError("Unsupported compiler -- at least C++11 support is needed!")
 
 
-def get_opts(typ):
+def get_opts(typ, std):
     c_opts = {"msvc": ["/EHsc", "/bigobj"], "unix": []}
     l_opts = {"msvc": [], "unix": []}
 
-    platform = get_platform()
-    if platform.os == "osx":
-        darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.9"]
+    plat = get_platform()
+    if plat.os == "osx":
+        darwin_opts = ["-stdlib=libc++"]
+
+        if "MACOSX_DEPLOYMENT_TARGET" not in os.environ:
+            # C++17 requires a higher min version of macOS. An earlier version
+            # (10.12 or 10.13) can be set manually via environment variable if
+            # you are careful in your feature usage, but 10.14 is the safest
+            # setting for general use. However, never set higher than the
+            # current macOS version!
+            current_macos = tuple(int(x) for x in platform.mac_ver()[0].split(".")[:2])
+            if std == 20:
+                desired_macos = (10, 15)
+            elif std == 17:
+                desired_macos = (10, 14)
+            else:
+                desired_macos = (10, 9)
+
+            macos_string = ".".join(str(x) for x in min(current_macos, desired_macos))
+            darwin_opts.append(f"-mmacosx-version-min={macos_string}")
+
         c_opts["unix"] += darwin_opts
         l_opts["unix"] += darwin_opts + ["-headerpad_max_install_names"]
 
@@ -66,7 +87,8 @@ class BuildExt(build_ext):
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
-        opts, link_opts = get_opts(ct)
+        std = cxx_std(self.compiler)
+        opts, link_opts = get_opts(ct, std)
 
         # To support ccache on windows
         cc_launcher = os.environ.get("RPYBUILD_CC_LAUNCHER")
@@ -78,7 +100,7 @@ class BuildExt(build_ext):
                 opts.append("-UNDEBUG")
             else:
                 opts.append("-g0")  # remove debug symbols
-            opts.append(cpp_flag(self.compiler, "-"))
+            opts.append(STD_TMPL.format(std))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
 
@@ -89,7 +111,7 @@ class BuildExt(build_ext):
                 # .. distutils is so weird
                 # self.compiler.compiler_cxx.insert(0, cc_launcher)
         elif ct == "msvc":
-            opts.append(cpp_flag(self.compiler, "/", ":"))
+            opts.append(STD_TMPL.format(std))
             opts.append("/Zc:__cplusplus")
             if cc_launcher:
                 # yes, this is terrible. There's really no other way with distutils
