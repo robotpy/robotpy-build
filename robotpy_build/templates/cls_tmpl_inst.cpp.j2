@@ -1,0 +1,26 @@
+{% include "cls_prologue.cpp.j2" %}
+
+{% set tmpl_index = per_tmpl_vars.index %}
+{% set tmpl_data = templates[per_tmpl_vars.key] %}
+
+#include <rpygen/{{ tmpl_data.x_qualname_ }}.hpp>
+#include "{{ mod_fn }}_tmpl.hpp"
+
+namespace rpygen {
+
+using BindType = rpygen::bind_{{ tmpl_data.x_qualname_ }}<{{ tmpl_data.params | join(', ') }}>;
+static std::unique_ptr<BindType> inst;
+
+bind_{{ tmpl_data.x_qualname_ }}_{{ tmpl_index }}::bind_{{ tmpl_data.x_qualname_ }}_{{ tmpl_index }}(py::module &m, const char * clsName)
+{
+    inst = std::make_unique<BindType>(m, clsName);
+}
+
+void bind_{{ tmpl_data.x_qualname_ }}_{{ tmpl_index }}::finish(const char *set_doc, const char *add_doc)
+{
+    inst->finish(set_doc, add_doc);
+    inst.reset();
+}
+
+}; // namespace rpygen
+
