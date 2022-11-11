@@ -10,6 +10,28 @@ on:
     - '*'
 
 jobs:
+
+  # This job limits concurrency on the default branch
+  # - we want it to run so it can populate ccache, but we typically
+  #   don't care about when it completes, so limit its concurrency
+  #   to stop eating up valuable + slow Windows/macOS runners
+  setup_concurrency:
+    runs-on: ubuntu-latest
+    outputs:
+      max-parallel: ${{ steps.max-parallel.outputs.p }}
+    steps:
+    - name: Setup concurrency
+      shell: bash
+      id: max-parallel
+      run: |
+        if [[ "${{ github.ref_name }}" == "${{ inputs.default_branch }}" ]]; then
+          echo "PARALLEL=1"
+          echo "p={\"v\": 1}" >> $GITHUB_OUTPUT
+        else
+          echo "PARALLEL=10000"
+          echo "p={\"v\": 10000}" >> $GITHUB_OUTPUT
+        fi
+
   check:
     runs-on: ubuntu-latest
     steps:
@@ -35,7 +57,9 @@ jobs:
   
   test:
     runs-on: ${{ matrix.os }}
+    needs: [setup_concurrency]
     strategy:
+      max-parallel: ${{ fromJSON(needs.setup_concurrency.outputs.max-parallel).v }}
       matrix:
         os: [windows-latest, macos-latest, ubuntu-18.04]
         python_version:
@@ -106,7 +130,9 @@ jobs:
 
   cross-build:
     runs-on: ubuntu-latest
+    needs: [setup_concurrency]
     strategy:
+      max-parallel: ${{ fromJSON(needs.setup_concurrency.outputs.max-parallel).v }}
       matrix:
         container:
         - robotpy/roborio-cross-ubuntu:2023.1
