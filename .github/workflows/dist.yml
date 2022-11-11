@@ -24,7 +24,7 @@ jobs:
       shell: bash
       id: max-parallel
       run: |
-        if [[ "${{ github.ref_name }}" == "${{ inputs.default_branch }}" ]]; then
+        if [[ "${{ github.ref_name }}" == "main" ]]; then
           echo "PARALLEL=1"
           echo "p={\"v\": 1}" >> $GITHUB_OUTPUT
         else
