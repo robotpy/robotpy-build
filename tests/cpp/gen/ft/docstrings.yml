@@ -1,0 +1,9 @@
+---
+
+classes:
+  DocClass:
+    methods:
+      fn3:
+        param_override:
+          renamed:
+            name: ohai
