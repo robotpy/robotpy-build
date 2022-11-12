@@ -1,4 +1,5 @@
 from rpytest import ft
+import pytest
 
 
 def test_enums():
@@ -27,3 +28,12 @@ def test_enum_strip_prefix():
     assert ft.StripPrefixEnum.STRIP_1 == 1
     # STRIP_B is converted to B
     assert ft.StripPrefixEnum.B == 2
+
+
+def test_enum_math():
+    assert ft.GEnumMath.MGE1 & 1 == 1
+    assert ft.EnumContainer2.InnerMathEnum.IME1 & 1 == 1
+
+    # Normal enums don't support math
+    with pytest.raises(TypeError):
+        ft.EnumContainer.InnerEnum.IE1 & 1

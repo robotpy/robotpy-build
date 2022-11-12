@@ -42,3 +42,12 @@ public:
 
 // strip prefix
 enum StripPrefixEnum { STRIP_1 = 1, STRIP_B = 2 };
+
+// global enum with arithmetic
+enum GEnumMath { MGE1 = 1 };
+
+// enum with arithmetic in a class
+class EnumContainer2 {
+public:
+  enum InnerMathEnum { IME1 = 1 };
+};

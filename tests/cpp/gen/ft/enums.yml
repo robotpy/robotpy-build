@@ -3,3 +3,11 @@
 enums:
   StripPrefixEnum:
     value_prefix: STRIP_
+  GEnumMath:
+    arithmetic: true
+
+classes:
+  EnumContainer2:
+    enums:
+      InnerMathEnum:
+        arithmetic: true
