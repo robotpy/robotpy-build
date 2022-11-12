@@ -113,6 +113,9 @@ class BuildExt(build_ext):
         elif ct == "msvc":
             opts.append(STD_TMPL.format(std))
             opts.append("/Zc:__cplusplus")
+            # Enable standards-compliant preprocessor
+            if has_flag(self.compiler, "/Zc:preprocessor"):
+                opts.append("/Zc:preprocessor")
             if cc_launcher:
                 # yes, this is terrible. There's really no other way with distutils
                 def _spawn(cmd):
