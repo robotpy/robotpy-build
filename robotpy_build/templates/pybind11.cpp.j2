@@ -210,7 +210,8 @@
 
 {%- macro enum_init(scope, enum) %}
   ({{ scope }}, "{{ enum.x_name }}"
-  {{ doc(enum, ',', '') }})
+  {{ doc(enum, ',', '') }}
+  {%- if enum.data.arithmetic %}, py::arithmetic(){% endif %})
 {%- endmacro -%}
 
 {%- macro enum_def(scope, enum) %}

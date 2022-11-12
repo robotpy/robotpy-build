@@ -288,6 +288,11 @@ class EnumData(Model):
     #: without using the global inline_code mechanism.
     inline_code: Optional[str] = None
 
+    #: Tell pybind11 to create an enumeration that also supports rudimentary
+    #: arithmetic and bit-level operations like comparisons, and, or, xor,
+    #: negation, etc.
+    arithmetic: bool = False
+
 
 class ClassData(Model):
 
