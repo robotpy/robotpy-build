@@ -147,6 +147,15 @@ class Setup:
         packages.update(find_packages())
         self.setup_kwargs["packages"] = list(packages)
 
+        # We include anything in the package directory. We've always intended
+        # to do this, but setuptools has gotten picky and no longer does this.
+        # In the future we probably need a better way of doing this; maybe
+        # via per-package specification?
+        package_data = {}
+        for pkg in packages:
+            package_data[pkg] = ["**"]
+        self.setup_kwargs["package_data"] = package_data
+
     def _generate_long_description(self):
         readme_rst = join(self.root, "README.rst")
         readme_md = join(self.root, "README.md")
