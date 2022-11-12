@@ -36,6 +36,20 @@ struct DocClass
    *             values provide more damping in response.
    */
     void utf8_docstring() {}
+
+    /**
+     * @brief Function with parameter that's a python keyword
+     * 
+     * @param from The from parameter
+     */
+    void fn2(int from) {}
+
+    /**
+     * @brief Function with renamed parameter
+     * 
+     * @param renamed The renamed parameter
+     */
+    void fn3(int renamed) {}
 };
 
 /// This function returns something very important

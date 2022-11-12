@@ -2,7 +2,7 @@ import inspect
 from rpytest import ft
 
 
-def test_docstrings():
+def test_docstrings_enum():
 
     assert inspect.getdoc(ft.DocEnum) == inspect.cleandoc(
         """
@@ -17,12 +17,17 @@ def test_docstrings():
         """
     )
 
+
+def test_docstrings_cls():
     assert inspect.getdoc(ft.DocClass) == inspect.cleandoc(
         """
         A class with documentation
         The docs are way cool.
         """
     )
+
+
+def test_docstrings_meth():
     assert inspect.getdoc(ft.DocClass.fn) == inspect.cleandoc(
         """
         fn(self: rpytest.ft._rpytest_ft.DocClass) -> None
@@ -30,11 +35,40 @@ def test_docstrings():
         Function with docstring for good measure
         """
     )
+
+
+def test_docstrings_meth_kwd():
+    assert inspect.getdoc(ft.DocClass.fn2) == inspect.cleandoc(
+        """
+        fn2(self: rpytest.ft._rpytest_ft.DocClass, from_: int) -> None
+        
+        Function with parameter that's a python keyword
+
+        :param from_: The from parameter
+        """
+    )
+
+
+def test_docstrings_meth_rename():
+    assert inspect.getdoc(ft.DocClass.fn3) == inspect.cleandoc(
+        """
+        fn3(self: rpytest.ft._rpytest_ft.DocClass, ohai: int) -> None
+        
+        Function with renamed parameter
+
+        :param ohai: The renamed parameter
+        """
+    )
+
+
+def test_docstrings_var():
     assert (
         inspect.getdoc(ft.DocClass.sweet_var)
         == "An awesome variable, use it for something"
     )
 
+
+def test_docstrings_fn():
     assert inspect.getdoc(ft.important_retval) == inspect.cleandoc(
         """
         important_retval() -> int

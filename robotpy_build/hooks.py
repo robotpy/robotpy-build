@@ -146,7 +146,7 @@ class Hooks:
         return name
 
     def _process_doc(
-        self, thing, data, append_prefix=""
+        self, thing, data, append_prefix="", param_remap: typing.Dict[str, str] = {}
     ) -> typing.Optional[typing.List[str]]:
         doc = ""
 
@@ -154,7 +154,15 @@ class Hooks:
             doc = data.doc
         elif "doxygen" in thing:
             doc = thing["doxygen"]
-            doc = sphinxify.process_raw(doc)
+            if param_remap:
+                d = sphinxify.Doc.from_comment(doc)
+                for param in d.params:
+                    new_name = param_remap.get(param.name)
+                    if new_name:
+                        param.name = new_name
+                doc = str(d)
+            else:
+                doc = sphinxify.process_raw(doc)
 
         if data.doc_append is not None:
             doc += f"\n{append_prefix}" + data.doc_append.replace(
@@ -361,6 +369,8 @@ class Hooks:
         x_temps = []
         x_keepalives = []
 
+        param_remap = {}
+
         x_genlambda = False
         x_lambda_pre: typing.List[str] = []
         x_lambda_post: typing.List[str] = []
@@ -411,15 +421,19 @@ class Hooks:
             # - separate from x_callname because it's just a passthrough
             p["x_virtual_callname"] = p["x_callname"]
 
-            p["x_retname"] = p["name"]
+            orig_pname = p["name"]
+            p["x_retname"] = orig_pname
 
-            po = param_override.get(p["name"])
+            po = param_override.get(orig_pname)
             if po:
                 p.update(po.dict(exclude_unset=True))
 
             py_pname = p["name"]
             if iskeyword(py_pname):
                 py_pname = f"{py_pname}_"
+
+            if orig_pname != py_pname:
+                param_remap[orig_pname] = py_pname
 
             p["x_pyarg"] = f'py::arg("{py_pname}")'
 
@@ -568,7 +582,7 @@ class Hooks:
         elif fn["constructor"]:
             x_name = "__init__"
 
-        doc_quoted = self._process_doc(fn, data)
+        doc_quoted = self._process_doc(fn, data, param_remap=param_remap)
 
         if data.keepalive is not None:
             x_keepalives = data.keepalive
