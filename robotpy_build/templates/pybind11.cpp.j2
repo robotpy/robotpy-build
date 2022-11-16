@@ -61,7 +61,7 @@
 
 {%- macro fn_retval(fn) -%}
   {% if fn.returns_const is defined and fn.returns_const %}const{% endif %}
-  {{ fn.returns }} 
+  {% if fn.returns_enum is defined %}  {{ fn.rtnType }}{% else %}  {{ fn.returns }}{% endif %}
   {%- if fn.returns_pointer %}*{% endif -%}
   {%- if fn.returns_reference %}&{% endif -%}
 {%- endmacro -%}
