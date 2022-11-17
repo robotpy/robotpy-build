@@ -37,7 +37,7 @@ _platforms = {
     "linux-athena": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
     "linux-raspbian": WPILibMavenPlatform("arm32", defines=["__RASPBIAN__"]),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
-    "linux-aarch64": WPILibMavenPlatform("aarch64bionic"),
+    "linux-aarch64": WPILibMavenPlatform("arm64"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
     "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib", ".lib"),
     "macos-x86_64": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
