@@ -40,7 +40,7 @@ _platforms = {
     "linux-aarch64": WPILibMavenPlatform("arm64"),
     "win32": WPILibMavenPlatform("x86", "windows", "", ".dll", ".lib", ".lib"),
     "win-amd64": WPILibMavenPlatform(X86_64, "windows", "", ".dll", ".lib", ".lib"),
-    "macos-x86_64": WPILibMavenPlatform(X86_64, "osx", libext=".dylib"),
+    "macos-universal": WPILibMavenPlatform("universal", "osx", libext=".dylib"),
 }
 
 
@@ -67,7 +67,7 @@ def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
         if re.fullmatch(r"macosx-.*-x86_64", pyplatform) or re.fullmatch(
             r"macosx-.*-universal2", pyplatform
         ):
-            return _platforms["macos-x86_64"]
+            return _platforms["macos-universal"]
 
         if pyplatform == "linux-armv7l":
             try:
