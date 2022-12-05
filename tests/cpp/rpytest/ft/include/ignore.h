@@ -13,6 +13,10 @@ int fnIgnoredParam(int x) { return x; }
 // class
 struct IgnoredClass {};
 
+struct IgnoredClassWithEnum {
+    enum AlsoIgnored { Value = 1 };
+};
+
 struct ClassWithIgnored {
 
     // class function

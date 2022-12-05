@@ -8,6 +8,7 @@ def test_ignore_fn():
 
 def test_ignore_cls():
     assert not hasattr(ft._rpytest_ft, "IgnoredClass")
+    assert not hasattr(ft._rpytest_ft, "IgnoredClassWithEnum")
 
     c = ft.ClassWithIgnored()
 

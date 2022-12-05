@@ -100,7 +100,7 @@ struct rpybuild_{{ mod_fn }}_initializer {
       enum{{ loop.index }}{{ pybind11.enum_def(enum.x_module_var, enum) }}
     {% endfor %}
 
-    {% for cls in header.classes %}
+    {% for cls in header.classes if not cls.data.ignore %}
     {{ pybind11.cls_def_enum(cls, cls.x_varname) }}
     {% endfor %}
   }
