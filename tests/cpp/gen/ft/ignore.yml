@@ -22,6 +22,8 @@ functions:
 classes:
   IgnoredClass:
     ignore: true
+  IgnoredClassWithEnum:
+    ignore: true
   ClassWithIgnored:
     attributes:
       ignoredProp:
