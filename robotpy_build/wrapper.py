@@ -698,7 +698,7 @@ class Wrapper:
 
                 # split instantiation of each template to separate cpp files to reduce
                 # compiler memory for really obscene objects
-                if data.templates:
+                if not report_only and data.templates:
                     class_templates.append(
                         {
                             "src": cls_tmpl_inst_hpp,
