@@ -1,6 +1,7 @@
 import argparse
 import glob
 import inspect
+from itertools import chain
 from os.path import basename, dirname, exists, join, relpath
 from pathlib import Path, PurePosixPath
 import posixpath
@@ -172,7 +173,10 @@ class HeaderScanner:
                 files = list(
                     sorted(
                         Path(relpath(f, incdir))
-                        for f in glob.glob(join(incdir, "**", "*.h"), recursive=True)
+                        for f in chain(
+                            glob.glob(join(incdir, "**", "*.h"), recursive=True),
+                            glob.glob(join(incdir, "**", "*.hpp"), recursive=True),
+                        )
                         if "rpygen" not in f
                     )
                 )
