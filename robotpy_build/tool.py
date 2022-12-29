@@ -147,10 +147,10 @@ class HeaderScanner:
                 files = set()
                 if wrapper.autogen_headers:
                     files |= {
-                        PurePosixPath(f) for f in wrapper.autogen_headers.values()
+                        Path(f) for f in wrapper.autogen_headers.values()
                     }
                 if wrapper.type_casters:
-                    files |= {PurePosixPath(tc.header) for tc in wrapper.type_casters}
+                    files |= {Path(tc.header) for tc in wrapper.type_casters}
                 if not files:
                     continue
                 for incdir in s.wrappers[i]._generation_search_path():
@@ -173,7 +173,7 @@ class HeaderScanner:
 
                 files = list(
                     sorted(
-                        PurePosixPath(relpath(f, incdir))
+                        Path(relpath(f, incdir))
                         for f in glob.glob(join(incdir, "**", "*.h"), recursive=True)
                         if "rpygen" not in f
                     )
@@ -195,7 +195,7 @@ class HeaderScanner:
                     lastdir = thisdir
 
                     base = f.stem
-                    print(f'{base} = "{f}"')
+                    print(f'{base} = "{f.as_posix()}"')
                 print()
 
 
