@@ -146,9 +146,7 @@ class HeaderScanner:
             for i, wrapper in enumerate(s.project.wrappers.values()):
                 files = set()
                 if wrapper.autogen_headers:
-                    files |= {
-                        Path(f) for f in wrapper.autogen_headers.values()
-                    }
+                    files |= {Path(f) for f in wrapper.autogen_headers.values()}
                 if wrapper.type_casters:
                     files |= {Path(tc.header) for tc in wrapper.type_casters}
                 if not files:
