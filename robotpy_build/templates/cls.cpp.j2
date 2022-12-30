@@ -29,7 +29,9 @@
   strings are generated properly. First part is to register the class with
   pybind11, second part is to generate all the methods/etc for it.
 
+  TODO: make type_traits optional by detecting trampoline
 #}
+#include <type_traits>
 
 {% for cls in header.classes
    if cls.namespace and not cls.parent and not cls.data.ignore and cls.template is not defined %}

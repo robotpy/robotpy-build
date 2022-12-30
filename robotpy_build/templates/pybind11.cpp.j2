@@ -260,6 +260,7 @@
 {%- macro cls_decl(cls) -%}
   {%- if cls.x_has_trampoline %}
   using {{ cls.x_trampoline_var }} = {{ cls.x_trampoline_name }};
+    static_assert(std::is_abstract<{{ cls.x_trampoline_var }}>::value == false, "{{ cls.x_qualname }} " RPYBUILD_BAD_TRAMPOLINE);
   {% endif -%}
   py::class_<typename {{ cls.x_qualname }}
     {%- if cls.data.nodelete -%}
