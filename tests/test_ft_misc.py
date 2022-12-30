@@ -1,5 +1,6 @@
 from rpytest import ft
 import pytest
+import re
 
 #
 # main module
@@ -44,6 +45,39 @@ class MyGoodAbstract(ft.Abstract):
 def test_good_abstract():
     m = MyGoodAbstract()
     assert m.mustOverrideMe() == 0x3
+
+
+class MyBadPrivateAbstract(ft.PrivateAbstract):
+    pass
+
+
+def test_private_abstract():
+    # it's private, you can't call it
+    assert not hasattr(ft.PrivateAbstract, "_mustOverrideMe")
+
+
+def test_bad_private_abstract():
+    m = MyBadPrivateAbstract()
+
+    with pytest.raises(
+        RuntimeError,
+        match=r".*"
+        + re.escape(
+            'does not override required function "PrivateAbstract::_mustOverrideMe"'
+        ),
+    ):
+        ft.PrivateAbstract.getPrivateOverride(m)
+
+
+class MyGoodPrivateAbstract(ft.PrivateAbstract):
+    def _mustOverrideMe(self):
+        return 0x3
+
+
+def test_good_private_abstract():
+    m = MyGoodPrivateAbstract()
+    assert m._mustOverrideMe() == 0x3
+    assert ft.PrivateAbstract.getPrivateOverride(m) == 0x3
 
 
 #

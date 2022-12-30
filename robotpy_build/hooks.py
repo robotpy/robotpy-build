@@ -861,6 +861,7 @@ class Hooks:
                     continue
 
                 is_private = access == "private"
+                is_virtual = fn["override"] or fn["virtual"]
 
                 # this has to be done even on private functions, because
                 # we do overload detection here
@@ -869,7 +870,8 @@ class Hooks:
                     fn, signature, cls_key, class_data, is_private
                 )
 
-                if not is_private:
+                # Have to process private virtual functions too
+                if not is_private or is_virtual:
                     if method_data.ignore:
                         fn["data"] = method_data
                         continue

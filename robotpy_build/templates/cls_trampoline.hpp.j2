@@ -143,8 +143,8 @@ struct PyTrampoline_{{ cls.x_qualname_ }} : PyTrampolineBase, virtual py::trampo
 {% endfor %}
 
     {# virtual methods (disabled for buffer overrides for now) #}
-    {% for fn in cls.methods.public + cls.methods.protected
-           if not fn.data.ignore and (fn.virtual or fn.override) and not fn.final and not fn.data.buffers %}
+    {% for fn in cls.methods.public + cls.methods.protected + cls.methods.private
+           if (fn.virtual or fn.override) and not fn.data.ignore and not fn.final and not fn.data.buffers %}
 #ifndef RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
     {{ fn.rtnType }} {{ fn.name }}({{ fn.parameters | join(', ', attribute='x_decl') }}){%
         if fn.const %} const{% endif
