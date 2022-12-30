@@ -19,6 +19,13 @@ namespace rpybuild_ext {
 using py::raise_from;
 } // namespace rpybuild_ext
 
+#define RPYBUILD_BAD_TRAMPOLINE \
+    "has an abstract trampoline -- and they must never be abstract! One of " \
+    "the generated override methods doesn't match the original class or its " \
+    "bases, or is missing. You will need to provide method and/or param " \
+    "overrides for that method. It is likely the following compiler error " \
+    "messages will tell you which one it is."
+
 // Use this to define your module instead of PYBIND11_MODULE
 #define RPYBUILD_PYBIND11_MODULE(variable) PYBIND11_MODULE(RPYBUILD_MODULE_NAME, variable)
 
