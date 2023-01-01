@@ -139,6 +139,9 @@ class FunctionData(Model):
     #: Mechanism to override individual parameters
     param_override: Dict[str, ParamData] = {}
 
+    #: Mechanism to override return type
+    return_override: Optional[str] = None
+
     #: If specified, put the function in a sub.pack.age
     subpackage: Optional[str] = None
 
