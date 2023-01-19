@@ -9,6 +9,7 @@ def test_enums():
     assert ft.NSGEnum.NSGE2 == 2
     assert ft.EnumContainer.InnerEnum.IE1 == 1
     assert ft.NSEnumContainer.InnerEnum.NSIE1 == 1
+    assert ft.NSEnumContainer2.InnerEnumContainer.MoreInnerEnum.NSIEMIE1 == 1
 
     # Unnamed enums are hoisted as integers to their scope
     # - not supported yet for globals
@@ -21,6 +22,9 @@ def test_enums():
     assert "NSGE2" in ft.NSGCEnum.NSGE2.__members__
     assert "IEC1" in ft.EnumContainer.InnerCEnum.__members__
     assert "NSIEC1" in ft.NSEnumContainer.InnerCEnum.__members__
+    assert (
+        "NSIEMIEC1" in ft.NSEnumContainer2.InnerEnumContainer.MoreInnerCEnum.__members__
+    )
 
 
 def test_enum_strip_prefix():
