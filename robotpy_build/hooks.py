@@ -691,16 +691,6 @@ class Hooks:
 
         self._add_subpackage(cls, class_data)
 
-        # fix enum paths
-        for e in cls["enums"]["public"]:
-            e["x_namespace"] = e["namespace"] + "::" + cls_name + "::"
-            enum_data = self.gendata.get_cls_enum_data(
-                e.get("name"), cls_key, class_data
-            )
-            e["data"] = enum_data
-
-            self._enum_hook(e, enum_data)
-
         # update inheritance
 
         pybase_params = set()
@@ -826,6 +816,16 @@ class Hooks:
                     )
 
         cls["x_qualname"] = cls_qualname
+
+        # fix enum paths
+        for e in cls["enums"]["public"]:
+            e["x_namespace"] = cls_qualname + "::"
+            enum_data = self.gendata.get_cls_enum_data(
+                e.get("name"), cls_key, class_data
+            )
+            e["data"] = enum_data
+
+            self._enum_hook(e, enum_data)
 
         has_constructor = False
         is_polymorphic = class_data.is_polymorphic
