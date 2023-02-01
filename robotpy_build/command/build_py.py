@@ -6,11 +6,9 @@ from ..wrapper import Wrapper
 
 
 class BuildPy(build_py):
-
     wrappers: List[Wrapper] = []
 
     def run(self):
-
         # files need to be generated before building can occur
         # -> otherwise they're not included in the bdist
         self.run_command("build_gen")

@@ -107,8 +107,7 @@ def _resolve_dependencies(
 
 
 def _fix_libs(to_fix: LibsDict, libs: LibsDict):
-
-    for (current_libpath, install_libpath) in to_fix.values():
+    for current_libpath, install_libpath in to_fix.values():
         for lib in get_install_names(current_libpath):
             libb = path.basename(lib)
             libdata = libs.get(libb)

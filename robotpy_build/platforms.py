@@ -59,7 +59,6 @@ def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
     #       be useful to note for the future.
 
     if not name:
-
         pyplatform = _get_platform()
 
         # Check for 64 bit x86 macOS (version agnostic)

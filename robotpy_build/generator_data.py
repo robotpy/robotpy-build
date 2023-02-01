@@ -154,7 +154,6 @@ class GeneratorData:
         return data
 
     def _process_missing(self, attrs, fns, enums, fn_key: str):
-
         data: Dict[str, Dict[str, Dict]] = {}
 
         # attributes

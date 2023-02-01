@@ -10,7 +10,6 @@ def get_install_root(cmd):
 
 
 def get_build_temp_path():
-
     import distutils.dist
     import distutils.command.build
 

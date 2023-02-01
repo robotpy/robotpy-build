@@ -79,7 +79,6 @@ class StaticLib:
         return libs
 
     def on_build_dl(self, cache: str, libdir: str):
-
         self.set_root(libdir)
 
         shutil.rmtree(self.libdir, ignore_errors=True)
@@ -88,7 +87,6 @@ class StaticLib:
         os.makedirs(self.libdir)
 
         for dl in self.cfg.download:
-
             if dl.sources is not None:
                 raise ValueError(f"{dl.url}: cannot specify sources in static lib")
 

@@ -103,7 +103,6 @@ class Setup:
         return self.setup_kwargs["name"]
 
     def prepare(self):
-
         self.setup_kwargs = self.project_dict.get("metadata", {})
         self.setup_kwargs["zip_safe"] = False
         self.setup_kwargs["include_package_data"] = True
@@ -161,7 +160,6 @@ class Setup:
                 self.setup_kwargs["long_description"] = fp.read()
 
     def _collect_wrappers(self):
-
         ext_modules = []
 
         for package_name, cfg in self.project.wrappers.items():

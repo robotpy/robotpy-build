@@ -46,7 +46,6 @@ class Wrapper:
     _cpp_version = "__cplusplus 201703L"
 
     def __init__(self, package_name, cfg: WrapperConfig, setup):
-
         self.package_name = package_name
         self.cfg = cfg
 
@@ -330,7 +329,6 @@ class Wrapper:
         return casters
 
     def on_build_dl(self, cache: str, srcdir: str):
-
         pkgcfgpy = join(self.root, "pkgcfg.py")
         srcdir = join(srcdir, self.name)
 
@@ -368,7 +366,6 @@ class Wrapper:
     def _clean_and_download(
         self, downloads: List[Download], cache: str, srcdir: str
     ) -> List[str]:
-
         libdir = join(self.root, "lib")
         incdir = join(self.root, "include")
 
@@ -449,7 +446,6 @@ class Wrapper:
         return libnames_full
 
     def _write_libinit_py(self, libnames):
-
         # This file exists to ensure that any shared library dependencies
         # are loaded for the compiled extension
 
@@ -503,7 +499,6 @@ class Wrapper:
         self._add_addl_data_file(self.libinit_import_py)
 
     def _write_pkgcfg_py(self, fname, libnames_full):
-
         library_dirs = "[]"
         library_dirs_rel = []
         library_names = self.get_library_names()
@@ -595,7 +590,6 @@ class Wrapper:
     def on_build_gen(
         self, cxx_gen_dir, missing_reporter: Optional[MissingReporter] = None
     ):
-
         if not self.cfg.autogen_headers:
             return
 
@@ -622,7 +616,6 @@ class Wrapper:
         # TODO: only regenerate files if the generated files
         #       have changed
         if not report_only:
-
             if self.dev_config.only_generate is None:
                 shutil.rmtree(cxx_gen_dir, ignore_errors=True)
                 shutil.rmtree(hppoutdir, ignore_errors=True)
@@ -656,7 +649,6 @@ class Wrapper:
         generation_search_path = self._generation_search_path()
 
         for name, header in self.cfg.autogen_headers.items():
-
             header = normpath(header)
             for path in generation_search_path:
                 header_path = join(path, header)
@@ -785,7 +777,6 @@ class Wrapper:
         self.extension.extra_objects = self._all_extra_objects()
 
     def _write_wrapper_hpp(self, outdir, classdeps):
-
         decls = []
         begin_calls = []
         finish_calls = []
