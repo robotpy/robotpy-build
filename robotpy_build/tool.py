@@ -98,7 +98,6 @@ class GenCreator:
         return parser
 
     def run(self, args):
-
         pfx = ""
         if args.strip_prefixes:
             pfx = "strip_prefixes:\n- " + "\n- ".join(args.strip_prefixes) + "\n\n"
@@ -167,7 +166,6 @@ class HeaderScanner:
             # This uses the direct include directories instead of the generation
             # search path as we only want to output a file once
             for incdir in wrapper.get_include_dirs():
-
                 wpresent = already_present.get(incdir, set())
 
                 files = list(
@@ -270,12 +268,10 @@ class PlatformInfo:
         return parser
 
     def run(self, args):
-
         if args.list:
             for name in platforms.get_platform_names():
                 print(name)
         else:
-
             p = platforms.get_platform(args.platform)
             print("platform:")
             pprint.pprint(p)
@@ -303,7 +299,6 @@ class ShowOverrides:
         return parser
 
     def run(self, args):
-
         p = platforms.get_platform(args.platform)
         override_keys = platforms.get_platform_override_keys(p)
 
@@ -315,7 +310,6 @@ class ShowOverrides:
 
 
 class MavenParser:
-
     after_archs = [
         "static",
         "debug",
@@ -348,7 +342,6 @@ class MavenParser:
         return False
 
     def run(self, args):
-
         self.os_names = set()
         self.arch_names = set()
         for plat in platforms._platforms.values():
@@ -379,7 +372,6 @@ class MavenParser:
                 exit()
 
             for w_name, wrapper in {**wrappers, **static_libs}.items():
-
                 if "maven_lib_download" not in wrapper:
                     continue
 
@@ -398,7 +390,6 @@ class MavenParser:
                 source_name = None
 
                 if args.brute_force:
-
                     for os in self.os_names:
                         for arch in self.arch_names:
                             for after_arch in self.after_archs + [""]:
@@ -482,7 +473,6 @@ class MavenParser:
 
 
 def main():
-
     parser = argparse.ArgumentParser(prog="robotpy-build")
     parent_parser = argparse.ArgumentParser(add_help=False)
     subparsers = parser.add_subparsers(dest="cmd")

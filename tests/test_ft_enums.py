@@ -3,7 +3,6 @@ import pytest
 
 
 def test_enums():
-
     # normal enums convert to integers
     assert ft.GEnum.GE1 == 1
     assert ft.NSGEnum.NSGE2 == 2

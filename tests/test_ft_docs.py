@@ -3,7 +3,6 @@ from rpytest import ft
 
 
 def test_docstrings_enum():
-
     assert inspect.getdoc(ft.DocEnum) == inspect.cleandoc(
         """
         An enum that is documented
@@ -79,7 +78,6 @@ def test_docstrings_fn():
 
 
 def test_docstrings_append():
-
     assert inspect.getdoc(ft.DocAppendEnum) == inspect.cleandoc(
         """
         An enum that is documented

@@ -9,7 +9,6 @@ from .util import get_install_root
 
 
 class BuildDl(Command):
-
     command_name = "build_dl"
     description = "Downloads files"
     user_options = [

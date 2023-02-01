@@ -117,7 +117,6 @@ class _PackageFinder:
 
 
 def generate_pyi(module_name: str, pyi_filename: str):
-
     print("generating", pyi_filename)
 
     pybind11_stubgen.FunctionSignature.n_invalid_signatures = 0
@@ -142,7 +141,6 @@ def generate_pyi(module_name: str, pyi_filename: str):
 
 
 def main():
-
     cfg = json.load(sys.stdin)
 
     # Configure custom loader

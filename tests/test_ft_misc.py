@@ -107,7 +107,6 @@ def test_inline_code():
 
 
 def test_static_only():
-
     # shouldn't be able to construct
     with pytest.raises(TypeError):
         ft.StaticOnly()
@@ -126,7 +125,6 @@ def test_static_only():
 
 
 def test_virtual_xform():
-
     base = ft.VBase()
 
     with pytest.raises(RuntimeError):
@@ -179,6 +177,7 @@ def test_virtual_xform():
 #
 # Misc
 #
+
 
 # ensure that not calling __init__ from a inherited class raises TypeError
 def test_init_raises():

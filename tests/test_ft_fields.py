@@ -2,7 +2,6 @@ from rpytest.ft import ClassWithFields
 
 
 def test_fields():
-
     c = ClassWithFields()
 
     assert "should_be_ignored" not in dir(c)

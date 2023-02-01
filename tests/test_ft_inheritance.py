@@ -16,7 +16,6 @@ class PyIBase(ft.IBase):
 
 
 def test_inheritance_base():
-
     # create a base, check its virtual methods
     b = ft.IBase()
     assert b.baseOnly() == "base::baseOnly"
@@ -34,7 +33,6 @@ def test_inheritance_base():
 
 
 def test_inheritance_pybase():
-
     # Overridden version should be the same
     pyb = PyIBase()
     assert pyb.baseOnly() == "pyibase::baseOnly"
@@ -52,7 +50,6 @@ def test_inheritance_pybase():
 
 
 def test_inheritance_child():
-
     # child
     c = ft.IChild()
     assert c.baseOnly() == "base::baseOnly"
@@ -123,7 +120,6 @@ def test_inheritance_grandchild():
 
 
 def test_inheritance_pygrandchild():
-
     # grandchild is final, so we cannot inherit from it
     with pytest.raises(TypeError):
 
@@ -132,7 +128,6 @@ def test_inheritance_pygrandchild():
 
 
 def test_inheritance_mchild():
-
     # child
     c = ft.IMChild()
     assert c.baseOnly() == "base::baseOnly"

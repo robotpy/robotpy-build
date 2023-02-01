@@ -39,7 +39,6 @@ class ParamData(Model):
 
 
 class BufferType(str, enum.Enum):
-
     #: The buffer must indicate that it is readable (such as bytes, or bytearray)
     IN = "in"
 
@@ -51,7 +50,6 @@ class BufferType(str, enum.Enum):
 
 
 class BufferData(Model):
-
     #: Indicates what type of python buffer is required
     type: BufferType
 
@@ -211,7 +209,6 @@ if not _generating_documentation:
 
 
 class PropAccess(enum.Enum):
-
     #: Determine read/read-write automatically:
     #:
     #: * If a struct/union, default to readwrite
@@ -229,7 +226,6 @@ class PropAccess(enum.Enum):
 
 
 class PropData(Model):
-
     #: If set to True, this property is not made available to python
     ignore: bool = False
 
@@ -247,7 +243,6 @@ class PropData(Model):
 
 
 class EnumValue(Model):
-
     #: If set to True, this property is not made available to python
     ignore: bool = False
 
@@ -262,7 +257,6 @@ class EnumValue(Model):
 
 
 class EnumData(Model):
-
     #: Set your own docstring for the enum
     doc: Optional[str] = None
 
@@ -295,7 +289,6 @@ class EnumData(Model):
 
 
 class ClassData(Model):
-
     #: Docstring for the class
     doc: Optional[str] = None
 

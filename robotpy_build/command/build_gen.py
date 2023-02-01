@@ -6,7 +6,6 @@ from ..wrapper import Wrapper
 
 
 class BuildGen(Command):
-
     command_name = "build_gen"
     description = "Generates source files"
     user_options = [

@@ -142,7 +142,6 @@ class BuildExt(build_ext):
         # Uses @loader_path, is compatible with macOS >= 10.4
         platform = get_platform()
         if platform.os == "osx":
-
             from ..relink_libs import relink_extension
 
             install_root = get_install_root(self)
@@ -160,7 +159,6 @@ class BuildExt(build_ext):
                 ext.rpybuild_libs = libs
 
     def run(self):
-
         # files need to be generated before building can occur
         self.run_command("build_gen")
 

@@ -399,7 +399,6 @@ class Hooks:
         is_constructor = fn.get("constructor")
 
         for i, p in enumerate(fn["parameters"]):
-
             if is_constructor and p["reference"] == 1:
                 x_keepalives.append((1, i + 2))
 
@@ -665,7 +664,6 @@ class Hooks:
         self._function_hook(fn, data)
 
     def class_hook(self, cls, data):
-
         if cls["parent"] is not None and cls["access_in_parent"] == "private":
             cls["data"] = ClassData(ignore=True)
             return
@@ -837,7 +835,6 @@ class Hooks:
             is_polymorphic = True
 
         for access in ("public", "protected", "private"):
-
             for fn in cls["methods"][access]:
                 if fn["constructor"]:
                     has_constructor = True

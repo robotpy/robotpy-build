@@ -35,7 +35,6 @@ def _download(url: str, dst_fname: str):
         headers = fp.info()
 
         with open(dst_fname, "wb") as tfp:
-
             # copied from urlretrieve source code, Python license
             bs = 1024 * 8
             size = -1

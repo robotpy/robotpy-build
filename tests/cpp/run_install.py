@@ -32,7 +32,6 @@ def http_server():
 
 
 if __name__ == "__main__":
-
     root = abspath(dirname(__file__))
     os.chdir(root)
 
@@ -41,7 +40,6 @@ if __name__ == "__main__":
 
     # create tempdir with maven directory structure for pkg
     with tempfile.TemporaryDirectory() as d:
-
         # create headers and sources zip files
         hname = create_artifact_path(d, "fake.dl", "dl", "1.2.3", "headers")
         with zipfile.ZipFile(hname, "w") as z:
