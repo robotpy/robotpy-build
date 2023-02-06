@@ -1,11 +1,16 @@
 from distutils.core import Command
 from typing import List
+import os
 import os.path
+import subprocess
 
 from ..platforms import get_platform
 from ..static_libs import StaticLib
 from ..wrapper import Wrapper
 from .util import get_install_root
+
+
+debug = os.environ.get("RPYBUILD_DEBUG") == "1"
 
 
 class BuildDl(Command):
@@ -40,10 +45,12 @@ class BuildDl(Command):
             self.lib_unpack_to = os.path.join(self.build_temp, "dlstatic")
 
     def run(self):
+        all_libs = []
+
         for lib in self.static_libs:
             lib.on_build_dl(self.build_cache, self.lib_unpack_to)
         for wrapper in self.wrappers:
-            wrapper.on_build_dl(self.build_cache, self.src_unpack_to)
+            all_libs += wrapper.on_build_dl(self.build_cache, self.src_unpack_to)
 
         # On OSX, fix library loader paths for embedded libraries
         # -> this happens here so that the libs are modified before build_py
@@ -55,3 +62,8 @@ class BuildDl(Command):
             install_root = get_install_root(self)
             for wrapper in self.wrappers:
                 relink_libs(install_root, wrapper, self.rpybuild_pkgcfg)
+
+        elif not debug and platform.os == "linux":
+            # strip any downloaded libraries
+            for lib in all_libs:
+                subprocess.check_call(["strip", lib])

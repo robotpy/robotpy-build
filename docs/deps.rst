@@ -23,6 +23,9 @@ That tells robotpy-build:
 * Libraries will be searched in the "libpath" directory (default is "")
 * The shared library "mylib" will be linked to the python module being built
 
+.. note:: When ``RPYBUILD_DEBUG`` isn't specified, downloaded shared libraries
+          are stripped on Linux.
+
 Maven artifacts
 ---------------
 
@@ -55,3 +58,5 @@ running ``python3 setup.py build_dl``.
           For FIRST Robotics related projects, the metadata for
           ``maven_lib_download`` can be found in a vendor JSON file.
 
+.. note:: When ``RPYBUILD_DEBUG`` isn't specified, downloaded shared libraries
+          are stripped on Linux.
