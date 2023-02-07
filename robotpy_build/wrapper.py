@@ -17,7 +17,7 @@ from os.path import (
 import posixpath
 import shutil
 import toposort
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 import yaml
 
 from header2whatever.config import Config
@@ -343,12 +343,15 @@ class Wrapper:
             pass
 
         libnames_full = []
+        all_libs = []
         downloads = self.cfg.download
         if downloads:
-            libnames_full = self._clean_and_download(downloads, cache, srcdir)
+            libnames_full, all_libs = self._clean_and_download(downloads, cache, srcdir)
 
         self._write_libinit_py(libnames_full)
         self._write_pkgcfg_py(pkgcfgpy, libnames_full)
+
+        return all_libs
 
     def _apply_patches(self, patches: List[PatchInfo], root: str):
         import patch
@@ -365,7 +368,7 @@ class Wrapper:
 
     def _clean_and_download(
         self, downloads: List[Download], cache: str, srcdir: str
-    ) -> List[str]:
+    ) -> Tuple[List[str], List[str]]:
         libdir = join(self.root, "lib")
         incdir = join(self.root, "include")
 
@@ -379,6 +382,7 @@ class Wrapper:
 
         dlopen_libnames = self.get_dlopen_library_names()
         libnames_full = []
+        all_libs = []
 
         for dl in downloads:
             # extract the whole thing into a directory when using for sources
@@ -423,6 +427,7 @@ class Wrapper:
                     posixpath.join(dl.libdir, libname): join(libdir, libname)
                     for libname in extract_names
                 }
+                all_libs.extend(to.values())
             else:
                 to = {}
 
@@ -443,7 +448,7 @@ class Wrapper:
             for f in glob.glob(join(glob.escape(libdir), "**"), recursive=True):
                 self._add_addl_data_file(f)
 
-        return libnames_full
+        return libnames_full, all_libs
 
     def _write_libinit_py(self, libnames):
         # This file exists to ensure that any shared library dependencies
