@@ -3,6 +3,8 @@ from typing import List
 import os
 import os.path
 import subprocess
+import sys
+import sysconfig
 
 from ..platforms import get_platform
 from ..static_libs import StaticLib
@@ -65,5 +67,14 @@ class BuildDl(Command):
 
         elif not debug and platform.os == "linux":
             # strip any downloaded libraries
+            strip_exe = "strip"
+            if getattr(sys, "cross_compiling", False):
+                # This is a hack, but the information doesn't seem to be available
+                # in other accessible ways
+                ar_exe = sysconfig.get_config_var("AR")
+                if ar_exe.endswith("-ar"):
+                    strip_exe = f"{ar_exe[:-3]}-strip"
+
             for lib in all_libs:
-                subprocess.check_call(["strip", lib])
+                print(strip_exe, lib)
+                subprocess.check_call([strip_exe, lib])
