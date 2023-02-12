@@ -397,6 +397,7 @@ class Hooks:
         self._add_type_caster(fn["returns"])
 
         is_constructor = fn.get("constructor")
+        fn_disable_none = data.disable_none
 
         for i, p in enumerate(fn["parameters"]):
             if is_constructor and p["reference"] == 1:
@@ -434,7 +435,14 @@ class Hooks:
             if orig_pname != py_pname:
                 param_remap[orig_pname] = py_pname
 
-            p["x_pyarg"] = f'py::arg("{py_pname}")'
+            disable_none = p.get("disable_none", None)
+            if disable_none is None:
+                disable_none = fn_disable_none
+
+            if disable_none:
+                p["x_pyarg"] = f'py::arg("{py_pname}").none(false)'
+            else:
+                p["x_pyarg"] = f'py::arg("{py_pname}")'
 
             if "default" in p:
                 default = self._resolve_default(fn, p, p["default"])

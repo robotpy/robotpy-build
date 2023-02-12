@@ -41,3 +41,12 @@ int fnParamFundConstRef(int x, const int &y)
     return x + y;
 }
 
+bool fnParamDisableNone(std::function<void()> fn)
+{
+    return (bool)fn;
+}
+
+bool fnParamDisableAllNone(std::function<void()> fn1, std::function<void()> fn2)
+{
+    return (bool)fn1 && (bool)fn2;
+}
