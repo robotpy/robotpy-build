@@ -22,6 +22,9 @@ class ParamData(Model):
     #: Default value for parameter
     default: Optional[str] = None
 
+    #: Disallow implicit conversions from None
+    disable_none: Optional[bool] = None
+
     #: Disables a default cast caused by ``default_arg_cast``
     disable_type_caster_default_cast: bool = False
 
@@ -127,6 +130,9 @@ class FunctionData(Model):
 
     #: Text to append to the (autoconverted) docstring for the function
     doc_append: Optional[str] = None
+
+    #: Disallow implicit conversions from None for all parameters
+    disable_none: bool = False
 
     #: If True, prepends an underscore to the python name
     internal: bool = False
