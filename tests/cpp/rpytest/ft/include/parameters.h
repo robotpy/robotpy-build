@@ -41,12 +41,24 @@ int fnParamFundConstRef(int x, const int &y)
     return x + y;
 }
 
-bool fnParamDisableNone(std::function<void()> fn)
+struct Param {};
+
+bool fnParamDisableNone(std::shared_ptr<Param> p)
+{
+    return (bool)p;
+}
+
+bool fnParamDisableAllNone(std::shared_ptr<Param> p1, std::shared_ptr<Param> p2)
+{
+    return (bool)p1 && (bool)p2;
+}
+
+bool fnParamAutoDisableNone(std::function<void()> fn)
 {
     return (bool)fn;
 }
 
-bool fnParamDisableAllNone(std::function<void()> fn1, std::function<void()> fn2)
+bool fnParamAllowNone(std::function<void()> fn)
 {
-    return (bool)fn1 && (bool)fn2;
+    return (bool)fn;
 }
