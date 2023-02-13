@@ -22,15 +22,11 @@ def test_fund_const_ref():
     assert ft.fnParamFundConstRef(1, 2) == 3
 
 
-def _callable():
-    pass
-
-
 def test_fn_disable_none():
     with pytest.raises(TypeError):
         ft.fnParamDisableNone(None)
 
-    ft.fnParamDisableNone(_callable)
+    assert ft.fnParamDisableNone(ft.Param())
 
 
 def test_fn_disable_all_none():
@@ -38,9 +34,25 @@ def test_fn_disable_all_none():
         ft.fnParamDisableAllNone(None, None)
 
     with pytest.raises(TypeError):
-        ft.fnParamDisableAllNone(None, _callable)
+        ft.fnParamDisableAllNone(None, ft.Param())
 
     with pytest.raises(TypeError):
-        ft.fnParamDisableAllNone(_callable, None)
+        ft.fnParamDisableAllNone(ft.Param(), None)
 
-    ft.fnParamDisableAllNone(_callable, _callable)
+    assert ft.fnParamDisableAllNone(ft.Param(), ft.Param())
+
+
+def _callable():
+    pass
+
+
+def test_fn_auto_disable_none():
+    with pytest.raises(TypeError):
+        ft.fnParamAutoDisableNone(None)
+
+    assert ft.fnParamAutoDisableNone(_callable)
+
+
+def test_fn_allow_none():
+    assert ft.fnParamAllowNone(_callable)
+    assert ft.fnParamAllowNone(None) == False

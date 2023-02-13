@@ -22,7 +22,9 @@ class ParamData(Model):
     #: Default value for parameter
     default: Optional[str] = None
 
-    #: Disallow implicit conversions from None
+    #: Disallow implicit conversions from None. This defaults to True for built
+    #: in types and types that are obviously std::function (does not handle all
+    #: cases, in which case this should be explicitly specified)
     disable_none: Optional[bool] = None
 
     #: Disables a default cast caused by ``default_arg_cast``
@@ -131,8 +133,9 @@ class FunctionData(Model):
     #: Text to append to the (autoconverted) docstring for the function
     doc_append: Optional[str] = None
 
-    #: Disallow implicit conversions from None for all parameters
-    disable_none: bool = False
+    #: Disallow implicit conversions from None for all parameters. See also
+    #: ``disable_none`` in ParamData.
+    disable_none: Optional[bool] = None
 
     #: If True, prepends an underscore to the python name
     internal: bool = False

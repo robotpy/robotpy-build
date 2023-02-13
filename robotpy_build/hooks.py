@@ -438,6 +438,8 @@ class Hooks:
             disable_none = p.get("disable_none", None)
             if disable_none is None:
                 disable_none = fn_disable_none
+                if disable_none is None and p["x_type"].startswith("std::function"):
+                    disable_none = True
 
             if disable_none:
                 p["x_pyarg"] = f'py::arg("{py_pname}").none(false)'
