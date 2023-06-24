@@ -114,7 +114,9 @@ class Setup:
         base_package_path = self.base_package_path
         os.makedirs(base_package_path, exist_ok=True)
         self.setup_kwargs["version"] = get_version(
-            write_to=join(base_package_path, "version.py"), fallback_version="master"
+            write_to=join(base_package_path, "version.py"),
+            fallback_version="master",
+            search_parent_directories=True,
         )
 
         self.pkgcfg = PkgCfgProvider()
