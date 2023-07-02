@@ -1,9 +1,13 @@
+from contextlib import contextmanager
 import importlib.util
 import json
 import os
 from os.path import abspath, exists, dirname, join
 import subprocess
 import sys
+
+import re
+from typing import Any
 
 import pybind11_stubgen
 from setuptools import Command
@@ -116,30 +120,6 @@ class _PackageFinder:
             return importlib.util.spec_from_file_location(fullname, m)
 
 
-def generate_pyi(module_name: str, pyi_filename: str):
-    print("generating", pyi_filename)
-
-    pybind11_stubgen.FunctionSignature.n_invalid_signatures = 0
-    module = pybind11_stubgen.ModuleStubsGenerator(module_name)
-    module.parse()
-    if pybind11_stubgen.FunctionSignature.n_invalid_signatures > 0:
-        print("FAILED to generate pyi for", module_name, file=sys.stderr)
-        return False
-
-    module.write_setup_py = False
-    with open(pyi_filename, "w") as fp:
-        fp.write("#\n# AUTOMATICALLY GENERATED FILE, DO NOT EDIT!\n#\n\n")
-        fp.write("\n".join(module.to_lines()))
-
-    typed = join(dirname(pyi_filename), "py.typed")
-    print("generating", typed)
-    if not exists(typed):
-        with open(typed, "w") as fp:
-            pass
-
-    return True
-
-
 def main():
     cfg = json.load(sys.stdin)
 
@@ -151,6 +131,7 @@ def main():
     sys.argv = [
         "<dummy>",
         "--no-setup-py",
+        # "--use-numpy-nptyping", # After stubgen PR
         "--log-level=WARNING",
         "--root-module-suffix=",
         "--ignore-invalid",
@@ -159,6 +140,68 @@ def main():
         cfg["out"],
     ] + cfg["stubs"]
 
+    math_to_add = {}
+
+    class fp_wrapper:
+        def __init__(self, fp) -> None:
+            self.fp = fp
+        
+        def write(self, s: str) -> None:
+            # fix underscored names
+            s = re.sub(r"([a-zA-Z0-9_]+)\._\1", r"\1", s)
+            self.fp.write(s)
+
+        def __getattr__(self, __name: str) -> Any:
+            return getattr(self.fp, __name)
+
+
+    @contextmanager
+    def open_wrapper(file, *args, **kwargs):
+        with open(file, *args, **kwargs) as fp:
+            import typing
+            fp: typing.TextIO
+            ### before pyi write
+            fp.write("#\n# AUTOMATICALLY GENERATED FILE, DO NOT EDIT!\n#\n\n")
+
+            # yield fp ### pyi write
+            yield fp_wrapper(fp) ### pyi write
+            ### after pyi write
+
+            # Add buffer definition
+            if sys.version_info >= (3, 12):
+                fp.write("\n\nfrom collections.abc import Buffer\n\n")
+            else:
+                fp.write("\n\nBuffer = typing.Union[bytes, bytearray, memoryview]\n\n")
+
+            # Add math units
+            for cpp_type, py_type in math_to_add.items():
+                if sys.version_info >= (3, 12):
+                    fp.write(f"\n\ntype {cpp_type} = {py_type}\n\n")
+                elif sys.version_info >= (3, 10):
+                    fp.write(f"\n\n{cpp_type}: typing.TypeAlias = {py_type}\n\n")
+                else:
+                    fp.write(f"\n\n{cpp_type} = {py_type}\n\n")
+    
+    # buffer
+    pybind11_stubgen.StubsGenerator.GLOBAL_CLASSNAME_REPLACEMENTS[
+        re.compile(r"(buffer)")
+    ] = lambda _: "Buffer"
+
+    @pybind11_stubgen.function_docstring_preprocessing_hooks.append
+    def fix_unsupported_escape_sequence_in_string_literal(docstring: str) -> str:
+        return docstring.replace("\\_", "_")
+
+    def replace_sub_callback(match: re.Match):
+        if match.group(1) in math_to_add and match.group(2) != math_to_add[match.group(1)]:
+            print("WARNING: math unit already defined with different value:", match.group(1), "->",  match.group(2), "and", math_to_add[match.group(1)])
+        math_to_add[match.group(1)] = match.group(2)
+        return match.group(1)
+
+    @pybind11_stubgen.function_docstring_preprocessing_hooks.append
+    def replace_math_units(docstring: str) -> str:
+        return re.sub(r"STUBGEN_CPP_(.*?)_IS_PY_(.*?)_STUBGEN", replace_sub_callback, docstring)
+
+    pybind11_stubgen.open = open_wrapper # type: ignore
     pybind11_stubgen.main()
 
 
