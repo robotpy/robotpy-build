@@ -613,7 +613,7 @@ class Wrapper:
 
         hppoutdir = join(self.rpy_incdir, "rpygen")
         tmpl_dir = join(thisdir, "templates")
-        cpp_tmpl = join(tmpl_dir, "cls.cpp.j2")
+        header_cpp_tmpl = join(tmpl_dir, "header.cpp.j2")
         cls_tmpl_inst_cpp = join(tmpl_dir, "cls_tmpl_inst.cpp.j2")
         cls_tmpl_inst_hpp = join(tmpl_dir, "cls_tmpl_inst.hpp.j2")
         hpp_tmpl = join(tmpl_dir, "cls_rpy_include.hpp.j2")
@@ -672,8 +672,8 @@ class Wrapper:
                 templates = []
                 class_templates = []
             else:
-                cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                self.extension.sources.append(cpp_dst)
+                header_cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
+                self.extension.sources.append(header_cpp_dst)
                 classdeps_dst = join(cxx_gen_dir, f"{name}.json")
                 classdeps[name] = classdeps_dst
 
@@ -683,7 +683,7 @@ class Wrapper:
                 )
 
                 templates = [
-                    {"src": cpp_tmpl, "dst": cpp_dst},
+                    {"src": header_cpp_tmpl, "dst": header_cpp_dst},
                     {"src": classdeps_tmpl, "dst": classdeps_dst},
                 ]
                 class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
