@@ -22,6 +22,8 @@ functions:
 classes:
   IgnoredClass:
     ignore: true
+  IgnoredTemplatedClass:
+    ignore: true
   IgnoredClassWithEnum:
     ignore: true
   ClassWithIgnored:
@@ -36,6 +38,15 @@ classes:
           Param1:
             ignore: true
     methods:
+      ClassWithIgnored:
+        cpp_code: |
+          [](py::args) {
+            return std::make_shared<ClassWithIgnored>(1);
+          }
+        keepalive: []
+        param_override:
+          y:
+            ignore: true
       fnIgnore:
         ignore: true
       fnIgnoredParam:
@@ -47,3 +58,11 @@ classes:
           [](ClassWithIgnored * self, int y) {
             return self->fnIgnoredParam(42, y);
           }
+  ClassWithIgnoredBase:
+    ignored_bases:
+    - IgnoredClass
+    force_no_trampoline: true
+  ClassWithIgnoredTemplateBase:
+    ignored_bases:
+    - IgnoredTemplatedClass<std::vector<int>>
+    force_no_trampoline: true

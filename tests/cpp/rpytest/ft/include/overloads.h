@@ -29,6 +29,11 @@ struct OverloadedObject
         return o;
     }
 
+    // This shows rtnType is inconsistent in CppHeaderParser
+    const OverloadedObject& overloaded() {
+        return *this;
+    }
+
     constexpr int overloaded_constexpr(int a, int b) {
         return a + b;
     }

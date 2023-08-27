@@ -5,6 +5,11 @@ functions:
 classes:
   VBase:
     methods:
+      different_cpp_and_py:
+        cpp_code: |
+          [](VBase * self, int x) {
+            return x + 2;
+          }
       pure_io:
         param_override:
           ss:
