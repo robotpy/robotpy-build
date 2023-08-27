@@ -1,7 +1,6 @@
 {#
     C++ template support
 #}
-
 {% import "pybind11.cpp.j2" as pybind11 %}
 
 namespace rpygen {
@@ -10,12 +9,12 @@ namespace rpygen {
 using namespace {{ cls.namespace }};
 {% endif %}
 
-{% for using in header.using.values() if using.using_type != "typealias" %}
-using {{ using.raw_type }};
+{% for decl in using_declarations %}
+using {{ decl }};
 {% endfor %}
 
-template <{{ cls.x_template_parameter_list }}>
-struct bind_{{ cls.x_qualname_ }} {
+template <{{ cls.template.parameter_list }}>
+struct bind_{{ cls.full_cpp_name_identifier }} {
 
     {{ pybind11.cls_user_using(cls) }}
     {{ pybind11.cls_auto_using(cls) }}
@@ -25,29 +24,29 @@ struct bind_{{ cls.x_qualname_ }} {
     py::module &m;
     std::string clsName;
 
-bind_{{ cls.x_qualname_ }}(py::module &m, const char * clsName) :
+bind_{{ cls.full_cpp_name_identifier }}(py::module &m, const char * clsName) :
     {# TODO: embedded structs will fail here #}
     {{ pybind11.cls_init(cls, "clsName") }}
     m(m),
     clsName(clsName)
 {
-    {{ pybind11.cls_def_enum(cls, cls.x_varname) }}
+    {{ pybind11.cls_def_enum(cls, cls.var_name) }}
 }
 
 void finish(const char * set_doc = NULL, const char * add_doc = NULL) {
 
-    {{ pybind11.cls_def(cls, cls.x_varname) }}
+    {{ pybind11.cls_def(cls, cls.var_name) }}
 
     if (set_doc) {
-        {{ cls.x_varname }}.doc() = set_doc;
+        {{ cls.var_name }}.doc() = set_doc;
     }
     if (add_doc) {
-        {{ cls.x_varname }}.doc() = py::cast<std::string>({{ cls.x_varname }}.doc()) + add_doc;
+        {{ cls.var_name }}.doc() = py::cast<std::string>({{ cls.var_name }}.doc()) + add_doc;
     }
 
-    {{ cls.data.template_inline_code }}
+    {{ cls.template.inline_code }}
 }
 
-}; // struct bind_{{ cls.x_qualname_ }}
+}; // struct bind_{{ cls.full_cpp_name_identifier }}
 
 }; // namespace rpygen

@@ -9,19 +9,19 @@
 {%- endmacro -%}
 
 {%- macro doc(o, pre, post) -%}
-  {%- if o.x_doc_quoted %}{{ pre }}
-    {{ docv(o.x_doc_quoted) }}{{ post }}
+  {%- if o.doc %}{{ pre }}
+    {{ docv(o.doc) }}{{ post }}
   {%- endif -%}
 {%- endmacro -%}
 
-{%- macro fndef(cls_qualname, fn) %}
-{% if cls_qualname and fn.static %}def_static{% else %}def{% endif %}
+{%- macro fndef(fn) %}
+{% if fn.is_static_method %}def_static{% else %}def{% endif %}
 {% endmacro -%}
 
 {%- macro fnptr(cls_qualname, fn, trampoline_qualname, tmpl) -%}
-  {%- if fn.data.cpp_code -%}
-    {{ fn.data.cpp_code }}
-  {%- elif not fn.x_genlambda -%}
+  {%- if fn.cpp_code -%}
+    {{ fn.cpp_code }}
+  {%- elif not fn.genlambda -%}
     &
     {%- if trampoline_qualname -%}
       {{ trampoline_qualname }}::
@@ -30,19 +30,18 @@
     {%- else -%}
       {{ fn.namespace }}
     {%- endif -%}
-    {% if tmpl %}template {% endif %}{{ fn.name }}{{ tmpl }}
+    {% if tmpl %}template {% endif %}{{ fn.cpp_name }}{{ tmpl }}
   {%- else -%}
+    {%- set genlambda = fn.genlambda -%}
     [](
       {%- if cls_qualname -%}
         {{ cls_qualname }} * __that
-        {%- if fn.x_in_params %},{% endif -%}
+        {%- if genlambda.in_params %},{% endif -%}
       {% endif -%}
-      {{ fn.x_in_params | join(', ', attribute='x_decl') -}}
+      {{ genlambda.in_params | join(', ', attribute='decl') -}}
       ) {
-          {% for stmt in fn.x_lambda_pre %}
-          {{ stmt }};
-          {% endfor %}
-          {{ fn.x_callstart }}
+          {{ genlambda.pre }}
+          {{ genlambda.call_start }}
           {%- if trampoline_qualname -%}
             (({{ trampoline_qualname }}*)__that)->
           {%- elif cls_qualname -%}
@@ -50,20 +49,10 @@
           {%- else -%}
             {{ fn.namespace }}
           {%- endif -%}
-          {{ fn.name }}{{ tmpl }}({{ fn.parameters | join(', ', attribute='x_callname') }} {{ fn.x_callend }});
-          {% for stmt in fn.x_lambda_post %}
-          {{ stmt }};
-          {% endfor %}
-          {{ fn.x_wrap_return }}
+          {{ fn.cpp_name }}{{ tmpl }}({{ fn.all_params | join(', ', attribute='call_name') }});
+          {{ genlambda.ret }}
         }
   {%- endif -%}
-{%- endmacro -%}
-
-{%- macro fn_retval(fn) -%}
-  {% if fn.returns_const is defined and fn.returns_const %}const{% endif %}
-  {% if fn.returns_enum is defined %}  {{ fn.rtnType }}{% else %}  {{ fn.returns }}{% endif %}
-  {%- if fn.returns_pointer %}*{% endif -%}
-  {%- if fn.returns_reference %}&{% endif -%}
 {%- endmacro -%}
 
 {%- macro gensig(cls_qualname, fn) -%}
@@ -71,108 +60,107 @@
     py::overload_cast fails in some obscure cases, so we don't use it here
     https://github.com/pybind/pybind11/issues/1153
   -#}
-  {{ fn_retval(fn) }}(
-  {%- if cls_qualname and not fn.static -%}
+  {{ fn.cpp_return_type }}(
+  {%- if cls_qualname and not fn.is_static_method -%}
     {{ cls_qualname }}::
   {%- endif -%}
   *)(
-      {{- fn.x_in_params | join(', ', attribute='x_type_full') -}}
+      {{- fn.all_params | join(', ', attribute='full_cpp_type') -}}
   )
   {%- if fn.const %} const{% endif -%}
   {%- if fn.ref_qualifiers %} {{ fn.ref_qualifiers }}{% endif -%}
 {%- endmacro -%}
 
 {%- macro _genmethod(cls_qualname, fn, trampoline_qualname, tmpl) -%}
-  {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.x_in_params) -%}
-  {%+ if fn.data.ifdef %}
+  {%- set ns = namespace(qualname=cls_qualname, arg_params=fn.filtered_params) -%}
+  {%+ if fn.ifdef %}
 
-  #ifdef {{ fn.data.ifdef }}
+  #ifdef {{ fn.ifdef }}
   {% endif %}
-  {%+ if fn.data.ifndef %}
+  {%+ if fn.ifndef %}
 
-  #ifndef {{ fn.data.ifndef }}
+  #ifndef {{ fn.ifndef }}
   {% endif %}
   {%- if fn.operator -%}
-    {%- if fn.data.cpp_code -%}
-      {{ fn.data.cpp_code }}
+    {%- if fn.cpp_code -%}
+      {{ fn.cpp_code }}
     {%- else -%}
       {%- if ns.arg_params -%}
-        .def(py::self {{ fn.operator }} {{ ns.arg_params[0].raw_type }}()
+        .def(py::self {{ fn.operator }} {{ ns.arg_params[0].cpp_type_no_const }}()
       {%- else -%}
         .def({{ fn.operator}} py::self
       {%- endif -%}
     {%- endif -%}
     {%- set ns.arg_params = [] -%}
-  {%- elif fn.constructor -%}
-    {%- set ns.arg_params = fn.x_all_params -%}
-    {%- if fn.data.cpp_code -%}
-      .def(py::init({{ fn.data.cpp_code }})
+  {%- elif fn.is_constructor -%}
+    {%- if fn.cpp_code -%}
+      .def(py::init({{ fn.cpp_code }})
     {%- elif trampoline_qualname -%}
-      .def(py::init_alias<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
+      .def(py::init_alias<{{ ns.arg_params | join(', ', attribute='full_cpp_type') }}>()
     {%- else -%}
-      .def(py::init<{{ ns.arg_params | join(', ', attribute='x_type_full') }}>()
+      .def(py::init<{{ ns.arg_params | join(', ', attribute='full_cpp_type') }}>()
     {%- endif -%}
   {%- else -%}
-    .{{ fndef(cls_qualname, fn) }}("{{ fn.x_name }}",{{ ' ' }}
-      {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
-        
+    .{{ fndef(fn) }}("{{ fn.py_name }}",{{ ' ' }}
+      {%- if not fn.cpp_code and not fn.genlambda -%}
         {%- if trampoline_qualname -%}
           {%- set ns.qualname = trampoline_qualname -%}
           static_cast<{{ gensig(cls_qualname, fn) }}>(
         {%- endif -%}
-        {%- if fn.x_overloaded -%}
+        {%- if fn.is_overloaded -%}
           static_cast<{{ gensig(ns.qualname, fn) }}>(
         {% endif -%}
       {%- endif -%}
+      {%- if fn.genlambda -%}{%- set ns.arg_params = fn.genlambda.in_params -%}{%- endif -%}
 	      {{- fnptr(cls_qualname, fn, trampoline_qualname, tmpl) -}}
-      {%- if not fn.data.cpp_code and not fn.x_genlambda -%}
-        {%- if fn.x_overloaded -%}){%- endif -%}
+      {%- if not fn.cpp_code and not fn.genlambda -%}
+        {%- if fn.is_overloaded -%}){%- endif -%}
         {%- if trampoline_qualname -%}){%- endif -%}
       {%- endif -%}
   {%- endif -%}
 
   {%- if ns.arg_params -%},
-      {{ ns.arg_params | join(', ', attribute='x_pyarg') }}
+      {{ ns.arg_params | join(', ', attribute='py_arg') }}
   {%- endif -%}
 
-  {%- if not fn.data.no_release_gil -%}
+  {%- if fn.release_gil -%}
     , release_gil()
   {%- endif -%}
 
-  {%- for nurse, patient in fn.x_keepalives %}
+  {%- for nurse, patient in fn.keepalives %}
     , py::keep_alive<{{ nurse }}, {{ patient }}>()
   {%- endfor -%}
 
-  {{- fn.x_return_value_policy -}}
+  {{- fn.return_value_policy -}}
 
   {{ doc(fn, ', py::doc(', ')') }}
   )
-  {%+ if fn.data.ifdef %}
-  #endif // {{ fn.data.ifdef }}
+  {%+ if fn.ifdef %}
+  #endif // {{ fn.ifdef }}
   {% endif %}
-  {%+ if fn.data.ifndef %}
-  #endif // {{ fn.data.ifndef }}
+  {%+ if fn.ifndef %}
+  #endif // {{ fn.ifndef }}
   {% endif %}
 {%- endmacro -%}
 
 {%- macro genmethod(cls_qualname, fn, trampoline_qualname) -%}
-  {%- if not fn.data.template_impls -%}
+  {%- if not fn.template_impls -%}
     {{ _genmethod(cls_qualname, fn, trampoline_qualname, "") }}
   {%- else -%}
-    {%- for tmpl in fn.data.template_impls -%}
+    {%- for tmpl in fn.template_impls -%}
     {{ _genmethod(cls_qualname, fn, trampoline_qualname, "<" + (tmpl | join(", ")) + ">") }}
     {% endfor -%}
   {%- endif -%}
 {%- endmacro %}
 
 {%- macro genprop(qualname, prop) -%}
-  {%- if prop.array_size is defined -%}
-    .def_property_readonly("{{ prop.x_name }}", []({{ qualname }}& inst) {
+  {%- if prop.array_size -%}
+    .def_property_readonly("{{ prop.py_name }}", []({{ qualname }}& inst) {
         return py::memoryview::from_buffer(
-          &inst.{{ prop.name }}, sizeof({{ prop.type }}),
-          py::format_descriptor<{{ prop.type }}>::value,
-          {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.type }})},
-          {% if prop.x_readonly %}true{% else %}false{% endif %}
+          &inst.{{ prop.cpp_name }}, sizeof({{ prop.cpp_type }}),
+          py::format_descriptor<{{ prop.cpp_type }}>::value,
+          {{ "{" }}{{ prop.array_size }}{{ "}" }}, {sizeof({{ prop.cpp_type }})},
+          {% if prop.readonly %}true{% else %}false{% endif %}
         );
     }
     {{- doc(prop, ', py::doc(', ')') }})
@@ -180,163 +168,150 @@
     {# cannot sensibly autowrap an array of incomplete size #}
   {%- elif prop.reference -%}
     .def_property
-    {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
+    {%- if prop.readonly -%}
         _readonly
     {%- endif -%}
-    ("{{ prop.x_name }}", {{ ' ' }}
-        [](const {{ qualname }}& inst) -> {{ prop.type }} { return inst.{{ prop.name}}; }
-        {%- if not (prop.constant or prop.constexpr or prop.x_readonly) %},
-        []({{ qualname }}& inst, {{ prop.type }} v) {inst.{{ prop.name}} = v; }
+    ("{{ prop.py_name }}", {{ ' ' }}
+        [](const {{ qualname }}& inst) -> {{ prop.cpp_type }} { return inst.{{ prop.cpp_name}}; }
+        {%- if not prop.readonly %},
+        []({{ qualname }}& inst, {{ prop.cpp_type }} v) {inst.{{ prop.cpp_name}} = v; }
         {%- endif -%}
         {{- doc(prop, ', py::doc(', ')') }}
     )
 
   {%- else -%}
     .def_
-      {%- if prop.constant or prop.constexpr or prop.x_readonly -%}
+      {%- if prop.readonly -%}
         readonly
       {%- else -%}
         readwrite
       {%- endif -%}
       {%- if prop.static %}_static{% endif -%}
-      ("{{ prop.x_name }}", &{{ qualname }}::{{ prop.name}}
+      ("{{ prop.py_name }}", &{{ qualname }}::{{ prop.cpp_name}}
       {{- doc(prop, ', py::doc(', ')') }})
   {%- endif -%}
 {%- endmacro -%}
 
-{%- macro enum_decl(scope, enum) %}
-  py::enum_<{{ enum.x_namespace }}{{ enum.name }}>
+{%- macro enum_decl(enum) %}
+  py::enum_<{{ enum.full_cpp_name }}>
 {%- endmacro -%}
 
 {%- macro enum_init(scope, enum) %}
-  ({{ scope }}, "{{ enum.x_name }}"
+  ({{ scope }}, "{{ enum.py_name }}"
   {{ doc(enum, ',', '') }}
-  {%- if enum.data.arithmetic %}, py::arithmetic(){% endif %})
+  {%- if enum.arithmetic %}, py::arithmetic(){% endif %})
 {%- endmacro -%}
 
 {%- macro enum_def(scope, enum) %}
-  {% for val in enum['values'] if not val.data.ignore %}
-    .value("{{ val.x_name }}", {{ enum.x_namespace }}{{ enum.name }}::{{ val.name }}
-    {%- if val.x_doc_quoted %},
-      {% for dq in val.x_doc_quoted -%}
+  {% for val in enum.values %}
+    .value("{{ val.py_name }}", {{ val.full_cpp_name }}
+    {%- if val.doc %},
+      {% for dq in val.doc -%}
       {{ dq }}{% if loop.nextitem is defined %}{{ '\n' }}{% endif %}
       {%- endfor -%}
     {%- endif -%})
   {% endfor -%}
-  {{ enum.data.inline_code or "" }};
+  {{ enum.inline_code or "" }};
 {% endmacro -%}
 
-{%- macro unnamed_enum(x, enums) %}
-{% for enum in enums if 'name' not in enum -%}
-  {% for val in enum['values'] -%}
-    {{ x }}.attr("{{ val.name }}") = (int){{ enum.x_namespace }}{{ val.name }};
+{%- macro unnamed_enums(x, unnamed_enums) %}
+{% for enum in unnamed_enums -%}
+  {% for val in enum.values -%}
+    {{ x }}.attr("{{ val.py_name }}") = (int){{ val.full_cpp_name }};
   {% endfor %}
 {% endfor %}
 {% endmacro -%}
 
 {%- macro cls_user_using(cls) -%}
-  {% for typealias in cls.x_user_typealias %}
+  {% for typealias in cls.user_typealias %}
     {{ typealias }};
   {% endfor %}
 {% endmacro -%}
 
 {%- macro cls_auto_using(cls) -%}
-  {% for ncls in cls.nested_classes 
-      if not ncls.data.ignore and ncls.template is not defined %}
-  using {{ ncls.name }} [[maybe_unused]] = typename {{ ncls.x_qualname }};
+  {% for ccls in cls.child_classes if not ccls.template %}
+  using {{ ccls.cpp_name }} [[maybe_unused]] = typename {{ ccls.full_cpp_name }};
   {% endfor %}
-  {% for typealias in cls.x_auto_typealias %}
+  {% for typealias in cls.auto_typealias %}
     {{ typealias }};
   {% endfor %}
 {% endmacro -%}
 
 {%- macro cls_consts(cls) -%}
-  {% for constant in cls.data.constants -%}
-    static constexpr auto {{ constant.split('::')[-1] }} = {{ constant }};
+  {% for constant in cls.constants -%}
+    static constexpr auto {{ constant[0] }} = {{ constant[1] }};
   {% endfor %}
 {% endmacro -%}
 
 
 {%- macro cls_decl(cls) -%}
-  {%- if cls.x_has_trampoline %}
-  using {{ cls.x_trampoline_var }} = {{ cls.x_trampoline_name }};
-    static_assert(std::is_abstract<{{ cls.x_trampoline_var }}>::value == false, "{{ cls.x_qualname }} " RPYBUILD_BAD_TRAMPOLINE);
+  {%- if cls.trampoline %}{% set tctx = cls.trampoline %}
+  using {{ tctx.var }} = {{ tctx.full_cpp_name }};
+    static_assert(std::is_abstract<{{ tctx.var }}>::value == false, "{{ cls.full_cpp_name }} " RPYBUILD_BAD_TRAMPOLINE);
   {% endif -%}
-  py::class_<typename {{ cls.x_qualname }}
-    {%- if cls.data.nodelete -%}
-      , std::unique_ptr<typename {{ cls.x_qualname }}, py::nodelete>
+  py::class_<typename {{ cls.full_cpp_name }}
+    {%- if cls.nodelete -%}
+      , std::unique_ptr<typename {{ cls.full_cpp_name }}, py::nodelete>
     {%- endif -%}
-    {%- if cls.x_has_trampoline -%}
-      , {{ cls.x_trampoline_var }}
+    {%- if cls.trampoline -%}
+      , {{ cls.trampoline.var }}
     {%- endif -%}
 
-    {%- if cls.x_inherits -%}
-      , {{ cls.x_inherits | join(', ', attribute='x_class') }}
+    {%- if cls.bases -%}
+      , {{ cls.bases | join(', ', attribute='full_cpp_name_w_templates') }}
     {%- endif -%}
-    > {{ cls.x_varname }};
+    > {{ cls.var_name }};
 
-    {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
-    {{ enum_decl(cls.x_varname, enum) }} {{ cls.x_varname }}_enum{{ loop.index }};
+    {% for enum in cls.enums %}
+    {{ enum_decl(enum) }} {{ cls.var_name }}_enum{{ loop.index }};
     {% endfor %}
 
     {# recurse #}
-    {% for ncls in cls.nested_classes
-      if not ncls.data.ignore and ncls.template is not defined %}
-      {{ cls_decl(ncls) }}
+    {% for ccls in cls.child_classes if not ccls.template %}
+    {{ cls_decl(ccls) }}
     {% endfor -%}
 
 {%- endmacro -%}
 
 {%- macro cls_init(cls, name) -%}
-    {{ cls.x_varname }}(
-
-    {%- if cls.parent -%}
-      {{ cls.parent.x_varname }}
-    {%- elif cls.data.template_params -%}
-      m
-    {%- else -%}
-      {{ cls.x_module_var }}
-    {%- endif -%}
-    , {{ name }}
-    
+    {{ cls.var_name }}({{ cls.scope_var }}, {{ name }}
     {%- if cls.final -%}
       , py::is_final()
     {%- endif -%}
-    {%- if cls.data.force_multiple_inheritance -%}
+    {%- if cls.force_multiple_inheritance -%}
       , py::multiple_inheritance()
     {%- endif -%}
 
     ),
 
-  {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
-    {{ cls.x_varname }}_enum{{ loop.index }}{{ enum_init(cls.x_varname, enum) }},
+  {% for enum in cls.enums %}
+    {{ cls.var_name }}_enum{{ loop.index }}{{ enum_init(cls.var_name, enum) }},
   {% endfor %}
 
   {# recurse #}
-  {% for ncls in cls.nested_classes
-     if not ncls.data.ignore and ncls.template is not defined %}
-    {{ cls_init(ncls, '"' + ncls.x_name + '"') }}
+  {% for ccls in cls.child_classes if not ccls.template %}
+    {{ cls_init(ccls, '"' + ccls.py_name + '"') }}
   {% endfor -%}
 
 {%- endmacro -%}
 
 {%- macro cls_def_enum(cls, varname) %}
-  {% for enum in cls.enums.public if "name" in enum and not enum.data.ignore %}
-    {{ cls.x_varname }}_enum{{ loop.index }}{{ enum_def(cls.x_varname, enum) }}
+  {% for enum in cls.enums %}
+    {{ cls.var_name }}_enum{{ loop.index }}{{ enum_def(cls.var_name, enum) }}
   {% endfor %}
 {% endmacro -%}
 
 {%- macro cls_def(cls, varname) -%}
 
-  {% if cls.x_vcheck_fns -%}
-  {%- for fn in cls.x_vcheck_fns %}
+  {% if cls.vcheck_fns -%}
+  {%- for fn in cls.vcheck_fns %}
   {
-    auto vcheck = {{ fn.data.cpp_code.strip() }};
+    auto vcheck = {{ fn.cpp_code.strip() }};
     static_assert(std::is_convertible<decltype(vcheck), std::function<
-    {{- fn_retval(fn) }}({{ cls.x_qualname }}*
-    {%- if fn.x_all_params %}, {{ fn.x_all_params | join(', ', attribute='x_type_full') }}{% endif -%}
+    {{- fn.cpp_return_type }}({{ cls.full_cpp_name }}*
+    {%- if fn.all_params %}, {{ fn.all_params | join(', ', attribute='full_cpp_type') }}{% endif -%}
       ) >>::value,
-      "{{ cls.x_qualname }}::{{ fn.name }} must have virtual_xform if cpp_code signature doesn't match original function");
+      "{{ cls.full_cpp_name }}::{{ fn.cpp_name }} must have virtual_xform if cpp_code signature doesn't match original function");
   }
   {% endfor -%}
   {%- endif %}
@@ -344,33 +319,31 @@
   {{ doc(cls, varname + '.doc() =', ';') }}
 
   {{ varname }}
-  {# default constructor if not defined #}
-  {% if not cls.x_has_constructor and not cls.data.nodelete and not cls.data.force_no_default_constructor %}
+  {% if cls.add_default_constructor %}
     .def(py::init<>(), release_gil())
   {% endif -%}
-  {%- for fn in cls.methods.public if not fn.data.ignore and not fn.data.ignore_pure and not fn.data.ignore_py %}
-    {{ genmethod(cls.x_qualname, fn, None) }}
+  {%- for fn in cls.wrapped_public_methods %}
+    {{ genmethod(cls.full_cpp_name, fn, None) }}
   {% endfor -%}
 
-  {%- if cls.x_has_trampoline -%}
-  {%- for fn in cls.methods.protected if not fn.data.ignore and not fn.data.ignore_pure and not fn.data.ignore_py %}
-    {{ genmethod(cls.x_qualname, fn, cls.x_trampoline_var) }}
+  {%- if cls.trampoline -%}
+  {%- for fn in cls.wrapped_protected_methods %}
+    {{ genmethod(cls.full_cpp_name, fn, cls.trampoline.var ) }}
   {% endfor -%}
   {%- endif -%}
 
-  {%- for prop in cls.properties.public if not prop.data.ignore %}
-    {{ genprop(cls.x_qualname, prop) }}
+  {%- for prop in cls.public_properties %}
+    {{ genprop(cls.full_cpp_name, prop) }}
   {% endfor -%}
-  {%- for prop in cls.properties.protected if not prop.data.ignore %}
-    {{ genprop(cls.x_trampoline_var, prop) }}
-  {%- endfor %}{{ cls.x_inline_code }};
+  {%- for prop in cls.protected_properties %}
+    {{ genprop(cls.trampoline.full_cpp_name, prop) }}
+  {%- endfor %}{{ cls.inline_code }};
 
-  {{ unnamed_enum(varname, cls.enums.public) }}
+  {{ unnamed_enums(varname, cls.unnamed_enums) }}
 
   {#- recurse -#}
-  {%- for ncls in cls.nested_classes 
-      if not ncls.data.ignore and ncls.template is not defined %}
-  {{ cls_def(ncls, ncls.x_varname) }}
+  {%- for ccls in cls.child_classes if not ccls.template %}
+  {{ cls_def(ccls, ccls.var_name) }}
   {% endfor -%}
 
 {%- endmacro -%}

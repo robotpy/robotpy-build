@@ -4,26 +4,25 @@
 #include <functional>
 {% endif %}
 
-{% for inc in data.extra_includes_first %}
+{% for inc in extra_includes_first %}
 #include <{{ inc }}>
 {% endfor %}
 
-#include <{{ header.rel_fname }}>
+#include <{{ rel_fname }}>
 
 {% for inc in type_caster_includes %}
 #include <{{ inc }}>
 {% endfor %}
 
-{% if x_has_operators %}
+{% if need_operators_h %}
 #include <pybind11/operators.h>
 {% endif %}
 
-{% for using in header.using.values() if using.using_type != "typealias" %}
-using {{ using.raw_type }};
+{% for decl in using_declarations %}
+using {{ decl }};
 {% endfor %}
 
-{% for cls in header.classes
-   if not cls.data.ignore and cls.x_has_trampoline %}
-#define RPYGEN_ENABLE_{{ cls.x_qualname_ }}_PROTECTED_CONSTRUCTORS
-#include <rpygen/{{ cls.x_qualname_ }}.hpp>
+{% for cls in classes_with_trampolines %}
+#define RPYGEN_ENABLE_{{ cls.full_cpp_name_identifier }}_PROTECTED_CONSTRUCTORS
+#include <rpygen/{{ cls.full_cpp_name_identifier }}.hpp>
 {% endfor %}

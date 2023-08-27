@@ -706,13 +706,13 @@ class Wrapper:
                         }
                     )
 
-                    for i, k in enumerate(data.templates.keys(), start=1):
-                        tmpl_cpp_dst = join(cxx_gen_dir, f"{name}_tmpl{i}.cpp")
+                    for i, k in enumerate(data.templates.keys()):
+                        tmpl_cpp_dst = join(cxx_gen_dir, f"{name}_tmpl{i + 1}.cpp")
                         class_templates.append(
                             {
                                 "src": cls_tmpl_inst_cpp,
                                 "dst": tmpl_cpp_dst,
-                                "vars": {"index": i, "key": k},
+                                "vars": {"index": i},
                             }
                         )
                         self.extension.sources.append(tmpl_cpp_dst)
@@ -730,14 +730,13 @@ class Wrapper:
                 "pp_retain_all_content": False,
                 "pp_include_paths": pp_includes,
                 "pp_defines": pp_defines,
-                "vars": {"mod_fn": name},
             }
 
             cfg = Config(cfgd)
             cfg.validate()
             cfg.root = self.incdir
 
-            hooks = Hooks(data, casters, report_only)
+            hooks = Hooks(data, casters, report_only, name)
             try:
                 processor.process_config(cfg, data, hooks)
             except Exception as e:
