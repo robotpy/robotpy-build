@@ -150,9 +150,7 @@ def main():
     # Generate pyi modules
     sys.argv = [
         "<dummy>",
-        "--no-setup-py",
-        "--log-level=WARNING",
-        "--root-module-suffix=",
+        "--root-suffix=",
         "-o",
         cfg["out"],
     ] + cfg["stubs"]
