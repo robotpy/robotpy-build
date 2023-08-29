@@ -153,8 +153,6 @@ def main():
         "--no-setup-py",
         "--log-level=WARNING",
         "--root-module-suffix=",
-        "--ignore-invalid",
-        "defaultarg",
         "-o",
         cfg["out"],
     ] + cfg["stubs"]
