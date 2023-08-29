@@ -148,14 +148,17 @@ def main():
     sys.meta_path.insert(0, _PackageFinder)
 
     # Generate pyi modules
-    sys.argv = [
-        "<dummy>",
-        "--root-suffix=",
-        "-o",
-        cfg["out"],
-    ] + cfg["stubs"]
+    out = cfg["out"]
+    for stub in cfg["stubs"]:
+        sys.argv = [
+            "<dummy>",
+            "--root-suffix=",
+            "-o",
+            out,
+            stub,
+        ]
 
-    pybind11_stubgen.main()
+        pybind11_stubgen.main()
 
 
 if __name__ == "__main__":
