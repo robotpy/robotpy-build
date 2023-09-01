@@ -31,8 +31,8 @@ from setuptools import Extension
 
 from .download import download_and_extract_zip
 from .config.pyproject_toml import PatchInfo, WrapperConfig, Download
-from .generator_data import MissingReporter
-from .hooks import Hooks
+from .autowrap.generator_data import MissingReporter
+from .autowrap.hooks import Hooks
 
 from .config.autowrap_yml import AutowrapConfigYaml
 from .config.dev_yml import get_dev_config
@@ -612,7 +612,7 @@ class Wrapper:
         thisdir = abspath(dirname(__file__))
 
         hppoutdir = join(self.rpy_incdir, "rpygen")
-        tmpl_dir = join(thisdir, "templates")
+        tmpl_dir = join(thisdir, "autowrap")
         header_cpp_tmpl = join(tmpl_dir, "header.cpp.j2")
         cls_tmpl_inst_cpp = join(tmpl_dir, "cls_tmpl_inst.cpp.j2")
         cls_tmpl_inst_hpp = join(tmpl_dir, "cls_tmpl_inst.hpp.j2")

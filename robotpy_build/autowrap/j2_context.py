@@ -12,7 +12,7 @@
 from dataclasses import dataclass, field
 import typing
 
-from .config.autowrap_yml import ReturnValuePolicy
+from ..config.autowrap_yml import ReturnValuePolicy
 
 
 Documentation = typing.Optional[typing.List[str]]

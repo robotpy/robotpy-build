@@ -10,7 +10,7 @@ if sys.version_info >= (3, 8):
 else:
     Protocol = object  # pragma: no cover
 
-from .config.autowrap_yml import (
+from ..config.autowrap_yml import (
     AutowrapConfigYaml,
     BufferData,
     BufferType,
@@ -21,7 +21,7 @@ from .config.autowrap_yml import (
     PropAccess,
     ReturnValuePolicy,
 )
-from .generator_data import GeneratorData, MissingReporter, OverloadTracker
+from .generator_data import GeneratorData, MissingReporter
 from .mangle import trampoline_signature
 
 from .j2_context import (
@@ -34,6 +34,7 @@ from .j2_context import (
     FunctionContext,
     GeneratedLambda,
     HeaderContext,
+    OverloadTracker,
     ParamContext,
     PropContext,
     TemplateInstanceContext,
