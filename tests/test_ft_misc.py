@@ -81,6 +81,41 @@ def test_good_private_abstract():
 
 
 #
+# buffers.h
+#
+
+
+def test_buffers():
+    o = ft.Buffers()
+    o.set_buffer(b"12345")
+
+    b = bytearray(4)
+    l = o.get_buffer1(b)
+    assert b == b"1234"
+    assert l == 4
+
+    b = bytearray(4)
+    l = o.get_buffer2(b)
+    assert b == b"1234"
+    assert l == 4
+
+
+def test_buffers_v():
+    o = ft.Buffers()
+    o.v_set_buffer(b"12345")
+
+    b = bytearray(4)
+    l = o.v_get_buffer1(b)
+    assert b == b"1234"
+    assert l == 4
+
+    b = bytearray(4)
+    l = o.v_get_buffer2(b)
+    assert b == b"1234"
+    assert l == 4
+
+
+#
 # factory.h
 #
 
@@ -99,6 +134,26 @@ def test_inline_code():
     o = ft.InlineCode()
     assert o.get2() == 2
     assert o.get4() == 4
+
+
+def test_cpp_code_with_constant():
+    o = ft.InlineCode()
+    assert o.cpp_code_with_constant() == 4
+
+
+#
+# operators.h
+#
+
+
+def test_operators_eq():
+    o1 = ft.HasOperator(1)
+    o1a = ft.HasOperator(1)
+    o2 = ft.HasOperator(2)
+
+    assert o1 == o1a
+    assert not (o1 == o2)
+    assert o1 != o2
 
 
 #
@@ -135,6 +190,9 @@ def test_virtual_xform():
 
     assert base.impure_io() == "py vbase impure + c++ vbase impure"
     assert ft.check_impure_io(base) == "c++ vbase impure"
+
+    assert base.different_cpp_and_py(1) == 3
+    assert ft.check_different_cpp_and_py(base, 1) == 2
 
     class PyChild(ft.VBase):
         def pure_io(self) -> str:

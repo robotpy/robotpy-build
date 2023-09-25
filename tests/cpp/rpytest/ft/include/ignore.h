@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 //
 // Test anything that can be ignored
 //
@@ -13,11 +15,17 @@ int fnIgnoredParam(int x) { return x; }
 // class
 struct IgnoredClass {};
 
+template <typename T>
+struct IgnoredTemplatedClass {};
+
 struct IgnoredClassWithEnum {
     enum AlsoIgnored { Value = 1 };
 };
 
 struct ClassWithIgnored {
+
+    // constructor with ignored param
+    ClassWithIgnored(int y) {}
 
     // class function
     int fnIgnore() { return 0x2; }
@@ -37,6 +45,12 @@ struct ClassWithIgnored {
         Param1 = 1,
         Param2 = 2
     };
+};
+
+struct ClassWithIgnoredBase : IgnoredClass {
+};
+
+struct ClassWithIgnoredTemplateBase : IgnoredTemplatedClass<std::vector<int>> {
 };
 
 // enums

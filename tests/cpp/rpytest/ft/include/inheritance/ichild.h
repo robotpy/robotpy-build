@@ -10,11 +10,13 @@ struct IChild : IBase
 {
     IChild() : IBase(), i(42) {}
 
+    /** doc: child::baseAndChild */
     std::string baseAndChild() override
     {
         return "child::baseAndChild";
     }
 
+    /** doc: child::baseAndChildFinal */
     std::string baseAndChildFinal() final
     {
         return "child::baseAndChildFinal";

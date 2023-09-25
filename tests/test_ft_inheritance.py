@@ -1,6 +1,16 @@
 from rpytest import ft
 import pytest
 
+import inspect
+
+
+def _getdoc(f):
+    # ensures that the method is actually defined at the right
+    # place, not just being passed through the base virtual fn
+    line = inspect.getdoc(f).splitlines()[-1]
+    assert line.startswith("doc: ")
+    return line[5:]
+
 
 # C++ check functions
 getBaseOnly = ft.IBase.getBaseOnly
@@ -30,6 +40,13 @@ def test_inheritance_base():
     assert getBaseAndPyChild(b) == "base::baseAndPyChild"
     assert getBaseAndChildFinal(b) == "base::baseAndChildFinal"
     assert getBaseAndGrandchild(b) == "base::baseAndGrandchild"
+
+    # docstring check
+    assert _getdoc(b.baseOnly) == "base::baseOnly"
+    assert _getdoc(b.baseAndChild) == "base::baseAndChild"
+    assert _getdoc(b.baseAndPyChild) == "base::baseAndPyChild"
+    assert _getdoc(b.baseAndChildFinal) == "base::baseAndChildFinal"
+    assert _getdoc(b.baseAndGrandchild) == "base::baseAndGrandchild"
 
 
 def test_inheritance_pybase():
@@ -66,6 +83,13 @@ def test_inheritance_child():
     assert getBaseAndPyChild(c) == "base::baseAndPyChild"
     assert getBaseAndChildFinal(c) == "child::baseAndChildFinal"
     assert getBaseAndGrandchild(c) == "base::baseAndGrandchild"
+
+    # docstring check
+    assert _getdoc(c.baseOnly) == "base::baseOnly"
+    assert _getdoc(c.baseAndChild) == "child::baseAndChild"
+    assert _getdoc(c.baseAndPyChild) == "base::baseAndPyChild"
+    assert _getdoc(c.baseAndChildFinal) == "child::baseAndChildFinal"
+    assert _getdoc(c.baseAndGrandchild) == "base::baseAndGrandchild"
 
 
 class PyIChild(ft.IChild):
@@ -118,6 +142,13 @@ def test_inheritance_grandchild():
     assert getBaseAndChildFinal(g) == "child::baseAndChildFinal"
     assert getBaseAndGrandchild(g) == "grandchild::baseAndGrandchild"
 
+    # docstring check
+    assert _getdoc(g.baseOnly) == "base::baseOnly"
+    assert _getdoc(g.baseAndChild) == "child::baseAndChild"
+    assert _getdoc(g.baseAndPyChild) == "base::baseAndPyChild"
+    assert _getdoc(g.baseAndChildFinal) == "child::baseAndChildFinal"
+    assert _getdoc(g.baseAndGrandchild) == "grandchild::baseAndGrandchild"
+
 
 def test_inheritance_pygrandchild():
     # grandchild is final, so we cannot inherit from it
@@ -142,6 +173,12 @@ def test_inheritance_mchild():
     assert getBaseAndChild(c) == "mchild::baseAndChild"
     assert getBaseAndChildFinal(c) == "mchild::baseAndChildFinal"
     assert getBaseAndGrandchild(c) == "base::baseAndGrandchild"
+
+    # docstring check
+    assert _getdoc(c.baseOnly) == "base::baseOnly"
+    assert _getdoc(c.baseAndChild) == "mchild::baseAndChild"
+    assert _getdoc(c.baseAndChildFinal) == "mchild::baseAndChildFinal"
+    assert _getdoc(c.baseAndGrandchild) == "base::baseAndGrandchild"
 
 
 class PyIMChild(ft.IMChild):

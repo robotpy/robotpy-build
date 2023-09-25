@@ -11,26 +11,31 @@ struct IBase
     IBase() {}
     virtual ~IBase() {}
 
+    /** doc: base::baseOnly */
     virtual std::string baseOnly()
     {
         return "base::baseOnly";
     }
 
+    /** doc: base::baseAndGrandchild */
     virtual std::string baseAndGrandchild()
     {
         return "base::baseAndGrandchild";
     }
 
+    /** doc: base::baseAndChild */
     virtual std::string baseAndChild()
     {
         return "base::baseAndChild";
     }
 
+    /** doc: base::baseAndPyChild */
     virtual std::string baseAndPyChild()
     {
         return "base::baseAndPyChild";
     }
 
+    /** doc: base::baseAndChildFinal */
     virtual std::string baseAndChildFinal()
     {
         return "base::baseAndChildFinal";
