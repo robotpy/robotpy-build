@@ -586,15 +586,6 @@ class Wrapper:
 
         self._add_addl_data_file(fname)
 
-    def _load_generation_data(self, datafile):
-        with open(datafile) as fp:
-            data = yaml.safe_load(fp)
-
-        if data is None:
-            data = {}
-
-        return AutowrapConfigYaml(**data)
-
     def on_build_gen(
         self, cxx_gen_dir, missing_reporter: Optional[MissingReporter] = None
     ):
@@ -637,7 +628,7 @@ class Wrapper:
             datapath = join(self.setup_root, normpath(self.cfg.generation_data))
             per_header = isdir(datapath)
             if not per_header:
-                data = self._load_generation_data(datapath)
+                data = AutowrapConfigYaml.from_file(datapath)
         else:
             data = AutowrapConfigYaml()
 
@@ -694,7 +685,7 @@ class Wrapper:
                     print("WARNING: could not find", data_fname)
                     data = AutowrapConfigYaml()
                 else:
-                    data = self._load_generation_data(data_fname)
+                    data = AutowrapConfigYaml.from_file(data_fname)
 
                 # split instantiation of each template to separate cpp files to reduce
                 # compiler memory for really obscene objects

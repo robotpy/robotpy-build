@@ -8,6 +8,7 @@ from typing import Dict, List, Tuple, Optional
 
 from pydantic import validator
 from .util import Model, _generating_documentation
+import yaml
 
 
 class ParamData(Model):
@@ -577,3 +578,13 @@ class AutowrapConfigYaml(Model):
             if v is None:
                 value[k] = FunctionData()
         return value
+
+    @classmethod
+    def from_file(cls, fname) -> "AutowrapConfigYaml":
+        with open(fname) as fp:
+            data = yaml.safe_load(fp)
+
+        if data is None:
+            data = {}
+
+        return cls(**data)
