@@ -378,6 +378,12 @@ class Hooks:
         # Use this if one of the parameter types don't quite match
         param_override = data.param_override
 
+        if data.return_override is not None:
+            # this matches the behavior of param_override
+            modifiers = fn["rtnType"].partition(fn["returns"])[2]
+            fn["rtnType"] = data.return_override + modifiers
+            fn["returns"] = data.return_override
+
         # buffers: accepts a python object that supports the buffer protocol
         #          as input. If the buffer is an 'out' buffer, then it
         #          will request a writeable buffer. Data is written by the
