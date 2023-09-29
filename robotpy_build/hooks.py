@@ -258,7 +258,14 @@ class Hooks:
         ta_names: typing.Set[str],
     ):
         for typealias in in_ta:
-            if typealias.startswith("template"):
+            if typealias.startswith("typedef"):
+                out_ta.append(typealias)
+            elif typealias.startswith("namespace "):
+                if "=" in typealias:
+                    out_ta.append("namespace{" + typealias + "}")
+                else:
+                    out_ta.append(f"using {typealias}")
+            elif typealias.startswith("template"):
                 out_ta.append(typealias)
             else:
                 teq = typealias.find("=")
