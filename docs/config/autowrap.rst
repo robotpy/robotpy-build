@@ -62,8 +62,8 @@ Reference
 ---------
 
 The following strctures describe the dictionaries that are read from the YAML
-file. The toplevel structure is :class:`.HooksDataYaml`.
+file. The toplevel structure is :class:`.AutowrapConfigYaml`.
 
-.. automodule:: robotpy_build.hooks_datacfg
+.. automodule:: robotpy_build.config.autowrap_yml
    :members:
    :undoc-members:

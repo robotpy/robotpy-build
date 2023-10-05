@@ -1,0 +1,219 @@
+{#
+    Generate trampoline classes to be used for two purposes:
+
+    * Allow python programs to override virtual functions
+    * Allow python programs access to protected members
+
+    This trampoline is used from two different places:
+    - To generate a trampoline usable by the class itself
+    - Generate a trampoline usable by child classes
+
+    Sometimes these are the same trampoline. The exception is when
+    a 'final' method is in the base class, then a separate
+
+    Each trampoline type is placed in a different namespace
+    to make our life easier.
+
+    Trampoline functions can be disabled via RPY_DISABLE_name_[type_type..]
+#}
+
+{%- macro precomma(v) -%}
+  {%- if v %}, {{ v }}{%- endif -%}
+{%- endmacro -%}
+
+{%- macro postcomma(v) -%}
+  {%- if v %}{{ v }}, {% endif -%}
+{%- endmacro -%}
+
+{%- set trampoline = cls.trampoline -%}
+{%- if cls.template -%}
+    {%- set template_parameter_list = cls.template.parameter_list -%}
+{%- else -%}
+    {%- set template_parameter_list = "" %}
+{%- endif -%}
+
+{# delete specified methods #}
+{% for fn in trampoline.methods_to_disable %}
+#define RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
+{% endfor %}
+
+{# include override files for each base -- TODO: exclude some bases? #}
+{% if cls.bases %}
+{% for base in cls.bases %}
+#include <rpygen/{{ base.full_cpp_name_identifier }}.hpp>
+{% endfor %}
+{% endif %}
+
+namespace rpygen {
+
+{% if cls.namespace %}
+using namespace {{ cls.namespace }};
+{% endif %}
+
+{% for decl in using_declarations %}
+using {{ decl }};
+{% endfor %}
+
+{#
+    Each trampoline has a configuration struct.
+
+    - Stores the base class that the trampoline is wrapping
+    - Provides a mechanism to detect which base class to use when calling an
+      overloaded virtual function (each class defines the overloads they have,
+      and so if it's not defined in this config, then it falls back to the
+      parent configuration)
+#}
+{% if cls.bases %}
+template <{{ postcomma(trampoline.tmpl_params) }}typename CfgBase>
+using PyTrampolineCfgBase_{{ cls.full_cpp_name_identifier }} =
+{% for base in cls.bases %}
+    PyTrampolineCfg_{{ base.full_cpp_name_identifier }}<{{ postcomma(base.template_params) }}
+{% endfor %}
+CfgBase
+{% for base in cls.bases %}>{% endfor %};
+{% endif %}
+
+template <{{ postcomma(template_parameter_list) }}typename CfgBase = EmptyTrampolineCfg>
+struct PyTrampolineCfg_{{ cls.full_cpp_name_identifier }} :
+{% if cls.bases %}
+    PyTrampolineCfgBase_{{ cls.full_cpp_name_identifier }}<{{ postcomma(trampoline.tmpl_args) }} CfgBase>
+{% else %}
+    CfgBase
+{% endif %}
+{
+    using Base = {{ cls.full_cpp_name }};
+
+    {# specify base class to use for each virtual function #}
+    {% for fn in trampoline.virtual_methods %}
+    using override_base_{{ trampoline_signature(fn) }} = {{ cls.full_cpp_name }};
+    {% endfor %}
+};
+
+
+{% if cls.bases %}
+{#
+    To avoid multiple inheritance here, we define a single base with bases that
+    are all template bases..
+
+    PyTrampolineBase is another trampoline or our base class
+#}
+template <typename PyTrampolineBase{{ precomma(trampoline.tmpl_params) }}, typename PyTrampolineCfg>
+using PyTrampolineBase_{{ cls.full_cpp_name_identifier }} =
+{% for base in cls.bases %}
+    PyTrampoline_{{ base.full_cpp_name_identifier }}<
+{% endfor %}
+        PyTrampolineBase
+{% for base in (cls.bases | reverse) %}
+        {{ precomma(base.template_params) }}
+        , PyTrampolineCfg
+    >
+{% endfor %}
+;
+
+template <typename PyTrampolineBase{{ precomma(template_parameter_list) }}, typename PyTrampolineCfg>
+struct PyTrampoline_{{ cls.full_cpp_name_identifier }} : PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(trampoline.tmpl_args) }}, PyTrampolineCfg> {
+    using PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(trampoline.tmpl_args) }}, PyTrampolineCfg>::PyTrampolineBase_{{ cls.full_cpp_name_identifier }};
+{% else %}
+template <typename PyTrampolineBase{{ precomma(template_parameter_list) }}, typename PyTrampolineCfg>
+struct PyTrampoline_{{ cls.full_cpp_name_identifier }} : PyTrampolineBase, virtual py::trampoline_self_life_support {
+    using PyTrampolineBase::PyTrampolineBase;
+{% endif %}
+
+{% for ccls in cls.child_classes if not ccls.template %}
+  using {{ ccls.cpp_name }} [[maybe_unused]] = typename {{ ccls.full_cpp_name }};
+{% endfor %}
+{% for typealias in cls.user_typealias %}
+    {{ typealias }};
+{% endfor %}
+{% for typealias in cls.auto_typealias %}
+    {{ typealias }};
+{% endfor %}
+{% for name, constant in cls.constants %}
+    static constexpr auto {{ name }} = {{ constant }};
+{% endfor %}
+
+{# protected constructors -- only used by the direct child #}
+{% for fn in trampoline.protected_constructors %}
+#ifdef RPYGEN_ENABLE_{{ cls.full_cpp_name_identifier }}_PROTECTED_CONSTRUCTORS
+    PyTrampoline_{{ cls.full_cpp_name_identifier }}({{ fn.all_params | join(', ', attribute='decl') }}) :
+        {% if cls.bases -%}
+             PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(trampoline.tmpl_args) }}, PyTrampolineCfg>
+        {%- else -%}
+            PyTrampolineBase
+        {%- endif -%}
+        ({{ fn.all_params | join(', ', attribute='arg_name') }})
+    {}
+#endif
+{% endfor %}
+
+    {# virtual methods #}
+    {% for fn in trampoline.virtual_methods %}
+#ifndef RPYGEN_DISABLE_{{ trampoline_signature(fn) }}
+    {{ fn.cpp_return_type }} {{ fn.cpp_name }}({{ fn.all_params | join(', ', attribute='decl') }})
+    {%- if fn.const %} const{% endif -%}
+    {{ fn.ref_qualifiers }} override {
+    {% if fn.trampoline_cpp_code %}
+    {{ fn.trampoline_cpp_code }}
+    {% else %}
+    {# TODO: probably will break for things like out parameters, etc #}
+    {% if fn.ignore_pure %}
+        throw std::runtime_error("not implemented");
+    {% else %}
+    {% if fn.virtual_xform %}
+        auto custom_fn = {{ fn.virtual_xform }};
+    {% endif %}
+        using LookupBase = typename PyTrampolineCfg::Base;
+    {#
+        We define a "LookupBase" and "CallBase" here because to find the python
+        override we need to use the actual class currently being overridden, but
+        to make the actual call we might need to use a base class.
+
+        .. lots of duplication here, but it's worse without it
+    #}
+    {% if fn.is_pure_virtual and fn.virtual_xform %}
+        RPYBUILD_OVERRIDE_PURE_CUSTOM_NAME({{ cls.cpp_name }}, PYBIND11_TYPE({{ fn.cpp_return_type }}), LookupBase,
+            "{{ fn.py_name }}", {{ fn.cpp_name }}, {{ fn.all_params | join(', ', attribute='arg_name') }});
+    {% elif fn.is_pure_virtual %}
+        RPYBUILD_OVERRIDE_PURE_NAME({{ cls.cpp_name }}, PYBIND11_TYPE({{ fn.cpp_return_type }}), LookupBase,
+            "{{ fn.py_name }}", {{ fn.cpp_name }}, {{ fn.all_params | join(', ', attribute='arg_name') }});
+    {% elif fn.virtual_xform %}
+        using CxxCallBase = typename PyTrampolineCfg::override_base_{{ trampoline_signature(fn) }};
+        RPYBUILD_OVERRIDE_CUSTOM_IMPL(PYBIND11_TYPE({{ fn.cpp_return_type }}), LookupBase,
+            "{{ fn.py_name }}", {{ fn.cpp_name }}, {{ fn.all_params | join(', ', attribute='arg_name') }});
+        return CxxCallBase::{{ fn.cpp_name }}({{ fn.all_params | join(', ', attribute='virtual_call_name') }});
+    {% else %}
+        using CxxCallBase = typename PyTrampolineCfg::override_base_{{ trampoline_signature(fn) }};
+        PYBIND11_OVERRIDE_IMPL(PYBIND11_TYPE({{ fn.cpp_return_type }}), LookupBase,
+            "{{ fn.py_name }}", {{ fn.all_params | join(', ', attribute='arg_name') }});
+        return CxxCallBase::{{ fn.cpp_name }}({{ fn.all_params | join(', ', attribute='virtual_call_name') }});
+    {% endif %}
+    {% endif %}
+    {% endif %}
+    }
+#endif
+
+    {% endfor %}
+
+    {# non-virtual protected methods/attributes #}
+    {% for fn in trampoline.non_virtual_protected_methods %}
+#ifndef RPYBLD_DISABLE_{{ trampoline_signature(fn) }}
+{# hack to ensure we don't do 'using' twice' in the same class, while
+   also ensuring that the overrides can be selectively disabled by
+   child trampoline functions #}
+  #ifndef RPYBLD_UDISABLE_{{ using_signature(cls, fn) }}
+    using {{ cls.full_cpp_name }}::{{ fn.cpp_name }};
+    #define RPYBLD_UDISABLE_{{ using_signature(cls, fn) }}
+  #endif
+#endif
+    {% endfor %}
+
+    {% for prop in cls.protected_properties %}
+    using {{ cls.full_cpp_name }}::{{ prop.cpp_name }};
+    {% endfor %}
+
+    {% if trampoline.inline_code %}
+    {{ trampoline.inline_code }}
+    {% endif %}
+};
+
+}; // namespace rpygen

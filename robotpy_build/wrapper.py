@@ -28,12 +28,15 @@ import dataclasses
 
 from setuptools import Extension
 
-from .devcfg import get_dev_config
+
 from .download import download_and_extract_zip
-from .pyproject_configs import PatchInfo, WrapperConfig, Download
-from .generator_data import MissingReporter
-from .hooks import Hooks
-from .hooks_datacfg import HooksDataYaml
+from .config.pyproject_toml import PatchInfo, WrapperConfig, Download
+from .autowrap.generator_data import MissingReporter
+from .autowrap.hooks import Hooks
+
+from .config.autowrap_yml import AutowrapConfigYaml
+from .config.dev_yml import get_dev_config
+from .config.pyproject_toml import WrapperConfig, Download
 
 
 class Wrapper:
@@ -583,15 +586,6 @@ class Wrapper:
 
         self._add_addl_data_file(fname)
 
-    def _load_generation_data(self, datafile):
-        with open(datafile) as fp:
-            data = yaml.safe_load(fp)
-
-        if data is None:
-            data = {}
-
-        return HooksDataYaml(**data)
-
     def on_build_gen(
         self, cxx_gen_dir, missing_reporter: Optional[MissingReporter] = None
     ):
@@ -609,8 +603,8 @@ class Wrapper:
         thisdir = abspath(dirname(__file__))
 
         hppoutdir = join(self.rpy_incdir, "rpygen")
-        tmpl_dir = join(thisdir, "templates")
-        cpp_tmpl = join(tmpl_dir, "cls.cpp.j2")
+        tmpl_dir = join(thisdir, "autowrap")
+        header_cpp_tmpl = join(tmpl_dir, "header.cpp.j2")
         cls_tmpl_inst_cpp = join(tmpl_dir, "cls_tmpl_inst.cpp.j2")
         cls_tmpl_inst_hpp = join(tmpl_dir, "cls_tmpl_inst.hpp.j2")
         hpp_tmpl = join(tmpl_dir, "cls_rpy_include.hpp.j2")
@@ -634,9 +628,9 @@ class Wrapper:
             datapath = join(self.setup_root, normpath(self.cfg.generation_data))
             per_header = isdir(datapath)
             if not per_header:
-                data = self._load_generation_data(datapath)
+                data = AutowrapConfigYaml.from_file(datapath)
         else:
-            data = HooksDataYaml()
+            data = AutowrapConfigYaml()
 
         pp_defines = [self._cpp_version] + self.platform.defines + self.cfg.pp_defines
         casters = self._all_casters()
@@ -669,8 +663,8 @@ class Wrapper:
                 templates = []
                 class_templates = []
             else:
-                cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                self.extension.sources.append(cpp_dst)
+                header_cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
+                self.extension.sources.append(header_cpp_dst)
                 classdeps_dst = join(cxx_gen_dir, f"{name}.json")
                 classdeps[name] = classdeps_dst
 
@@ -680,7 +674,7 @@ class Wrapper:
                 )
 
                 templates = [
-                    {"src": cpp_tmpl, "dst": cpp_dst},
+                    {"src": header_cpp_tmpl, "dst": header_cpp_dst},
                     {"src": classdeps_tmpl, "dst": classdeps_dst},
                 ]
                 class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
@@ -689,9 +683,9 @@ class Wrapper:
                 data_fname = join(datapath, name + ".yml")
                 if not exists(data_fname):
                     print("WARNING: could not find", data_fname)
-                    data = HooksDataYaml()
+                    data = AutowrapConfigYaml()
                 else:
-                    data = self._load_generation_data(data_fname)
+                    data = AutowrapConfigYaml.from_file(data_fname)
 
                 # split instantiation of each template to separate cpp files to reduce
                 # compiler memory for really obscene objects
@@ -703,13 +697,13 @@ class Wrapper:
                         }
                     )
 
-                    for i, k in enumerate(data.templates.keys(), start=1):
-                        tmpl_cpp_dst = join(cxx_gen_dir, f"{name}_tmpl{i}.cpp")
+                    for i, k in enumerate(data.templates.keys()):
+                        tmpl_cpp_dst = join(cxx_gen_dir, f"{name}_tmpl{i + 1}.cpp")
                         class_templates.append(
                             {
                                 "src": cls_tmpl_inst_cpp,
                                 "dst": tmpl_cpp_dst,
-                                "vars": {"index": i, "key": k},
+                                "vars": {"index": i},
                             }
                         )
                         self.extension.sources.append(tmpl_cpp_dst)
@@ -727,14 +721,13 @@ class Wrapper:
                 "pp_retain_all_content": False,
                 "pp_include_paths": pp_includes,
                 "pp_defines": pp_defines,
-                "vars": {"mod_fn": name},
             }
 
             cfg = Config(cfgd)
             cfg.validate()
             cfg.root = self.incdir
 
-            hooks = Hooks(data, casters, report_only)
+            hooks = Hooks(data, casters, report_only, name)
             try:
                 processor.process_config(cfg, data, hooks)
             except Exception as e:

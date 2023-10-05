@@ -1,14 +1,40 @@
 import yaml
 
-from .hooks_datacfg import (
+from ..config.autowrap_yml import (
     ClassData,
     EnumData,
-    HooksDataYaml,
+    AutowrapConfigYaml,
     PropData,
     FunctionData,
 )
+from .j2_context import OverloadTracker
 
-from typing import Dict, Optional
+import dataclasses
+from typing import Dict, Optional, Tuple
+
+
+@dataclasses.dataclass
+class FnReportData:
+    missing: bool = False
+    overloads: Dict[str, bool] = dataclasses.field(default_factory=dict)
+    tracker: OverloadTracker = dataclasses.field(default_factory=OverloadTracker)
+
+
+AttrMissingData = Dict[str, bool]
+EnumMissingData = Dict[str, bool]
+FnMissingData = Dict[str, FnReportData]
+
+
+@dataclasses.dataclass
+class ClsReportData:
+    missing: bool
+    attributes: AttrMissingData = dataclasses.field(default_factory=dict)
+    enums: EnumMissingData = dataclasses.field(default_factory=dict)
+    functions: FnMissingData = dataclasses.field(default_factory=dict)
+
+
+_default_enum_data = EnumData()
+_default_fn_data = FunctionData()
 
 
 class GeneratorData:
@@ -17,16 +43,16 @@ class GeneratorData:
     report to the user that there is data missing
     """
 
-    data: HooksDataYaml
+    data: AutowrapConfigYaml
 
-    def __init__(self, data: HooksDataYaml):
+    def __init__(self, data: AutowrapConfigYaml):
         self.data = data
 
         # report data
-        self.functions: Dict[str, bool] = {}
-        self.classes: Dict[str, Dict] = {}
-        self.enums: Dict[str, bool] = {}
-        self.attributes: Dict[str, bool] = {}
+        self.functions: FnMissingData = {}
+        self.classes: Dict[str, ClsReportData] = {}
+        self.enums: EnumMissingData = {}
+        self.attributes: AttrMissingData = {}
 
     def get_class_data(self, name: str) -> ClassData:
         data = self.data.classes.get(name)
@@ -34,12 +60,7 @@ class GeneratorData:
         if missing:
             data = ClassData()
 
-        self.classes[name] = {
-            "attributes": {},
-            "enums": {},
-            "functions": {},
-            "missing": missing,
-        }
+        self.classes[name] = ClsReportData(missing=missing)
         return data
 
     def get_cls_enum_data(
@@ -47,11 +68,11 @@ class GeneratorData:
     ) -> EnumData:
         if name is None:
             # TODO
-            return EnumData()
+            return _default_enum_data
         data = cls_data.enums.get(name)
         if data is None:
-            self.classes[cls_key]["enums"][name] = False
-            data = EnumData()
+            self.classes[cls_key].enums[name] = False
+            data = _default_enum_data
 
         return data
 
@@ -59,31 +80,34 @@ class GeneratorData:
         data = self.data.enums.get(name)
         if data is None:
             self.enums[name] = False
-            data = EnumData()
+            data = _default_enum_data
         return data
 
     def get_function_data(
         self,
-        fn: dict,
+        name: str,
         signature: str,
         cls_key: Optional[str] = None,
         cls_data: Optional[ClassData] = None,
         is_private: bool = False,
-    ) -> FunctionData:
-        name = fn["name"]
+    ) -> Tuple[FunctionData, OverloadTracker]:
         if cls_data and cls_key:
             data = cls_data.methods.get(name)
-            report_base = self.classes[cls_key]["functions"]
+            report_base = self.classes[cls_key].functions
         else:
             data = self.data.functions.get(name)
             report_base = self.functions
 
-        report_base = report_base.setdefault(name, {"overloads": {}, "first": fn})
+        report_data = report_base.get(name)
+        if not report_data:
+            report_data = FnReportData()
+            report_base[name] = report_data
+
         missing = data is None
-        report_base["missing"] = missing and not is_private
+        report_data.missing = missing and not is_private
 
         if missing:
-            data = FunctionData()
+            data = _default_fn_data
         else:
             overload = data.overloads.get(signature)
             missing = overload is None
@@ -94,22 +118,16 @@ class GeneratorData:
                 data.update(overload.dict(exclude_unset=True))
                 data = FunctionData(**data)
 
-        report_base["overloads"][signature] = is_private or not missing
-
-        # TODO: doesn't belong here
-        is_overloaded = len(report_base["overloads"]) > 1
-        if is_overloaded:
-            report_base["first"]["x_overloaded"] = True
-        fn["x_overloaded"] = is_overloaded
-
-        return data
+        report_data.overloads[signature] = is_private or not missing
+        report_data.tracker.add_overload()
+        return data, report_data.tracker
 
     def get_cls_prop_data(
         self, name: str, cls_key: str, cls_data: ClassData
     ) -> PropData:
         data = cls_data.attributes.get(name)
         if data is None:
-            self.classes[cls_key]["attributes"][name] = False
+            self.classes[cls_key].attributes[name] = False
             data = PropData()
 
         return data
@@ -138,12 +156,12 @@ class GeneratorData:
         all_cls_data = {}
         for cls_key, cls_data in self.classes.items():
             result = self._process_missing(
-                cls_data["attributes"],
-                cls_data["functions"],
-                cls_data["enums"],
+                cls_data.attributes,
+                cls_data.functions,
+                cls_data.enums,
                 "methods",
             )
-            if result or cls_data["missing"]:
+            if result or cls_data.missing:
                 all_cls_data[str(cls_key)] = result
         if all_cls_data:
             data["classes"] = all_cls_data
@@ -153,7 +171,13 @@ class GeneratorData:
 
         return data
 
-    def _process_missing(self, attrs, fns, enums, fn_key: str):
+    def _process_missing(
+        self,
+        attrs: AttrMissingData,
+        fns: FnMissingData,
+        enums: EnumMissingData,
+        fn_key: str,
+    ):
         data: Dict[str, Dict[str, Dict]] = {}
 
         # attributes
@@ -171,12 +195,12 @@ class GeneratorData:
         fn_report = {}
         for fn, fndata in fns.items():
             fn = str(fn)
-            overloads = fndata["overloads"]
+            overloads = fndata.overloads
             overloads_count = len(overloads)
             if overloads_count > 1:
                 has_data = all(overloads.values())
             else:
-                has_data = not fndata["missing"]
+                has_data = not fndata.missing
 
             if not has_data:
                 d = {}

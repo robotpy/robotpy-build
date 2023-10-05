@@ -30,7 +30,7 @@ robotpy-build: (mostly) automated C++ wrapping for Python
    :maxdepth: 2
 
    config/pyproject
-   config/hookdata
+   config/autowrap
 
 .. toctree::
    :caption: Support

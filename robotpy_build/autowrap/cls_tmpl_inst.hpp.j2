@@ -4,9 +4,9 @@
 
 namespace rpygen {
 
-{% for name, tmpl_data in templates.items() %}
-struct bind_{{ tmpl_data.x_qualname_ }}_{{ loop.index }} {
-    bind_{{ tmpl_data.x_qualname_ }}_{{ loop.index }}(py::module &m, const char * clsName);
+{% for tmpl_data in template_instances.values() %}
+struct {{ tmpl_data.binder_typename }} {
+    {{ tmpl_data.binder_typename }}(py::module &m, const char * clsName);
     void finish(const char *set_doc, const char *add_doc);
 };
 {% endfor %}

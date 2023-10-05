@@ -17,7 +17,7 @@ import tomli_w
 from contextlib import suppress
 
 from .setup import Setup
-from .generator_data import MissingReporter
+from .autowrap.generator_data import MissingReporter
 from .command.util import get_build_temp_path
 
 from . import overrides

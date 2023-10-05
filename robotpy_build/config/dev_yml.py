@@ -2,7 +2,7 @@ import os
 from typing import Optional, List
 import yaml
 
-from .hooks_datacfg import Model
+from .util import Model
 
 
 class DevConfig(Model):
