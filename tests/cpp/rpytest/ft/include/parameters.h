@@ -28,6 +28,17 @@ int fnParamFundPtr(int x, int * y)
     return x - 1;
 }
 
+// do a namespace thing because we messed that up once
+namespace ohno {
+    // parameters that are pointers and fundamental types are out by default
+    int fnParamFundPtr(int x, int * y)
+    {
+        *y = x + 1;
+        return x - 1;
+    }
+}
+
+
 // parameters that are references and fundamental types are out by default
 int fnParamFundRef(int x, int &y)
 {
@@ -61,4 +72,9 @@ bool fnParamAutoDisableNone(std::function<void()> fn)
 bool fnParamAllowNone(std::function<void()> fn)
 {
     return (bool)fn;
+}
+
+int fnParamDisableDefault(int p = 42)
+{
+    return p + 1;
 }

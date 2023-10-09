@@ -2,12 +2,19 @@
 
 classes:
   InlineCode:
+    constants:
+    - NS::inner::KONSTANT
     enums:
       MyE:
         inline_code: |
           .value("Value2", (InlineCode::MyE)2)
     methods:
       get2:
+      cpp_code_with_constant:
+        cpp_code: |
+          [](InlineCode *self) {
+            return KONSTANT;
+          }
     inline_code: |
       // you can even start with a comment
       .def("get4", [](InlineCode *self) {

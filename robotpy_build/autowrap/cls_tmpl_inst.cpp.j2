@@ -1,0 +1,23 @@
+{% include "cls_prologue.cpp.j2" %}
+
+#include <rpygen/{{ tmpl_data.header_name }}>
+#include "{{ hname }}_tmpl.hpp"
+
+namespace rpygen {
+
+using BindType = rpygen::bind_{{ tmpl_data.full_cpp_name_identifier }}<{{ tmpl_data.params | join(', ') }}>;
+static std::unique_ptr<BindType> inst;
+
+{{ tmpl_data.binder_typename }}::{{ tmpl_data.binder_typename }}(py::module &m, const char * clsName)
+{
+    inst = std::make_unique<BindType>(m, clsName);
+}
+
+void {{ tmpl_data.binder_typename }}::finish(const char *set_doc, const char *add_doc)
+{
+    inst->finish(set_doc, add_doc);
+    inst.reset();
+}
+
+}; // namespace rpygen
+

@@ -15,6 +15,7 @@ try:
 except ImportError:
     bdist_wheel = None  # type: ignore
 
+from .autowrap.writer import WrapperWriter
 
 from .command.build_py import BuildPy
 from .command.build_dl import BuildDl
@@ -23,9 +24,10 @@ from .command.build_ext import BuildExt
 from .command.build_pyi import BuildPyi
 from .command.develop import Develop
 
+from .config.pyproject_toml import RobotpyBuildConfig
+
 from .maven import convert_maven_to_downloads
 from .overrides import apply_overrides
-from .pyproject_configs import RobotpyBuildConfig
 from .pkgcfg_provider import PkgCfgProvider
 from .platforms import get_platform, get_platform_override_keys
 from .static_libs import StaticLib
@@ -85,6 +87,9 @@ class Setup:
                         autogen_headers[name] = header
                 wrapper.autogen_headers = autogen_headers
                 wrapper.generate = None
+
+        # Shared wrapper writer instance
+        self.wwriter = WrapperWriter()
 
     @property
     def base_package(self):
@@ -168,7 +173,7 @@ class Setup:
             if cfg.ignore:
                 continue
             self._fix_downloads(cfg, False)
-            w = Wrapper(package_name, cfg, self)
+            w = Wrapper(package_name, cfg, self, self.wwriter)
             self.wrappers.append(w)
             self.pkgcfg.add_pkg(w)
 

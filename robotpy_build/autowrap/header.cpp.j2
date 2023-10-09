@@ -1,0 +1,156 @@
+{#
+  This contains the primary binding code generated from parsing a single
+  header file. There are also per-class headers generated (templates,
+  trampolines), and those are included/used by this.
+#}
+{% include "cls_prologue.cpp.j2" %}
+
+{% import "pybind11.cpp.j2" as pybind11 %}
+
+{% if template_instances %}
+#include "{{ hname }}_tmpl.hpp"
+{% endif %}
+
+{% for inc in extra_includes %}
+#include <{{ inc }}>
+{% endfor %}
+
+{%- for typealias in user_typealias %}
+{{ typealias }};
+{% endfor %}
+
+{#
+  Ordering of the initialization function
+
+  - namespace/typealiases
+  - global enums
+  - templates (because CRTP)
+  - class declarations
+  - class enums
+  - class methods
+  - global methods
+
+  Additionally, we use two-part initialization to ensure that documentation
+  strings are generated properly. First part is to register the class with
+  pybind11, second part is to generate all the methods/etc for it.
+
+  TODO: make type_traits optional by detecting trampoline
+#}
+#include <type_traits>
+
+{% for ns in namespaces %}
+  using namespace {{ ns }};
+{% endfor %}
+
+{% for cls in classes if cls.nodelete %}
+PYBIND11_TYPE_CASTER_BASE_HOLDER(typename {{ cls.full_cpp_name }}, std::unique_ptr<typename {{ cls.full_cpp_name }}, py::nodelete>);
+{% endfor %}
+
+
+struct rpybuild_{{ hname }}_initializer {
+
+{% for cls in classes if not cls.template %}
+  {{ pybind11.cls_user_using(cls) }}
+  {{ pybind11.cls_consts(cls) }}
+{% endfor %}
+
+{% for pkg, vname in subpackages.items() %}
+  py::module {{ vname }};
+{% endfor %}
+
+{# enums #}
+{% for enum in enums %}
+  {{ pybind11.enum_decl(enum) }} enum{{ loop.index }};
+{% endfor %}
+
+{# template decls #}
+{% for tmpl_data in template_instances %}
+  rpygen::{{ tmpl_data.binder_typename }} {{ tmpl_data.var_name }};
+{% endfor %}
+
+{# class decls #}
+{%- for cls in classes if not cls.template %}
+  {{ pybind11.cls_decl(cls) }}
+{% endfor %}
+
+  py::module &m;
+
+  {# register classes with pybind11 #}
+  rpybuild_{{ hname }}_initializer(py::module &m) :
+
+  {% for pkg, vname in subpackages.items() %}
+    {{ vname }}(m.def_submodule("{{ pkg }}")),
+  {% endfor %}
+
+  {% for enum in enums %}
+    enum{{ loop.index }}{{ pybind11.enum_init(enum.scope_var, enum) }},
+  {% endfor %}
+
+  {% for tmpl_data in template_instances %}
+    {{ tmpl_data.var_name }}({{ tmpl_data.scope_var }}, "{{ tmpl_data.py_name }}"),
+  {% endfor %}
+
+  {% for cls in classes if not cls.template %}
+    {{ pybind11.cls_init(cls, '"' + cls.py_name + '"') }}
+  {% endfor %}
+
+    m(m)
+  {
+    {#
+      enums can go in the initializer because they cant have dependencies,
+      and then we dont need to figure out class dependencies for enum arguments
+    #}
+    {% for enum in enums %}
+      enum{{ loop.index }}{{ pybind11.enum_def(enum.scope_var, enum) }}
+    {% endfor %}
+
+    {% for cls in classes %}
+    {{ pybind11.cls_def_enum(cls, cls.var_name) }}
+    {% for ccls in cls.child_classes %}
+    {{ pybind11.cls_def_enum(ccls, ccls.var_name) }}
+    {% endfor %}
+    {% endfor %}
+  }
+
+void finish() {
+
+{# templates #}
+{% for tdata in template_instances %}
+  {{ tdata.var_name }}.finish(
+    {% if tdata.doc_set %}{{ pybind11.docv(tdata.doc_set) }}{% else %}NULL{% endif %},
+    {% if tdata.doc_add %}{{ pybind11.docv(tdata.doc_add) }}{% else %}NULL{% endif %}
+  );
+{% endfor %}
+
+{# class methods #}
+{%- for cls in classes if not cls.template %}
+  {
+  {{ pybind11.cls_auto_using(cls) }}
+
+  {{ pybind11.cls_def(cls, cls.var_name) }}
+  }
+{% endfor %}
+
+{# global methods #}
+{% for fn in functions if not fn.ignore_py -%}
+  {{ fn.scope_var }}{{ pybind11.genmethod(None, fn, None) }};
+{% endfor %}
+
+{% if inline_code %}
+
+  {{ inline_code }}
+{% endif %}
+}
+
+}; // struct rpybuild_{{ hname }}_initializer
+
+static std::unique_ptr<rpybuild_{{ hname }}_initializer> cls;
+
+void begin_init_{{ hname }}(py::module &m) {
+  cls = std::make_unique<rpybuild_{{ hname }}_initializer>(m);
+}
+
+void finish_init_{{ hname }}() {
+  cls->finish();
+  cls.reset();
+}
