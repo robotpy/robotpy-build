@@ -4,7 +4,7 @@
 
 namespace rpygen {
 
-{% for tmpl_data in template_instances.values() %}
+{% for tmpl_data in template_instances %}
 struct {{ tmpl_data.binder_typename }} {
     {{ tmpl_data.binder_typename }}(py::module &m, const char * clsName);
     void finish(const char *set_doc, const char *add_doc);

@@ -33,6 +33,13 @@ struct ClassWithIgnored {
     // class function parameter
     int fnIgnoredParam(int x, int y) { return x + y; }
 
+    // function with parameter pack
+    template <typename... T>
+    void fnParamPack(int x, T&&... t) {}
+
+    // twice to make sure it has to be in overloads
+    void fnParamPack() {}
+
     // property
     int ignoredProp = 8;
 

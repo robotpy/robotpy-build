@@ -1,4 +1,18 @@
-from .j2_context import FunctionContext, ParamContext
+import typing
+
+from .j2_context import FunctionContext
+from cxxheaderparser.types import (
+    Array,
+    DecoratedType,
+    FunctionType,
+    FundamentalSpecifier,
+    Method,
+    MoveReference,
+    NameSpecifier,
+    Pointer,
+    Reference,
+    Type,
+)
 
 # yes, we include some stdint types in here, but that's fine, this
 # is just a best effort generator
@@ -42,44 +56,79 @@ _type_bad_chars = ":<>=()&,"
 _type_trans = str.maketrans(_type_bad_chars, "_" * len(_type_bad_chars))
 
 
-def _encode_type(param: ParamContext) -> str:
-    names = []
+def _encode_type(dt: DecoratedType, names: typing.List[str]) -> str:
+    # Decode the type
+    ptrs = 0
+    refs = 0
+    const = False
+    volatile = False
+
+    t = dt
+    while True:
+        if isinstance(t, Type):
+            const = const or t.const
+            volatile = volatile or t.volatile
+            break
+        elif isinstance(t, Pointer):
+            ptrs += 1
+            const = const or t.const
+            volatile = volatile or t.volatile
+            t = t.ptr_to
+        elif isinstance(t, Reference):
+            refs += 1
+            t = t.ref_to
+        elif isinstance(t, MoveReference):
+            refs += 2
+            t = t.moveref_to
+        else:
+            break
 
     # prefix with cv-qualifiers, refs, pointers
-    if param.const:
+    if const:
         names.append("K")
-    if param.volatile:
+    if volatile:
         names.append("V")
 
-    if param.array:
-        names.append("A" * param.array)
+    if isinstance(t, Array):
+        assert False  # TODO, convert array size?
+        names.append("A" * t.size)
 
-    refs = param.refs
     if refs == 1:
         names.append("R")
     elif refs == 2:
         names.append("O")
 
-    ptr = param.pointers
-    if ptr:
-        names.append("P" * ptr)
+    if ptrs:
+        names.append("P" * ptrs)
 
-    # actual type
-    typ = _builtins.get(param.cpp_type)
-    if not typ:
-        # Only mangle the typename, ignore namespaces as children might have the types
-        # aliased or something. There are cases where this would fail, but hopefully
-        # that doesn't happen?
-        # TODO: do this better
-        typename = param.full_cpp_type.split("::")[-1]
-        # assert " " not in raw_type, raw_type
-        typ = "T" + typename.replace(" ", "").translate(_type_trans)
+    if isinstance(t, FunctionType):
+        # encode like a function but include the return type
+        names.append("F")
+        _encode_type(t.return_type, names)
+        params = t.parameters
+        if not params:
+            names.append("_v")
+        else:
+            for p in params:
+                names.append("_")
+                _encode_type(p.type, names)
+        if t.vararg:
+            names.append("_z")
+    else:
+        typename = t.typename.segments[-1]
+        if isinstance(typename, (FundamentalSpecifier, NameSpecifier)):
+            typ = _builtins.get(typename.name)
+            if not typ:
+                # .. good enough, there are cases where this would fail, but
+                # hopefully that doesn't happen?
+                typ = f"T{typename.name.translate(_type_trans)}"
+        else:
+            typ = "T__"
 
-    names.append(typ)
-    return "".join(names)
+        names.append(typ)
 
 
-def trampoline_signature(fn: FunctionContext) -> str:
+def trampoline_signature(fctx: FunctionContext) -> str:
     """
     In our trampoline functions, each function can be disabled by defining
     a macro corresponding to the function type. This helper function
@@ -94,33 +143,35 @@ def trampoline_signature(fn: FunctionContext) -> str:
     """
 
     # fast path in case it was computed previously
-    if fn._trampoline_signature:
-        return fn._trampoline_signature
+    if fctx._trampoline_signature:
+        return fctx._trampoline_signature
 
     # TODO: operator overloads
     names = []
 
-    if fn.const:
-        names.append("K")
-    refqual = fn.ref_qualifiers
-    if refqual:
-        if refqual == "&":
-            names.append("R")
-        if refqual == "&&":
-            names.append("O")
+    fn = fctx._fn
+    if isinstance(fn, Method):
+        if fn.const:
+            names.append("K")
+        refqual = fn.ref_qualifier
+        if refqual:
+            if refqual == "&":
+                names.append("R")
+            if refqual == "&&":
+                names.append("O")
 
-    names.append(fn.cpp_name)
+    names.append(fctx.cpp_name)
 
-    params = fn.all_params
+    params = fn.parameters
     if not params:
         names.append("_v")
     else:
         for p in params:
             names.append("_")
-            names.append(_encode_type(p))
+            _encode_type(p.type, names)
 
     if fn.vararg:
         names.append("_z")
 
-    fn._trampoline_signature = "".join(names)
-    return fn._trampoline_signature
+    fctx._trampoline_signature = "".join(names)
+    return fctx._trampoline_signature

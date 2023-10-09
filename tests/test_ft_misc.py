@@ -99,6 +99,11 @@ def test_buffers():
     assert b == b"1234"
     assert l == 4
 
+    bi = b"2345"
+    bo = bytearray(4)
+    l = o.inout_buffer(bi, bo)
+    assert bo == b"3456"
+
 
 def test_buffers_v():
     o = ft.Buffers()
@@ -168,6 +173,18 @@ def test_static_only():
 
     # should be able to call static
     assert ft.StaticOnly.callme() == 0x56
+
+
+#
+# using.h / using2.h
+#
+
+
+def test_using_fwddecl():
+    f = ft.FwdDecl()
+    f.x = 42
+    u = ft.Using4()
+    assert u.getX(f) == 43
 
 
 #

@@ -1,4 +1,4 @@
-from rpytest.ft import ClassWithFields
+from rpytest.ft import ClassWithFields, StructWithBitfields
 
 
 def test_fields():
@@ -33,3 +33,15 @@ def test_fields():
     #       be readonly?
     c.ref_int = 4
     assert c.actual_int == 4
+
+
+def test_bitfields():
+    s = StructWithBitfields()
+
+    assert s.enabled == 0
+    s.enabled = 1
+    assert s.enabled == 1
+
+    assert s.autonomous == 0
+    s.autonomous = 1
+    assert s.autonomous == 1

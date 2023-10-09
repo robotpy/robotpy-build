@@ -23,6 +23,9 @@ class ParamData(Model):
     #: Default value for parameter
     default: Optional[str] = None
 
+    #: Disable default value
+    no_default: Optional[bool] = False
+
     #: Disallow implicit conversions from None. This defaults to True for built
     #: in types and types that are obviously std::function (does not handle all
     #: cases, in which case this should be explicitly specified)
@@ -307,17 +310,20 @@ class ClassData(Model):
     doc_append: Optional[str] = None
 
     ignore: bool = False
+
+    #: List of bases to ignore. Name must include any template specializations.
     ignored_bases: List[str] = []
 
     #: Specify fully qualified names for the bases. If the base has a template
-    #: parameter, you must include it
+    #: parameter, you must include it. Only needed if it can't be automatically
+    #: detected directly from the text.
     base_qualnames: Dict[str, str] = {}
 
     attributes: Dict[str, PropData] = {}
     enums: Dict[str, EnumData] = {}
     methods: Dict[str, FunctionData] = {}
 
-    is_polymorphic: bool = False
+    is_polymorphic: Optional[bool] = None
     force_no_trampoline: bool = False
     force_no_default_constructor: bool = False
 
@@ -550,6 +556,9 @@ class AutowrapConfigYaml(Model):
     #: Extra 'using' directives to insert into the trampoline and the
     #: wrapping scope
     typealias: List[str] = []
+
+    #: Encoding to use when opening this header file
+    encoding: str = "utf-8-sig"
 
     @validator("attributes", pre=True)
     def validate_attributes(cls, value):

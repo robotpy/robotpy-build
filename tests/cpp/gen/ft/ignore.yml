@@ -58,6 +58,12 @@ classes:
           [](ClassWithIgnored * self, int y) {
             return self->fnIgnoredParam(42, y);
           }
+      fnParamPack:
+        overloads:
+          int, T&&...:
+            ignore: true
+          "":
+            ignore: true
   ClassWithIgnoredBase:
     ignored_bases:
     - IgnoredClass

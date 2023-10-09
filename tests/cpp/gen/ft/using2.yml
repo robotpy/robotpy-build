@@ -1,4 +1,7 @@
 
+extra_includes:
+- using.h
+
 classes:
   fancy_list:
     template_params:
