@@ -28,7 +28,7 @@
     {%- elif cls_qualname -%}
       {{ cls_qualname }}::
     {%- else -%}
-      {{ fn.namespace }}
+      {{ fn.namespace }}::
     {%- endif -%}
     {% if tmpl %}template {% endif %}{{ fn.cpp_name }}{{ tmpl }}
   {%- else -%}
@@ -47,7 +47,7 @@
           {%- elif cls_qualname -%}
             __that->
           {%- else -%}
-            {{ fn.namespace }}
+            {{ fn.namespace }}::
           {%- endif -%}
           {{ fn.cpp_name }}{{ tmpl }}({{ fn.all_params | join(', ', attribute='call_name') }});
           {{ genlambda.ret }}
@@ -166,7 +166,7 @@
     {{- doc(prop, ', py::doc(', ')') }})
   {%- elif prop.array -%}
     {# cannot sensibly autowrap an array of incomplete size #}
-  {%- elif prop.reference -%}
+  {%- elif prop.reference or prop.bitfield -%}
     .def_property
     {%- if prop.readonly -%}
         _readonly
@@ -231,6 +231,9 @@
 {%- macro cls_auto_using(cls) -%}
   {% for ccls in cls.child_classes if not ccls.template %}
   using {{ ccls.cpp_name }} [[maybe_unused]] = typename {{ ccls.full_cpp_name }};
+  {% endfor %}
+  {% for enum in cls.enums if enum.cpp_name %}
+  using {{ enum.cpp_name }} [[maybe_unused]] = typename {{ enum.full_cpp_name }};
   {% endfor %}
   {% for typealias in cls.auto_typealias %}
     {{ typealias }};

@@ -56,3 +56,9 @@ def test_fn_auto_disable_none():
 def test_fn_allow_none():
     assert ft.fnParamAllowNone(_callable)
     assert ft.fnParamAllowNone(None) == False
+
+
+def test_fn_disable_default():
+    assert ft.fnParamDisableDefault(1) == 2
+    with pytest.raises(TypeError):
+        ft.fnParamDisableDefault()

@@ -10,7 +10,7 @@ using namespace {{ cls.namespace }};
 {% endif %}
 
 {% for decl in using_declarations %}
-using {{ decl }};
+using {{ decl.format() }};
 {% endfor %}
 
 template <{{ cls.template.parameter_list }}>

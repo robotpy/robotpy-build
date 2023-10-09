@@ -10,7 +10,10 @@
 #
 
 from dataclasses import dataclass, field
+import enum
 import typing
+
+from cxxheaderparser.types import Function, PQName
 
 from ..config.autowrap_yml import ReturnValuePolicy
 
@@ -58,6 +61,9 @@ class EnumContext:
     #: Name of variable in initializer
     var_name: str
 
+    #: C++ name without namespace
+    cpp_name: str
+
     #: C++ name, including namespace/classname
     full_cpp_name: str
 
@@ -78,6 +84,13 @@ class EnumContext:
     inline_code: typing.Optional[str]
 
 
+class ParamCategory(enum.Enum):
+    IGNORE = 0
+    OUT = 1
+    IN = 2
+    TMP = 3
+
+
 @dataclass
 class ParamContext:
     """Render data for each parameter"""
@@ -86,10 +99,8 @@ class ParamContext:
     arg_name: str
 
     # name of type with const but no *, &
+    # .. why does this have const
     cpp_type: str
-
-    #: name of type without const, used in trampoline_signature
-    cpp_type_no_const: str
 
     # contains 'const', &, etc
     full_cpp_type: str
@@ -99,9 +110,6 @@ class ParamContext:
 
     #: passed to lambda
     default: typing.Optional[str]
-
-    # type + name
-    decl: str
 
     #: Name to pass to function when calling the original
     #: .. only used by lambda
@@ -114,24 +122,21 @@ class ParamContext:
     #: name when used as an out parameter
     cpp_retname: str
 
-    #: type marked as const
-    #: -> used by trampoline signature
-    const: bool = False
+    #: Not used in jinja template, used for filtering
+    category: ParamCategory
 
-    #: type marked as volatile
-    #: -> used by trampoline signature
-    volatile: bool = False
+    # type + name, rarely used
+    @property
+    def decl(self) -> str:
+        return f"{self.full_cpp_type} {self.arg_name}"
 
-    #: -> used by trampoline signature
-    array: typing.Optional[int] = None
-
-    # Number of &
-    #: -> used by trampoline signature
-    refs: int = 0
-
-    # Number of *
-    #: -> used by trampoline signature
-    pointers: int = 0
+    # only used for operator generation, rarely used
+    @property
+    def cpp_type_no_const(self) -> str:
+        ct = self.cpp_type
+        if ct.startswith("const "):
+            return ct[6:]
+        return ct
 
 
 @dataclass
@@ -176,22 +181,9 @@ class FunctionContext:
     #: every parameter except ignored
     filtered_params: typing.List[ParamContext]
 
-    genlambda: typing.Optional[GeneratedLambda]
-
-    #: Marked const
-    #: -> used by trampoline signature
-    const: bool
-
     #: Has vararg parameters
     #: -> used by trampoline signature
-    vararg: bool
-
-    #: & or && qualifiers for function
-    #: -> used by trampoline signature
-    ref_qualifiers: str
-
-    #: Is this a constructor?
-    is_constructor: bool
+    # vararg: bool
 
     #
     # Mixed
@@ -201,7 +193,7 @@ class FunctionContext:
 
     keepalives: typing.List[typing.Tuple[int, int]]
 
-    return_value_policy: ReturnValuePolicy
+    return_value_policy: str
 
     #
     # User settings from autowrap_yml.FunctionData
@@ -233,9 +225,23 @@ class FunctionContext:
     # OverloadTracker evaluates to True if there are overloads
     is_overloaded: OverloadTracker
 
+    # Used to compute the trampoline signature
+    _fn: Function
+
     #
     # Cached/conditionally set properties
     #
+
+    genlambda: typing.Optional[GeneratedLambda] = None
+
+    #: Is this a constructor?
+    is_constructor: bool = False
+
+    #: & or && qualifiers for function
+    ref_qualifiers: str = ""
+
+    #: Marked const
+    const: bool = False
 
     is_pure_virtual: bool = False
 
@@ -270,6 +276,7 @@ class PropContext:
     array: bool  # cannot sensibly autowrap an array of incomplete size
     reference: bool
     static: bool
+    bitfield: bool
 
 
 @dataclass
@@ -278,7 +285,7 @@ class BaseClassData:
     Render data for each base that a class inherits
     """
 
-    #: C++ name, including namespace/classname
+    #: C++ name, including all known components
     full_cpp_name: str  # was x_qualname
 
     full_cpp_name_w_templates: str  # was x_class
@@ -286,6 +293,9 @@ class BaseClassData:
     #: Translated C++ name suitable for use as an identifier. :<>= are
     #: turned into underscores.
     full_cpp_name_identifier: str  # was x_qualname_
+
+    #: C++ name + components, no template parameters
+    dep_cpp_name: str
 
     #: comma separated list of template parameters for this base, or empty string
     template_params: str
@@ -352,7 +362,7 @@ class ClassContext:
     parent: typing.Optional["ClassContext"]
 
     #: Namespace that this class lives in
-    namespace: typing.Optional[str]
+    namespace: str
 
     #: C++ name (only the class)
     cpp_name: str
@@ -363,6 +373,9 @@ class ClassContext:
     #: Translated C++ name suitable for use as an identifier. :<>= are
     #: turned into underscores. was: x_qualname_
     full_cpp_name_identifier: str
+
+    #: C++ name + components, no template parameters
+    dep_cpp_name: str
 
     #: Python name
     py_name: str
@@ -385,46 +398,7 @@ class ClassContext:
 
     bases: typing.List[BaseClassData]
 
-    #: was x_has_trampoline
-    trampoline: typing.Optional[TrampolineData]
-
-    #
-    # Properties (member variables)
-    #
-
-    public_properties: typing.List[PropContext]
-    protected_properties: typing.List[PropContext]
-
-    #
-    # Methods: the idea here is have a bunch of descriptive lists here so that
-    # the j2 templates don't need logic to emit each method
-    #
-
-    #
-    # Method lists for wrapping
-    #
-
-    add_default_constructor: bool
-
-    # public + not (ignore_pure + ignore_py)
-    wrapped_public_methods: typing.List[FunctionContext]
-
-    # only if trampoline:
-    # - protected + not (ignore_pure + ignore_py)
-    wrapped_protected_methods: typing.List[FunctionContext]
-
-    #: Public enums + unnamed enums
-    enums: typing.List[EnumContext]
-    unnamed_enums: typing.List[EnumContext]
-
     template: typing.Optional[ClassTemplateData]
-
-    #: Extra autodetected 'using' directives
-    auto_typealias: typing.List[str]
-
-    #: vcheck are various static asserts that check things about the
-    #: inline functions
-    vcheck_fns: typing.List[FunctionContext]
 
     #
     # User specified settings copied from ClassData
@@ -443,6 +417,55 @@ class ClassContext:
 
     #: User specified settings
     force_multiple_inheritance: bool
+
+    #
+    # Everything else
+    #
+
+    # Not used in jinja_template
+    has_constructor: bool = False
+    is_polymorphic: bool = False
+
+    #: was x_has_trampoline
+    trampoline: typing.Optional[TrampolineData] = None
+
+    #
+    # Properties (member variables)
+    #
+
+    public_properties: typing.List[PropContext] = field(default_factory=list)
+    protected_properties: typing.List[PropContext] = field(default_factory=list)
+
+    #
+    # Methods: the idea here is have a bunch of descriptive lists here so that
+    # the j2 templates don't need logic to emit each method
+    #
+
+    #
+    # Method lists for wrapping
+    #
+
+    add_default_constructor: bool = False
+
+    # public + not (ignore_pure + ignore_py)
+    wrapped_public_methods: typing.List[FunctionContext] = field(default_factory=list)
+
+    # only if trampoline:
+    # - protected + not (ignore_pure + ignore_py)
+    wrapped_protected_methods: typing.List[FunctionContext] = field(
+        default_factory=list
+    )
+
+    #: Public enums + unnamed enums
+    enums: typing.List[EnumContext] = field(default_factory=list)
+    unnamed_enums: typing.List[EnumContext] = field(default_factory=list)
+
+    #: Extra autodetected 'using' directives
+    auto_typealias: typing.List[str] = field(default_factory=list)
+
+    #: vcheck are various static asserts that check things about the
+    #: inline functions
+    vcheck_fns: typing.List[FunctionContext] = field(default_factory=list)
 
     child_classes: typing.List["ClassContext"] = field(default_factory=list)
 
@@ -474,6 +497,7 @@ class HeaderContext:
     Globals in all .j2 files
     """
 
+    # Name in toml
     hname: str
 
     extra_includes_first: typing.List[str]
@@ -483,13 +507,13 @@ class HeaderContext:
     trampoline_signature: typing.Callable[[FunctionContext], str]
     using_signature: typing.Callable[[ClassContext, FunctionContext], str]
 
-    #: Path to the parsed header
-    rel_fname: str = ""
+    #: Path to the parsed header relative to some root
+    rel_fname: str
 
     #: True if <pybind11/operators.h> is needed
     need_operators_h: bool = False
 
-    using_declarations: typing.List[str] = field(default_factory=list)
+    using_declarations: typing.List[PQName] = field(default_factory=list)
 
     # TODO: anon enums?
     enums: typing.List[EnumContext] = field(default_factory=list)
@@ -505,16 +529,17 @@ class HeaderContext:
     # trampolines
 
     # template_classes
-    # - this is a dict instead of a list because of a quirk in Jinja, change
-    #   it back once we get rid of h2w
-    template_instances: typing.Dict[str, TemplateInstanceContext] = field(
-        default_factory=dict
+    template_instances: typing.List[TemplateInstanceContext] = field(
+        default_factory=list
     )
 
     type_caster_includes: typing.List[str] = field(default_factory=list)
     user_typealias: typing.List[str] = field(default_factory=list)
 
     using_ns: typing.List[str] = field(default_factory=list)
+
+    # All namespaces that occur in the file
+    namespaces: typing.List[str] = field(default_factory=list)
 
     subpackages: typing.Dict[str, str] = field(default_factory=dict)
 

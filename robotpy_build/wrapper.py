@@ -14,25 +14,27 @@ from os.path import (
     sep,
     splitext,
 )
+import pathlib
 import posixpath
 import shutil
 import toposort
 from typing import Any, Dict, List, Optional, Set, Tuple
-import yaml
-
-from header2whatever.config import Config
-from header2whatever.parse import ConfigProcessor
 
 from urllib.error import HTTPError
 import dataclasses
 
 from setuptools import Extension
 
+from cxxheaderparser.options import ParserOptions
+from cxxheaderparser.preprocessor import make_pcpp_preprocessor
+
 
 from .download import download_and_extract_zip
 from .config.pyproject_toml import PatchInfo, WrapperConfig, Download
-from .autowrap.generator_data import MissingReporter
-from .autowrap.hooks import Hooks
+
+from .autowrap.cxxparser import parse_header
+from .autowrap.generator_data import GeneratorData, MissingReporter
+from .autowrap.writer import WrapperWriter
 
 from .config.autowrap_yml import AutowrapConfigYaml
 from .config.dev_yml import get_dev_config
@@ -48,9 +50,10 @@ class Wrapper:
     # -> should we change this based on what flags the compiler supports?
     _cpp_version = "__cplusplus 201703L"
 
-    def __init__(self, package_name, cfg: WrapperConfig, setup):
+    def __init__(self, package_name, cfg: WrapperConfig, setup, wwriter: WrapperWriter):
         self.package_name = package_name
         self.cfg = cfg
+        self.wwriter = wwriter
 
         self.setup_root = setup.root
         self.pypi_package = setup.pypi_package
@@ -183,7 +186,7 @@ class Wrapper:
             self.additional_data_files.append(relpath(fullpath, self.root))
 
     # pkgcfg interface
-    def get_include_dirs(self) -> Optional[List[str]]:
+    def get_include_dirs(self) -> List[str]:
         includes = [self.incdir, self.rpy_incdir]
         if self.cfg.download:
             for dl in self.cfg.download:
@@ -600,15 +603,7 @@ class Wrapper:
             report_only = False
             missing_reporter = MissingReporter()
 
-        thisdir = abspath(dirname(__file__))
-
         hppoutdir = join(self.rpy_incdir, "rpygen")
-        tmpl_dir = join(thisdir, "autowrap")
-        header_cpp_tmpl = join(tmpl_dir, "header.cpp.j2")
-        cls_tmpl_inst_cpp = join(tmpl_dir, "cls_tmpl_inst.cpp.j2")
-        cls_tmpl_inst_hpp = join(tmpl_dir, "cls_tmpl_inst.hpp.j2")
-        hpp_tmpl = join(tmpl_dir, "cls_rpy_include.hpp.j2")
-        classdeps_tmpl = join(tmpl_dir, "clsdeps.json.j2")
 
         pp_includes = self._all_includes(False)
 
@@ -638,8 +633,6 @@ class Wrapper:
         # These are written to file to make it easier for dev mode to work
         classdeps = {}
 
-        processor = ConfigProcessor(tmpl_dir)
-
         if self.dev_config.only_generate is not None:
             only_generate = {n: True for n in self.dev_config.only_generate}
         else:
@@ -652,6 +645,7 @@ class Wrapper:
             for path in generation_search_path:
                 header_path = join(path, header)
                 if exists(header_path):
+                    header_root = pathlib.Path(path)
                     break
             else:
                 import pprint
@@ -659,25 +653,9 @@ class Wrapper:
                 pprint.pprint(generation_search_path)
                 raise ValueError("could not find " + header)
 
-            if report_only:
-                templates = []
-                class_templates = []
-            else:
-                header_cpp_dst = join(cxx_gen_dir, f"{name}.cpp")
-                self.extension.sources.append(header_cpp_dst)
+            if not report_only:
                 classdeps_dst = join(cxx_gen_dir, f"{name}.json")
                 classdeps[name] = classdeps_dst
-
-                hpp_dst = join(
-                    hppoutdir,
-                    "{{ cls['namespace'] | replace(':', '_') }}__{{ cls['name'] }}.hpp",
-                )
-
-                templates = [
-                    {"src": header_cpp_tmpl, "dst": header_cpp_dst},
-                    {"src": classdeps_tmpl, "dst": classdeps_dst},
-                ]
-                class_templates = [{"src": hpp_tmpl, "dst": hpp_dst}]
 
             if per_header:
                 data_fname = join(datapath, name + ".yml")
@@ -687,53 +665,41 @@ class Wrapper:
                 else:
                     data = AutowrapConfigYaml.from_file(data_fname)
 
-                # split instantiation of each template to separate cpp files to reduce
-                # compiler memory for really obscene objects
-                if not report_only and data.templates:
-                    class_templates.append(
-                        {
-                            "src": cls_tmpl_inst_hpp,
-                            "dst": join(cxx_gen_dir, f"{name}_tmpl.hpp"),
-                        }
-                    )
-
-                    for i, k in enumerate(data.templates.keys()):
-                        tmpl_cpp_dst = join(cxx_gen_dir, f"{name}_tmpl{i + 1}.cpp")
-                        class_templates.append(
-                            {
-                                "src": cls_tmpl_inst_cpp,
-                                "dst": tmpl_cpp_dst,
-                                "vars": {"index": i},
-                            }
-                        )
-                        self.extension.sources.append(tmpl_cpp_dst)
-
             if only_generate is not None and not only_generate.pop(name, False):
                 continue
 
-            # for each thing, create a h2w configuration dictionary
-            cfgd = {
-                # generation code depends on this being just one header!
-                "headers": [header_path],
-                "templates": templates,
-                "class_templates": class_templates,
-                "preprocess": True,
-                "pp_retain_all_content": False,
-                "pp_include_paths": pp_includes,
-                "pp_defines": pp_defines,
-            }
+            popts = ParserOptions(
+                preprocessor=make_pcpp_preprocessor(
+                    defines=pp_defines,
+                    include_paths=pp_includes,
+                    encoding=data.encoding,
+                )
+            )
 
-            cfg = Config(cfgd)
-            cfg.validate()
-            cfg.root = self.incdir
+            gendata = GeneratorData(data)
 
-            hooks = Hooks(data, casters, report_only, name)
             try:
-                processor.process_config(cfg, data, hooks)
+                hctx = parse_header(
+                    name,
+                    pathlib.Path(header_path),
+                    header_root,
+                    gendata,
+                    popts,
+                    casters,
+                    report_only,
+                )
+
+                if not report_only:
+                    generated_sources = self.wwriter.write_files(
+                        hctx, name, cxx_gen_dir, hppoutdir, classdeps_dst
+                    )
+                    self.extension.sources.extend(
+                        [relpath(src, self.setup_root) for src in generated_sources]
+                    )
             except Exception as e:
                 raise ValueError(f"processing {header}") from e
 
-            hooks.report_missing(data_fname, missing_reporter)
+            gendata.report_missing(data_fname, missing_reporter)
 
         if only_generate:
             unused = ", ".join(sorted(only_generate))
@@ -779,12 +745,6 @@ class Wrapper:
         begin_calls = []
         finish_calls = []
 
-        def _clean(n):
-            tmpl_idx = n.find("<")
-            if tmpl_idx != -1:
-                n = n[:tmpl_idx]
-            return n
-
         # Need to ensure that wrapper initialization is called in base order
         # so we have to toposort it here. The data is written at gen time
         # to JSON files
@@ -801,11 +761,10 @@ class Wrapper:
                 ordering.append(name)
 
             for clsname, bases in dep.items():
-                clsname = _clean(clsname)
                 if clsname in types2name:
-                    raise ValueError(f"duplicate class {clsname}")
+                    raise ValueError(f"{name} ({jsonfile}): duplicate class {clsname}")
                 types2name[clsname] = name
-                types2deps[clsname] = [_clean(base) for base in bases]
+                types2deps[clsname] = bases[:]
 
         to_sort: Dict[str, Set[str]] = {}
         for clsname, bases in types2deps.items():

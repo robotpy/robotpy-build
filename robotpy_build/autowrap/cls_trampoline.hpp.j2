@@ -51,7 +51,7 @@ using namespace {{ cls.namespace }};
 {% endif %}
 
 {% for decl in using_declarations %}
-using {{ decl }};
+using {{ decl.format() }};
 {% endfor %}
 
 {#
@@ -121,6 +121,9 @@ struct PyTrampoline_{{ cls.full_cpp_name_identifier }} : PyTrampolineBase, virtu
 
 {% for ccls in cls.child_classes if not ccls.template %}
   using {{ ccls.cpp_name }} [[maybe_unused]] = typename {{ ccls.full_cpp_name }};
+{% endfor %}
+{% for enum in cls.enums if enum.cpp_name %}
+  using {{ enum.cpp_name }} [[maybe_unused]] = typename {{ enum.full_cpp_name }};
 {% endfor %}
 {% for typealias in cls.user_typealias %}
     {{ typealias }};

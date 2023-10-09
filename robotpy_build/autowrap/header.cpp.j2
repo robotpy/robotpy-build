@@ -38,8 +38,8 @@
 #}
 #include <type_traits>
 
-{% for cls in classes if cls.namespace and not cls.template %}
-  using namespace {{ cls.namespace }};
+{% for ns in namespaces %}
+  using namespace {{ ns }};
 {% endfor %}
 
 {% for cls in classes if cls.nodelete %}
@@ -64,7 +64,7 @@ struct rpybuild_{{ hname }}_initializer {
 {% endfor %}
 
 {# template decls #}
-{% for tmpl_data in template_instances.values() %}
+{% for tmpl_data in template_instances %}
   rpygen::{{ tmpl_data.binder_typename }} {{ tmpl_data.var_name }};
 {% endfor %}
 
@@ -86,7 +86,7 @@ struct rpybuild_{{ hname }}_initializer {
     enum{{ loop.index }}{{ pybind11.enum_init(enum.scope_var, enum) }},
   {% endfor %}
 
-  {% for tmpl_data in template_instances.values() %}
+  {% for tmpl_data in template_instances %}
     {{ tmpl_data.var_name }}({{ tmpl_data.scope_var }}, "{{ tmpl_data.py_name }}"),
   {% endfor %}
 
@@ -115,7 +115,7 @@ struct rpybuild_{{ hname }}_initializer {
 void finish() {
 
 {# templates #}
-{% for tdata in template_instances.values() %}
+{% for tdata in template_instances %}
   {{ tdata.var_name }}.finish(
     {% if tdata.doc_set %}{{ pybind11.docv(tdata.doc_set) }}{% else %}NULL{% endif %},
     {% if tdata.doc_add %}{{ pybind11.docv(tdata.doc_add) }}{% else %}NULL{% endif %}

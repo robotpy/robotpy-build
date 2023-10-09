@@ -31,6 +31,14 @@ public:
         return rlen;
     }
 
+    // in and out with shared length
+    int inout_buffer(const uint8_t *indata, uint8_t* outdata, int size) {
+        for (int i = 0; i < size; i++) {
+            outdata[i] = indata[i] + 1;
+        }
+        return size;
+    }
+
     //
     // virtual functions -- trampolines are disabled but normal function
     // calls work

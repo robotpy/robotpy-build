@@ -8,9 +8,9 @@ robotpy-build can be told to parse C/C++ headers and automatically generate
 :std:doc:`pybind11 <pybind11:basics>` wrappers around the functions
 and objects found in that header.
 
-.. note:: We use a fork of `CppHeaderParser <https://github.com/robotpy/robotpy-cppheaderparser>`_
-          to parse headers. We've improved it to handle many complicated modern
-          C++ features, but if you run into problems please file a bug on github.
+.. note:: We use `cxxheaderparser <https://github.com/robotpy/cxxheaderparser>`_
+          to parse headers. It can handle common and complex C++ syntax, but
+          if you run into problems please file a bug on github.
 
 C++ Features
 ------------

@@ -2,8 +2,11 @@
 #pragma once
 
 #include "using_companion.h"
+#include <string>
 
 namespace cr::inner {
+
+using cr2::WontResolve;
     
 class ProtectedUsing {
 public:
@@ -15,7 +18,16 @@ protected:
   ProtectedUsing(CantResolve t) {}
 };
 
-void fn_using(AlsoCantResolve t) {}
-void fn_using(std::string t) {}
+inline void fn_using(AlsoCantResolve t) {}
+inline void fn_using(std::string t) {}
+
+}
+
+// used in using2.h
+namespace u {
+
+struct FwdDecl {
+  int x = 0;
+};
 
 }

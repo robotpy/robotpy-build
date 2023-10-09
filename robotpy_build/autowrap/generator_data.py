@@ -9,8 +9,10 @@ from ..config.autowrap_yml import (
 )
 from .j2_context import OverloadTracker
 
+from cxxheaderparser.types import Function
+
 import dataclasses
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclasses.dataclass
@@ -18,6 +20,11 @@ class FnReportData:
     missing: bool = False
     overloads: Dict[str, bool] = dataclasses.field(default_factory=dict)
     tracker: OverloadTracker = dataclasses.field(default_factory=OverloadTracker)
+
+    # need to be put into overloads if reports are being made
+    deferred_signatures: List[Tuple[Function, bool]] = dataclasses.field(
+        default_factory=list
+    )
 
 
 AttrMissingData = Dict[str, bool]
@@ -55,6 +62,9 @@ class GeneratorData:
         self.attributes: AttrMissingData = {}
 
     def get_class_data(self, name: str) -> ClassData:
+        """
+        The 'name' is [parent_class::]class_name
+        """
         data = self.data.classes.get(name)
         missing = data is None
         if missing:
@@ -86,7 +96,7 @@ class GeneratorData:
     def get_function_data(
         self,
         name: str,
-        signature: str,
+        fn: Function,
         cls_key: Optional[str] = None,
         cls_data: Optional[ClassData] = None,
         is_private: bool = False,
@@ -106,9 +116,22 @@ class GeneratorData:
         missing = data is None
         report_data.missing = missing and not is_private
 
+        # When retrieving function data, we have to take into account which overload
+        # is being processed, so that the user can customize each overload uniquely
+        # if desired
+
+        # most functions don't have overloads, so instead of computing the
+        # signature each time we defer it until we actually need to use it
+
         if missing:
             data = _default_fn_data
+            report_data.deferred_signatures.append((fn, is_private))
+        elif not data.overloads:
+            report_data.deferred_signatures.append((fn, True))
         else:
+            # When there is overload data present, we have to actually compute
+            # the signature of every function
+            signature = self._get_function_signature(fn)
             overload = data.overloads.get(signature)
             missing = overload is None
             if not missing and overload:
@@ -117,8 +140,8 @@ class GeneratorData:
                 del data["overloads"]
                 data.update(overload.dict(exclude_unset=True))
                 data = FunctionData(**data)
+            report_data.overloads[signature] = is_private or not missing
 
-        report_data.overloads[signature] = is_private or not missing
         report_data.tracker.add_overload()
         return data, report_data.tracker
 
@@ -196,8 +219,14 @@ class GeneratorData:
         for fn, fndata in fns.items():
             fn = str(fn)
             overloads = fndata.overloads
-            overloads_count = len(overloads)
+            deferred_signatures = fndata.deferred_signatures
+            overloads_count = len(overloads) + len(deferred_signatures)
             if overloads_count > 1:
+                # process each deferred signature
+                for dfn, v in deferred_signatures:
+                    signature = self._get_function_signature(dfn)
+                    overloads[signature] = v
+
                 has_data = all(overloads.values())
             else:
                 has_data = not fndata.missing
@@ -223,6 +252,29 @@ class GeneratorData:
             data[fn_key] = fn_report
 
         return data
+
+    def _get_function_signature(self, fn: Function) -> str:
+        """
+        Only includes the names of parameters and a [const] indicator if needed
+        """
+
+        signature = ", ".join(
+            f"{p.type.format()}..." if p.param_pack else p.type.format()
+            for p in fn.parameters
+        )
+
+        if getattr(fn, "const", False):
+            if signature:
+                signature = f"{signature} [const]"
+            else:
+                signature = "[const]"
+        elif fn.constexpr:
+            if signature:
+                signature = f"{signature} [constexpr]"
+            else:
+                signature = "[constexpr]"
+
+        return signature
 
 
 class MissingReporter:

@@ -19,7 +19,7 @@
 {% endif %}
 
 {% for decl in using_declarations %}
-using {{ decl }};
+using {{ decl.format() }};
 {% endfor %}
 
 {% for cls in classes_with_trampolines %}
