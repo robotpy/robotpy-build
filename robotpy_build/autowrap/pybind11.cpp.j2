@@ -83,7 +83,7 @@
   {% endif %}
   {%- if fn.operator -%}
     {%- if fn.cpp_code -%}
-      {{ fn.cpp_code }}
+        .def({{ fn.cpp_code }}
     {%- else -%}
       {%- if ns.arg_params -%}
         .def(py::self {{ fn.operator }} {{ ns.arg_params[0].cpp_type_no_const }}()
