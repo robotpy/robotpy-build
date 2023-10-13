@@ -344,6 +344,8 @@ class TrampolineData:
 
 @dataclass
 class ClassTemplateData:
+    #: N, ..
+    argument_list: str
     #: <typename N, .. >
     parameter_list: str
 

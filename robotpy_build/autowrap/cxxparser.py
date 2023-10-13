@@ -651,6 +651,7 @@ class AutowrapVisitor:
             template_parameter_list = ", ".join(template_params)
 
             template_data = ClassTemplateData(
+                argument_list=template_argument_list,
                 parameter_list=template_parameter_list,
                 inline_code=class_data.template_inline_code,
             )

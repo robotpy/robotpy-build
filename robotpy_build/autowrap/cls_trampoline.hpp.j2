@@ -27,8 +27,10 @@
 
 {%- set trampoline = cls.trampoline -%}
 {%- if cls.template -%}
+    {%- set template_argument_list = cls.template.argument_list -%}
     {%- set template_parameter_list = cls.template.parameter_list -%}
 {%- else -%}
+    {%- set template_argument_list = "" %}
     {%- set template_parameter_list = "" %}
 {%- endif -%}
 
@@ -63,20 +65,14 @@ using {{ decl.format() }};
       and so if it's not defined in this config, then it falls back to the
       parent configuration)
 #}
+template <{{ postcomma(template_parameter_list) }}typename CfgBase = EmptyTrampolineCfg>
+struct PyTrampolineCfg_{{ cls.full_cpp_name_identifier }} :
 {% if cls.bases %}
-template <{{ postcomma(trampoline.tmpl_params) }}typename CfgBase>
-using PyTrampolineCfgBase_{{ cls.full_cpp_name_identifier }} =
 {% for base in cls.bases %}
     PyTrampolineCfg_{{ base.full_cpp_name_identifier }}<{{ postcomma(base.template_params) }}
 {% endfor %}
 CfgBase
-{% for base in cls.bases %}>{% endfor %};
-{% endif %}
-
-template <{{ postcomma(template_parameter_list) }}typename CfgBase = EmptyTrampolineCfg>
-struct PyTrampolineCfg_{{ cls.full_cpp_name_identifier }} :
-{% if cls.bases %}
-    PyTrampolineCfgBase_{{ cls.full_cpp_name_identifier }}<{{ postcomma(trampoline.tmpl_args) }} CfgBase>
+{% for base in cls.bases %}>{% endfor %}
 {% else %}
     CfgBase
 {% endif %}
@@ -97,7 +93,7 @@ struct PyTrampolineCfg_{{ cls.full_cpp_name_identifier }} :
 
     PyTrampolineBase is another trampoline or our base class
 #}
-template <typename PyTrampolineBase{{ precomma(trampoline.tmpl_params) }}, typename PyTrampolineCfg>
+template <typename PyTrampolineBase{{ precomma(template_parameter_list) }}, typename PyTrampolineCfg>
 using PyTrampolineBase_{{ cls.full_cpp_name_identifier }} =
 {% for base in cls.bases %}
     PyTrampoline_{{ base.full_cpp_name_identifier }}<
@@ -111,8 +107,8 @@ using PyTrampolineBase_{{ cls.full_cpp_name_identifier }} =
 ;
 
 template <typename PyTrampolineBase{{ precomma(template_parameter_list) }}, typename PyTrampolineCfg>
-struct PyTrampoline_{{ cls.full_cpp_name_identifier }} : PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(trampoline.tmpl_args) }}, PyTrampolineCfg> {
-    using PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(trampoline.tmpl_args) }}, PyTrampolineCfg>::PyTrampolineBase_{{ cls.full_cpp_name_identifier }};
+struct PyTrampoline_{{ cls.full_cpp_name_identifier }} : PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(template_argument_list) }}, PyTrampolineCfg> {
+    using PyTrampolineBase_{{ cls.full_cpp_name_identifier }}<PyTrampolineBase{{ precomma(template_argument_list) }}, PyTrampolineCfg>::PyTrampolineBase_{{ cls.full_cpp_name_identifier }};
 {% else %}
 template <typename PyTrampolineBase{{ precomma(template_parameter_list) }}, typename PyTrampolineCfg>
 struct PyTrampoline_{{ cls.full_cpp_name_identifier }} : PyTrampolineBase, virtual py::trampoline_self_life_support {
