@@ -29,6 +29,7 @@ from cxxheaderparser.types import (
     AnonymousName,
     Array,
     ClassDecl,
+    Concept,
     DecoratedType,
     EnumDecl,
     Field,
@@ -379,6 +380,9 @@ class AutowrapVisitor:
         self, state: AWNonClassBlockState, alias: NamespaceAlias
     ) -> None:
         # TODO: add to some sort of resolver?
+        pass
+
+    def on_concept(self, state: AWNonClassBlockState, concept: Concept) -> None:
         pass
 
     def on_forward_decl(self, state: AWState, fdecl: ForwardDecl) -> None:
