@@ -145,6 +145,24 @@ class GeneratorData:
         report_data.tracker.add_overload()
         return data, report_data.tracker
 
+    def add_using_decl(
+        self, name: str, cls_key: str, cls_data: ClassData, is_private: bool
+    ):
+        # copied from get_function_data
+        data = cls_data.methods.get(name)
+        report_base = self.classes[cls_key].functions
+
+        report_data = report_base.get(name)
+        if not report_data:
+            report_data = FnReportData()
+            report_base[name] = report_data
+
+        missing = data is None
+        report_data.missing = missing and not is_private
+
+        # We count this as an overload because it might be
+        report_data.tracker.add_overload()
+
     def get_cls_prop_data(
         self, name: str, cls_key: str, cls_data: ClassData
     ) -> PropData:

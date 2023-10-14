@@ -451,6 +451,16 @@ class AutowrapVisitor:
 
         if using.access is None:
             self.hctx.using_declarations.append(using.typename)
+        elif isinstance(state, ClassBlockState):
+            # A using declaration might bring in a colliding name for a function,
+            # so mark it as overloaded
+            lseg = using.typename.segments[-1]
+            if isinstance(lseg, NameSpecifier):
+                cdata = state.user_data
+                name = lseg.name
+                self.gendata.add_using_decl(
+                    name, cdata.cls_key, cdata.data, state.access == "private"
+                )
 
     #
     # Enums
