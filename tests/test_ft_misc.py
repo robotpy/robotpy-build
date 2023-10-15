@@ -161,6 +161,16 @@ def test_operators_eq():
     assert o1 != o2
 
 
+def test_operators_eq2():
+    o1 = ft.HasOperatorNoDefault(1)
+    o1a = ft.HasOperatorNoDefault(1)
+    o2 = ft.HasOperatorNoDefault(2)
+
+    assert o1 == o1a
+    assert not (o1 == o2)
+    assert o1 != o2
+
+
 #
 # static_only.h
 #

@@ -250,6 +250,7 @@ class FunctionContext:
     namespace: str = ""
 
     #: The operator for this method
+    #: - if set, cpp_type will be filled out by the parser
     operator: typing.Optional[str] = None
 
     #: True if this is a static method

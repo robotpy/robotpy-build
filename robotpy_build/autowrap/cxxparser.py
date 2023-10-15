@@ -1043,6 +1043,23 @@ class AutowrapVisitor:
             self.hctx.need_operators_h = True
             if method_data.no_release_gil is None:
                 fctx.release_gil = False
+
+            # Use cpp_code to setup the operator
+            if fctx.cpp_code is None:
+                if len(method.parameters) == 0:
+                    fctx.cpp_code = f"{operator} py::self"
+                else:
+                    ptype, _, _, _ = _count_and_unwrap(method.parameters[0].type)
+                    if (
+                        isinstance(ptype, Type)
+                        and isinstance(ptype.typename.segments[-1], NameSpecifier)
+                        and ptype.typename.segments[-1].name == cdata.ctx.cpp_name
+                    ):
+                        # don't try to predict the type, use py::self instead
+                        fctx.cpp_code = f"py::self {operator} py::self"
+                    else:
+                        fctx.cpp_code = f"py::self {operator} {fctx.all_params[0].cpp_type_no_const}()"
+
         if method.const:
             fctx.const = True
         if method.static:
