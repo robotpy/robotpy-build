@@ -9,7 +9,7 @@ of RobotPy's various wrapper libraries, chiefly around:
 * Autogenerating pybind11 wrappers around those dependencies
 * Building wheels from those generated wrappers
 
-Requires Python 3.6+
+Requires Python 3.8+
 
 Documentation
 -------------

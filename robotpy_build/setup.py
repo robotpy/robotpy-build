@@ -111,7 +111,7 @@ class Setup:
         self.setup_kwargs = self.project_dict.get("metadata", {})
         self.setup_kwargs["zip_safe"] = False
         self.setup_kwargs["include_package_data"] = True
-        self.setup_kwargs["python_requires"] = ">=3.6"
+        self.setup_kwargs["python_requires"] = ">=3.8"
 
         self._generate_long_description()
 
