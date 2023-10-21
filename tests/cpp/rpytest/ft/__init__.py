@@ -230,3 +230,6 @@ __all__ = [
     "raise_from_already_set",
     "subpkg",
 ]
+
+# type alias used for rpyint_type_caster.h
+rpyint = int
