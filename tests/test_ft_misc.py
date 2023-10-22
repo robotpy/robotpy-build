@@ -147,6 +147,15 @@ def test_cpp_code_with_constant():
 
 
 #
+# ns_class.h
+#
+
+
+def test_ns_class():
+    assert ft._rpytest_ft.NSClass().getN() == 4
+
+
+#
 # operators.h
 #
 

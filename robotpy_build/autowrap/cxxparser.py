@@ -580,7 +580,11 @@ class AutowrapVisitor:
         ):
             return False
 
-        cls_key, cls_name, cls_namespace, parent_ctx = self._process_class_name(state)
+        cls_name_result = self._process_class_name(state)
+        if cls_name_result is None:
+            return False
+
+        cls_key, cls_name, cls_namespace, parent_ctx = cls_name_result
         class_data = self.gendata.get_class_data(cls_key)
 
         # Ignore explicitly ignored classes
@@ -761,23 +765,24 @@ class AutowrapVisitor:
 
     def _process_class_name(
         self, state: AWClassBlockState
-    ) -> typing.Tuple[str, str, str, typing.Optional[ClassContext]]:
+    ) -> typing.Optional[typing.Tuple[str, str, str, typing.Optional[ClassContext]]]:
         class_decl = state.class_decl
         segments = class_decl.typename.segments
         assert len(segments) > 0
 
-        name_segment = segments[-1]
-        if not isinstance(name_segment, NameSpecifier):
-            raise ValueError(f"not sure how to handle '{class_decl.typename}'")
+        segment_names: typing.List[str] = []
+        for segment in segments:
+            if not isinstance(segment, NameSpecifier):
+                raise ValueError(
+                    f"not sure how to handle '{class_decl.typename.format()}'"
+                )
+            # ignore specializations for now
+            if segment.specialization is not None:
+                return None
+            segment_names.append(segment.name)
 
-        cls_name = name_segment.name
-
-        # for now, don't support these?
-        other_segments = segments[:-1]
-        if other_segments:
-            raise ValueError(
-                f"not sure what to do with compound name '{class_decl.typename}'"
-            )
+        cls_name = segment_names[-1]
+        extra_segments = "::".join(segment_names[:-1])
 
         parent_ctx: typing.Optional[ClassContext] = None
 
@@ -787,13 +792,18 @@ class AutowrapVisitor:
             # easy case -- namespace is the next user_data up
             cls_key = cls_name
             cls_namespace = typing.cast(str, parent.user_data)
+            if extra_segments:
+                cls_namespace = f"{cls_namespace}::{extra_segments}"
         else:
             # Use things the parent already computed
             cdata = typing.cast(ClassStateData, parent.user_data)
             # parent: AWClassBlockState = state.parent
             parent_ctx = cdata.ctx
             # the parent context already computed namespace, so use that
-            cls_key = f"{cdata.cls_key}::{cls_name}"
+            if extra_segments:
+                cls_key = f"{cdata.cls_key}::{extra_segments}::{cls_name}"
+            else:
+                cls_key = f"{cdata.cls_key}::{cls_name}"
             cls_namespace = parent_ctx.namespace
 
         return cls_key, cls_name, cls_namespace, parent_ctx
