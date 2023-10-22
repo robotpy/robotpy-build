@@ -40,10 +40,6 @@ class ClsReportData:
     functions: FnMissingData = dataclasses.field(default_factory=dict)
 
 
-_default_enum_data = EnumData()
-_default_fn_data = FunctionData()
-
-
 class GeneratorData:
     """
     Used by the hooks to retrieve user-specified generation data, and
@@ -54,6 +50,13 @@ class GeneratorData:
 
     def __init__(self, data: AutowrapConfigYaml):
         self.data = data
+
+        default_ignore = self.data.defaults.ignore
+        self._default_enum_data = EnumData(ignore=default_ignore)
+        self._default_fn_data = FunctionData(ignore=default_ignore)
+        self._default_method_data = FunctionData()
+        self._default_class_data = ClassData(ignore=default_ignore)
+        self._default_class_enum_data = EnumData()
 
         # report data
         self.functions: FnMissingData = {}
@@ -68,7 +71,7 @@ class GeneratorData:
         data = self.data.classes.get(name)
         missing = data is None
         if missing:
-            data = ClassData()
+            data = self._default_class_data
 
         self.classes[name] = ClsReportData(missing=missing)
         return data
@@ -78,11 +81,11 @@ class GeneratorData:
     ) -> EnumData:
         if name is None:
             # TODO
-            return _default_enum_data
+            return self._default_class_enum_data
         data = cls_data.enums.get(name)
         if data is None:
             self.classes[cls_key].enums[name] = False
-            data = _default_enum_data
+            data = self._default_class_enum_data
 
         return data
 
@@ -90,7 +93,7 @@ class GeneratorData:
         data = self.data.enums.get(name)
         if data is None:
             self.enums[name] = False
-            data = _default_enum_data
+            data = self._default_enum_data
         return data
 
     def get_function_data(
@@ -124,7 +127,10 @@ class GeneratorData:
         # signature each time we defer it until we actually need to use it
 
         if missing:
-            data = _default_fn_data
+            if cls_key:
+                data = self._default_method_data
+            else:
+                data = self._default_fn_data
             report_data.deferred_signatures.append((fn, is_private))
         elif not data.overloads:
             report_data.deferred_signatures.append((fn, True))
@@ -187,22 +193,39 @@ class GeneratorData:
         data yaml and print it out if there's missing data
         """
 
+        ignore_default = self.data.defaults.ignore
+        report_missing = True
+        if ignore_default and not self.data.defaults.report_ignored_missing:
+            report_missing = False
+
         # note: sometimes we have strings from CppHeaderParser that aren't
         # strings, so we need to cast them to str so yaml doesn't complain
 
         data = self._process_missing(
-            self.attributes, self.functions, self.enums, "functions"
+            self.attributes,
+            self.functions,
+            self.enums,
+            "functions",
+            ignore_default,
+            report_missing,
         )
 
         all_cls_data = {}
         for cls_key, cls_data in self.classes.items():
+            if cls_data.missing and not report_missing:
+                continue
+
             result = self._process_missing(
                 cls_data.attributes,
                 cls_data.functions,
                 cls_data.enums,
                 "methods",
+                False,
+                True,
             )
             if result or cls_data.missing:
+                if ignore_default and cls_data.missing:
+                    result["ignore"] = True
                 all_cls_data[str(cls_key)] = result
         if all_cls_data:
             data["classes"] = all_cls_data
@@ -218,6 +241,8 @@ class GeneratorData:
         fns: FnMissingData,
         enums: EnumMissingData,
         fn_key: str,
+        ignore_default: bool,
+        report_missing: bool,
     ):
         data: Dict[str, Dict[str, Dict]] = {}
 
@@ -230,11 +255,22 @@ class GeneratorData:
 
         # enums
         if enums:
-            data["enums"] = {str(n): {} for n in enums.keys()}
+            enums_report = {}
+            for en, enum_present in enums.items():
+                if not enum_present and not report_missing:
+                    continue
+                enums_report[en] = {}
+                if ignore_default:
+                    enums_report[en]["ignore"] = True
+            if enums_report:
+                data["enums"] = enums_report
 
         # functions
         fn_report = {}
         for fn, fndata in fns.items():
+            if fndata.missing and not report_missing:
+                continue
+
             fn = str(fn)
             overloads = fndata.overloads
             deferred_signatures = fndata.deferred_signatures
@@ -264,8 +300,12 @@ class GeneratorData:
                     for k, v in fn_report[fn]["overloads"].items():
                         if "initializer_list" in k:
                             v["ignore"] = True
+                        if ignore_default:
+                            v["ignore"] = True
                 else:
                     fn_report[fn] = d
+                    if ignore_default:
+                        d["ignore"] = True
         if fn_report:
             data[fn_key] = fn_report
 

@@ -6,7 +6,7 @@
 import enum
 from typing import Dict, List, Tuple, Optional
 
-from pydantic import validator
+from pydantic import validator, Field
 from .util import Model, _generating_documentation
 import yaml
 
@@ -463,11 +463,26 @@ class TemplateData(Model):
     doc_append: Optional[str] = None
 
 
+class Defaults(Model):
+    """
+    Defaults to apply to everything
+    """
+
+    #: Set this to True to ignore functions/enums/classes at namespace scope
+    #: by default if they aren't present in the YAML
+    ignore: bool = False
+
+    #: If False and default ignore is True, don't report missing items
+    report_ignored_missing: bool = True
+
+
 class AutowrapConfigYaml(Model):
     """
     Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
     generation_data
     """
+
+    defaults: Defaults = Field(default_factory=Defaults)
 
     strip_prefixes: List[str] = []
 

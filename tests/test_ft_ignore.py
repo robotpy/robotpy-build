@@ -29,3 +29,27 @@ def test_ignored_enums():
 
     assert not hasattr(ft.EnumWithIgnored, "Ignored")
     assert ft.EnumWithIgnored.NotIgnored == 1
+
+
+#
+# ignored_by_default
+#
+
+
+def test_ignored_by_default_fn():
+    assert not hasattr(ft._rpytest_ft, "id_fnIgnore")
+    assert ft._rpytest_ft.id_fnEnable() == 2
+
+
+def test_ignored_by_default_enum():
+    assert not hasattr(ft._rpytest_ft, "id_IgnoredEnum")
+    assert ft._rpytest_ft.id_EnabledEnum.Param3 == 3
+
+
+def test_ignored_by_default_class():
+    assert not hasattr(ft._rpytest_ft, "id_IgnoreClass")
+    o = ft._rpytest_ft.id_EnabledClass()
+    assert o.fn() == 3
+    assert o.fn_missing() == 4
+    assert ft._rpytest_ft.id_EnabledClass.InnerEnum.Param6 == 6
+    assert ft._rpytest_ft.id_EnabledClass.InnerEnumMissing.Param7 == 7
