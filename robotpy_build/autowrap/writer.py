@@ -1,6 +1,8 @@
 import json
+import os
 from os.path import join
 import pathlib
+import pprint
 import typing
 
 import jinja2
@@ -8,6 +10,8 @@ import jinja2
 from .j2_context import HeaderContext
 
 templates_path = pathlib.Path(__file__).parent.absolute()
+
+_emit_j2_debug = os.getenv("RPYBUILD_J2_DEBUG") == "1"
 
 
 class WrapperWriter:
@@ -49,6 +53,10 @@ class WrapperWriter:
 
         # Jinja requires input as a dictionary
         data = hctx.__dict__
+
+        if _emit_j2_debug:
+            with open(join(cxx_gen_dir, f"{name}.txt"), "w") as fp:
+                fp.write(pprint.pformat(hctx))
 
         # Write the cpp file first
         fname = join(cxx_gen_dir, f"{name}.cpp")

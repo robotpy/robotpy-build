@@ -35,5 +35,16 @@ struct Using4 {
     int getX(const FwdDecl&);
 };
 
+struct Using5a {
+    virtual ~Using5a() {}
+    void fn(int arg) {}
+};
+
+struct Using5b : Using5a {
+    // this collides but isn't picked up without interpreting the using
+    using Using5a::fn;
+    void fn(bool arg) {}
+};
+
 } // namespace u2
 } // namespace u

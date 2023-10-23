@@ -22,6 +22,7 @@ from ._rpytest_ft import (
     GEnumMath,
     HasFactory,
     HasOperator,
+    HasOperatorNoDefault,
     IBase,
     IChild,
     IFinal,
@@ -78,6 +79,9 @@ from ._rpytest_ft import (
     TOuter,
     TcrtpConcrete,
     TcrtpFwdConcrete,
+    TVBase2,
+    TVChild2,
+    TVParam2,
     UPBase,
     UPChild,
     Using4,
@@ -133,6 +137,7 @@ __all__ = [
     "GEnumMath",
     "HasFactory",
     "HasOperator",
+    "HasOperatorNoDefault",
     "IBase",
     "IChild",
     "IFinal",
@@ -189,6 +194,9 @@ __all__ = [
     "TOuter",
     "TcrtpConcrete",
     "TcrtpFwdConcrete",
+    "TVBase2",
+    "TVChild2",
+    "TVParam2",
     "UPBase",
     "UPChild",
     "Using4",
@@ -222,3 +230,6 @@ __all__ = [
     "raise_from_already_set",
     "subpkg",
 ]
+
+# type alias used for rpyint_type_caster.h
+rpyint = int

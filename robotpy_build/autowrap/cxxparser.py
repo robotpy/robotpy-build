@@ -29,6 +29,7 @@ from cxxheaderparser.types import (
     AnonymousName,
     Array,
     ClassDecl,
+    Concept,
     DecoratedType,
     EnumDecl,
     Field,
@@ -381,6 +382,9 @@ class AutowrapVisitor:
         # TODO: add to some sort of resolver?
         pass
 
+    def on_concept(self, state: AWNonClassBlockState, concept: Concept) -> None:
+        pass
+
     def on_forward_decl(self, state: AWState, fdecl: ForwardDecl) -> None:
         # TODO: add to some sort of resolver?
         pass
@@ -447,6 +451,16 @@ class AutowrapVisitor:
 
         if using.access is None:
             self.hctx.using_declarations.append(using.typename)
+        elif isinstance(state, ClassBlockState):
+            # A using declaration might bring in a colliding name for a function,
+            # so mark it as overloaded
+            lseg = using.typename.segments[-1]
+            if isinstance(lseg, NameSpecifier):
+                cdata = state.user_data
+                name = lseg.name
+                self.gendata.add_using_decl(
+                    name, cdata.cls_key, cdata.data, state.access == "private"
+                )
 
     #
     # Enums
@@ -566,7 +580,11 @@ class AutowrapVisitor:
         ):
             return False
 
-        cls_key, cls_name, cls_namespace, parent_ctx = self._process_class_name(state)
+        cls_name_result = self._process_class_name(state)
+        if cls_name_result is None:
+            return False
+
+        cls_key, cls_name, cls_namespace, parent_ctx = cls_name_result
         class_data = self.gendata.get_class_data(cls_key)
 
         # Ignore explicitly ignored classes
@@ -647,6 +665,7 @@ class AutowrapVisitor:
             template_parameter_list = ", ".join(template_params)
 
             template_data = ClassTemplateData(
+                argument_list=template_argument_list,
                 parameter_list=template_parameter_list,
                 inline_code=class_data.template_inline_code,
             )
@@ -746,23 +765,24 @@ class AutowrapVisitor:
 
     def _process_class_name(
         self, state: AWClassBlockState
-    ) -> typing.Tuple[str, str, str, typing.Optional[ClassContext]]:
+    ) -> typing.Optional[typing.Tuple[str, str, str, typing.Optional[ClassContext]]]:
         class_decl = state.class_decl
         segments = class_decl.typename.segments
         assert len(segments) > 0
 
-        name_segment = segments[-1]
-        if not isinstance(name_segment, NameSpecifier):
-            raise ValueError(f"not sure how to handle '{class_decl.typename}'")
+        segment_names: typing.List[str] = []
+        for segment in segments:
+            if not isinstance(segment, NameSpecifier):
+                raise ValueError(
+                    f"not sure how to handle '{class_decl.typename.format()}'"
+                )
+            # ignore specializations for now
+            if segment.specialization is not None:
+                return None
+            segment_names.append(segment.name)
 
-        cls_name = name_segment.name
-
-        # for now, don't support these?
-        other_segments = segments[:-1]
-        if other_segments:
-            raise ValueError(
-                f"not sure what to do with compound name '{class_decl.typename}'"
-            )
+        cls_name = segment_names[-1]
+        extra_segments = "::".join(segment_names[:-1])
 
         parent_ctx: typing.Optional[ClassContext] = None
 
@@ -772,13 +792,18 @@ class AutowrapVisitor:
             # easy case -- namespace is the next user_data up
             cls_key = cls_name
             cls_namespace = typing.cast(str, parent.user_data)
+            if extra_segments:
+                cls_namespace = f"{cls_namespace}::{extra_segments}"
         else:
             # Use things the parent already computed
             cdata = typing.cast(ClassStateData, parent.user_data)
             # parent: AWClassBlockState = state.parent
             parent_ctx = cdata.ctx
             # the parent context already computed namespace, so use that
-            cls_key = f"{cdata.cls_key}::{cls_name}"
+            if extra_segments:
+                cls_key = f"{cdata.cls_key}::{extra_segments}::{cls_name}"
+            else:
+                cls_key = f"{cdata.cls_key}::{cls_name}"
             cls_namespace = parent_ctx.namespace
 
         return cls_key, cls_name, cls_namespace, parent_ctx
@@ -1028,6 +1053,23 @@ class AutowrapVisitor:
             self.hctx.need_operators_h = True
             if method_data.no_release_gil is None:
                 fctx.release_gil = False
+
+            # Use cpp_code to setup the operator
+            if fctx.cpp_code is None:
+                if len(method.parameters) == 0:
+                    fctx.cpp_code = f"{operator} py::self"
+                else:
+                    ptype, _, _, _ = _count_and_unwrap(method.parameters[0].type)
+                    if (
+                        isinstance(ptype, Type)
+                        and isinstance(ptype.typename.segments[-1], NameSpecifier)
+                        and ptype.typename.segments[-1].name == cdata.ctx.cpp_name
+                    ):
+                        # don't try to predict the type, use py::self instead
+                        fctx.cpp_code = f"py::self {operator} py::self"
+                    else:
+                        fctx.cpp_code = f"py::self {operator} {fctx.all_params[0].cpp_type_no_const}()"
+
         if method.const:
             fctx.const = True
         if method.static:

@@ -3,6 +3,10 @@
 #}
 {% import "pybind11.cpp.j2" as pybind11 %}
 
+{% for inc in type_caster_includes %}
+#include <{{ inc }}>
+{% endfor %}
+
 namespace rpygen {
 
 {% if cls.namespace %}

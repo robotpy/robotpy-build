@@ -152,6 +152,8 @@ def main():
     for stub in cfg["stubs"]:
         sys.argv = [
             "<dummy>",
+            "--exit-code",
+            "--ignore-invalid-expressions=<.*>",
             "--root-suffix=",
             "-o",
             out,

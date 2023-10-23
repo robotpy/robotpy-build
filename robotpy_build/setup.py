@@ -24,6 +24,11 @@ from .command.build_ext import BuildExt
 from .command.build_pyi import BuildPyi
 from .command.develop import Develop
 
+try:
+    from .command.editable_wheel import EditableWheel
+except ImportError:
+    EditableWheel = None  # type: ignore
+
 from .config.pyproject_toml import RobotpyBuildConfig
 
 from .maven import convert_maven_to_downloads
@@ -139,6 +144,8 @@ class Setup:
             "build_pyi": BuildPyi,
             "develop": Develop,
         }
+        if EditableWheel:
+            self.setup_kwargs["cmdclass"]["editable_wheel"] = EditableWheel
         if bdist_wheel:
             self.setup_kwargs["cmdclass"]["bdist_wheel"] = bdist_wheel
         for cls in self.setup_kwargs["cmdclass"].values():

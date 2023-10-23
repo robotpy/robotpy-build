@@ -12,8 +12,12 @@ namespace pybind11 { namespace detail {
          * This macro establishes the name 'inty' in
          * function signatures and declares a local variable
          * 'value' of type inty
+         *
+         * BUT if you're using a custom type name that doesn't exist,
+         * then you need to add a type alias or pybind11-stubgen gets
+         * angry at you -- so this has to be a fully qualified name
          */
-        PYBIND11_TYPE_CASTER(rpy::rpyint, const_name("rpyint"));
+        PYBIND11_TYPE_CASTER(rpy::rpyint, const_name("rpytest.ft.rpyint"));
 
         /**
          * Conversion part 1 (Python->C++): convert a PyObject into a inty

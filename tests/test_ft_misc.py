@@ -147,6 +147,15 @@ def test_cpp_code_with_constant():
 
 
 #
+# ns_class.h
+#
+
+
+def test_ns_class():
+    assert ft._rpytest_ft.NSClass().getN() == 4
+
+
+#
 # operators.h
 #
 
@@ -155,6 +164,16 @@ def test_operators_eq():
     o1 = ft.HasOperator(1)
     o1a = ft.HasOperator(1)
     o2 = ft.HasOperator(2)
+
+    assert o1 == o1a
+    assert not (o1 == o2)
+    assert o1 != o2
+
+
+def test_operators_eq2():
+    o1 = ft.HasOperatorNoDefault(1)
+    o1a = ft.HasOperatorNoDefault(1)
+    o2 = ft.HasOperatorNoDefault(2)
 
     assert o1 == o1a
     assert not (o1 == o2)

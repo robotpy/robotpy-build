@@ -12,3 +12,16 @@ public:
 private:
     int m_i;
 };
+
+struct HasOperatorNoDefault {
+    // no default constructor
+    explicit HasOperatorNoDefault(int set_x) {
+        x = set_x;
+    }
+
+    bool operator==(const HasOperatorNoDefault &o) const {
+        return x == o.x;
+    }
+
+    int x;
+};

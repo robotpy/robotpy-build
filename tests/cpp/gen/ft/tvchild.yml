@@ -1,0 +1,14 @@
+---
+
+classes:
+  TVChild:
+    template_params:
+    - int N
+    methods:
+      get:
+
+templates:
+  TVChild2:
+    qualname: TVChild
+    params:
+    - 2

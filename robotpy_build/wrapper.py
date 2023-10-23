@@ -17,6 +17,7 @@ from os.path import (
 import pathlib
 import posixpath
 import shutil
+import sysconfig
 import toposort
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -26,7 +27,7 @@ import dataclasses
 from setuptools import Extension
 
 from cxxheaderparser.options import ParserOptions
-from cxxheaderparser.preprocessor import make_pcpp_preprocessor
+from cxxheaderparser import preprocessor
 
 
 from .download import download_and_extract_zip
@@ -39,6 +40,16 @@ from .autowrap.writer import WrapperWriter
 from .config.autowrap_yml import AutowrapConfigYaml
 from .config.dev_yml import get_dev_config
 from .config.pyproject_toml import WrapperConfig, Download
+
+# TODO: eventually provide native preprocessor by default and allow it
+#       to be enabled/disabled per-file just in case
+if os.getenv("RPYBUILD_PP_GCC") == 1:
+    # GCC preprocessor can be 10x faster than pcpp for very complex files
+    def make_preprocessor(*args, **kwargs):
+        return preprocessor.make_gcc_preprocessor(print_cmd=False, *args, **kwargs)
+
+else:
+    make_preprocessor = preprocessor.make_pcpp_preprocessor
 
 
 class Wrapper:
@@ -605,7 +616,7 @@ class Wrapper:
 
         hppoutdir = join(self.rpy_incdir, "rpygen")
 
-        pp_includes = self._all_includes(False)
+        pp_includes = self._all_includes(True) + [sysconfig.get_path("include")]
 
         # TODO: only regenerate files if the generated files
         #       have changed
@@ -669,7 +680,7 @@ class Wrapper:
                 continue
 
             popts = ParserOptions(
-                preprocessor=make_pcpp_preprocessor(
+                preprocessor=make_preprocessor(
                     defines=pp_defines,
                     include_paths=pp_includes,
                     encoding=data.encoding,

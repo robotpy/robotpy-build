@@ -1,0 +1,17 @@
+defaults:
+  ignore: true
+  # report_ignored_missing: false
+
+enums:
+  id_EnabledEnum:
+    ignore: false
+functions:
+  id_fnEnable:
+    ignore: false
+classes:
+  id_EnabledClass:
+    ignore: false
+    enums:
+      InnerEnum:
+    methods:
+      fn:

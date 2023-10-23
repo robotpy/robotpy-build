@@ -1,0 +1,22 @@
+---
+classes:
+  TVParam:
+    template_params:
+    - int N
+    methods:
+      get:
+  TVBase:
+    template_params:
+    - T
+    methods:
+      get:
+
+templates:
+  TVParam2:
+    qualname: TVParam
+    params:
+    - 2
+  TVBase2:
+    qualname: TVBase
+    params:
+    - TVParam<2>

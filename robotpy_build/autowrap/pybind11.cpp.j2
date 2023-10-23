@@ -82,15 +82,7 @@
   #ifndef {{ fn.ifndef }}
   {% endif %}
   {%- if fn.operator -%}
-    {%- if fn.cpp_code -%}
-      {{ fn.cpp_code }}
-    {%- else -%}
-      {%- if ns.arg_params -%}
-        .def(py::self {{ fn.operator }} {{ ns.arg_params[0].cpp_type_no_const }}()
-      {%- else -%}
-        .def({{ fn.operator}} py::self
-      {%- endif -%}
-    {%- endif -%}
+        .def({{ fn.cpp_code }}
     {%- set ns.arg_params = [] -%}
   {%- elif fn.is_constructor -%}
     {%- if fn.cpp_code -%}

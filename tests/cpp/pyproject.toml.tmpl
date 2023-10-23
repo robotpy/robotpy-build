@@ -55,9 +55,11 @@ generate = [
     { fields = "fields.h" },
     { keepalive = "keepalive.h" },
     { ignore = "ignore.h" },
+    { ignored_by_default = "ignored_by_default.h" },
     { inline_code = "inline_code.h" },
     { lifetime = "lifetime.h" },
     { nested = "nested.h" },
+    { ns_class = "ns_class.h" },
     { operators = "operators.h" },
     { overloads = "overloads.h" },
     { parameters = "parameters.h" },
@@ -93,6 +95,9 @@ generate = [
     {tcrtp = "templates/tcrtp.h"},
     {tcrtpfwd = "templates/tcrtpfwd.h"},
     {tconcrete = "templates/tconcrete.h"},
+
+    {tvbase = "templates/tvbase.h"},
+    {tvchild = "templates/tvchild.h"},
 
     {tbasic = "templates/basic.h"},
     {tdependent_param = "templates/dependent_param.h"},
