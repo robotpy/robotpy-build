@@ -17,6 +17,7 @@ from os.path import (
 import pathlib
 import posixpath
 import shutil
+import sysconfig
 import toposort
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -605,7 +606,7 @@ class Wrapper:
 
         hppoutdir = join(self.rpy_incdir, "rpygen")
 
-        pp_includes = self._all_includes(False)
+        pp_includes = self._all_includes(True) + [sysconfig.get_path("include")]
 
         # TODO: only regenerate files if the generated files
         #       have changed
