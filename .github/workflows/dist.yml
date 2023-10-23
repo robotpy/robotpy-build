@@ -162,8 +162,9 @@ jobs:
       max-parallel: ${{ fromJSON(needs.setup_concurrency.outputs.max-parallel).v }}
       matrix:
         container:
-        - robotpy/roborio-cross-ubuntu:2023.1
-        - robotpy/raspbian-cross-ubuntu:2023.1
+        - wpilib/roborio-cross-ubuntu:2024-22.04-py312
+        - wpilib/raspbian-cross-ubuntu:bullseye-22.04-py312
+        - wpilib/aarch64-cross-ubuntu:bullseye-22.04-py312
 
     container:
       image: "${{ matrix.container }}"
@@ -184,6 +185,11 @@ jobs:
       with:
         name: dist
         path: dist
+
+    - name: Install setuptools
+      run: |
+        /build/venv/bin/build-pip --disable-pip-version-check install setuptools
+        /build/venv/bin/cross-pip --disable-pip-version-check install setuptools
 
     - name: Install
       working-directory: dist
