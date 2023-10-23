@@ -34,7 +34,7 @@ X86_64 = "x86-64"
 
 # key is python platform, value is information about wpilib maven artifacts
 _platforms = {
-    "linux-athena": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
+    "linux-roborio": WPILibMavenPlatform("athena", defines=["__FRC_ROBORIO__"]),
     "linux-raspbian": WPILibMavenPlatform("arm32", defines=["__RASPBIAN__"]),
     "linux-armv7l": WPILibMavenPlatform("arm32"),
     "linux-x86_64": WPILibMavenPlatform(X86_64),
@@ -77,9 +77,7 @@ def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
 
                 distro_id = distro.id()
 
-                if distro_id in ("nilrt", "nilrt-academic"):
-                    pyplatform = "linux-athena"
-                elif distro_id == "raspbian":
+                if distro_id == "raspbian":
                     pyplatform = "linux-raspbian"
 
             except Exception:
