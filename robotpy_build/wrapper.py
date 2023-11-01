@@ -43,7 +43,7 @@ from .config.pyproject_toml import WrapperConfig, Download
 
 # TODO: eventually provide native preprocessor by default and allow it
 #       to be enabled/disabled per-file just in case
-if os.getenv("RPYBUILD_PP_GCC") == 1:
+if os.getenv("RPYBUILD_PP_GCC") == "1":
     # GCC preprocessor can be 10x faster than pcpp for very complex files
     def make_preprocessor(*args, **kwargs):
         return preprocessor.make_gcc_preprocessor(print_cmd=False, *args, **kwargs)
