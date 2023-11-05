@@ -131,6 +131,15 @@ def test_factory():
 
 
 #
+# gilsafe_container.h
+#
+
+
+def test_gilsafe_container():
+    ft.GilsafeContainer.check()
+
+
+#
 # inline_code.h
 #
 
