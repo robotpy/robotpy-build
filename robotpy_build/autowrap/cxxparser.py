@@ -286,6 +286,7 @@ class ClassStateData(typing.NamedTuple):
 
     # have to defer processing these
     defer_protected_methods: typing.List[Method]
+    defer_private_nonvirtual_methods: typing.List[Method]
     defer_private_virtual_methods: typing.List[Method]
     defer_protected_fields: typing.List[Field]
 
@@ -750,6 +751,7 @@ class AutowrapVisitor:
             typealias_names=typealias_names,
             # Method data
             defer_protected_methods=[],
+            defer_private_nonvirtual_methods=[],
             defer_private_virtual_methods=[],
             defer_protected_fields=[],
             # Trampoline data
@@ -983,8 +985,11 @@ class AutowrapVisitor:
             self._on_class_method(state, method, cctx.wrapped_public_methods)
         elif access == "protected":
             cdata.defer_protected_methods.append(method)
-        elif access == "private" and is_polymorphic:
-            cdata.defer_private_virtual_methods.append(method)
+        elif access == "private":
+            if is_polymorphic:
+                cdata.defer_private_virtual_methods.append(method)
+            else:
+                cdata.defer_private_nonvirtual_methods.append(method)
 
     def _on_class_method(
         self,
@@ -1152,6 +1157,23 @@ class AutowrapVisitor:
                     f"{cdata.cls_key}::{method_name}: has && ref-qualifier which cannot be directly bound by pybind11, must specify cpp_code or ignore_py"
                 )
 
+    def _on_class_method_process_overload_only(
+        self, state: AWClassBlockState, method: Method
+    ):
+        cdata = state.user_data
+
+        method_name = self._get_fn_name(method)
+        if not method_name:
+            return
+
+        self.gendata.get_function_data(
+            method_name,
+            method,
+            cdata.cls_key,
+            cdata.data,
+            True,
+        )
+
     def _is_copy_move_constructor(
         self, cctx: ClassContext, first_type_param: DecoratedType
     ) -> bool:
@@ -1241,6 +1263,17 @@ class AutowrapVisitor:
             raise ValueError(
                 f"{cdata.cls_key} has trampoline_inline_code specified, but there is no trampoline!"
             )
+
+        else:
+            # still need to do minimal processing to add deferred functions
+            # to the overload tracker, otherwise we won't handle it correctly
+            for m in cdata.defer_protected_methods:
+                self._on_class_method_process_overload_only(state, m)
+            for m in cdata.defer_private_virtual_methods:
+                self._on_class_method_process_overload_only(state, m)
+
+        for m in cdata.defer_private_nonvirtual_methods:
+            self._on_class_method_process_overload_only(state, m)
 
     #
     # Function/method processing

@@ -51,6 +51,12 @@ struct OverloadedObject
         return 0x4;
     }
 
+    void overloaded_private(int a) {}
+
 private:
+
+    // this causes errors if we don't account for it
+    void overloaded_private(int a, int b) {}
+
     int o;
 };
