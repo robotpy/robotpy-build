@@ -1,6 +1,6 @@
 import importlib.util
+from importlib.metadata import entry_points, EntryPoint
 from os.path import join, dirname
-from pkg_resources import iter_entry_points
 import sys
 from typing import Dict, List, Optional, Set
 import warnings
@@ -27,12 +27,17 @@ class PkgCfg:
     Contains information about an installed package that uses robotpy-build
     """
 
-    def __init__(self, entry_point):
+    def __init__(self, entry_point: EntryPoint):
         try:
             self.module = entry_point.load()
         except Exception as e:
             try:
-                self.module = _hacky_entrypoint_loader(entry_point.module_name)
+                mod = (
+                    entry_point.module
+                    if hasattr(entry_point, "module")
+                    else entry_point.value
+                )
+                self.module = _hacky_entrypoint_loader(mod)
             except Exception:
                 raise e
 
@@ -147,7 +152,13 @@ class PkgCfgProvider:
         Only loads packages that are dependencies.
         """
         deps_names = set().union(*[pkg.depends for pkg in self.pkgs.values()])
-        entry_points = list(iter_entry_points(group="robotpybuild", name=None))
+        ep_ret = entry_points()
+
+        # Python 3.8/3.9
+        if isinstance(ep_ret, dict):
+            all_entry_points = ep_ret.get("robotpybuild", [])
+        else:
+            all_entry_points = [e for e in entry_points() if e.group == "robotpybuild"]
 
         # Only load the dependencies of the package we're building.
         # If we load the [package being built], then the current build will fail.
@@ -156,7 +167,7 @@ class PkgCfgProvider:
         run_loop = True
         while run_loop:
             run_loop = False
-            for ep in entry_points:
+            for ep in all_entry_points:
                 if ep.name in self.pkgs:  # Prevents loading the package being built
                     continue
                 if ep.name not in deps_names and ep.name != "robotpy-build":
