@@ -371,7 +371,8 @@ class DistutilsMetadata(Model):
     license: str
 
     #: A string or list of strings specifying what other distributions need
-    #: to be installed when this one is.
+    #: to be installed when this one is. If the requirement is ``==THIS_VERSION``,
+    #: the requirement is set to be the same version as this package
     install_requires: List[str]
 
 

@@ -123,11 +123,23 @@ class Setup:
         # get_version expects the directory to exist
         base_package_path = self.base_package_path
         os.makedirs(base_package_path, exist_ok=True)
-        self.setup_kwargs["version"] = get_version(
+        this_version = get_version(
             write_to=join(base_package_path, "version.py"),
             fallback_version="master",
             search_parent_directories=True,
         )
+        self.setup_kwargs["version"] = this_version
+
+        # Support ==THIS_VERSION
+        install_requires = self.setup_kwargs.get("install_requires")
+        if install_requires:
+
+            def _xform(v: str):
+                if v.endswith("==THIS_VERSION"):
+                    v = f"{v[:-14]}=={this_version}"
+                return v
+
+            self.setup_kwargs["install_requires"] = list(map(_xform, install_requires))
 
         self.pkgcfg = PkgCfgProvider()
 
