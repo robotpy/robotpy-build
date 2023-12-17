@@ -488,13 +488,18 @@ class Wrapper:
         init += "\n"
 
         if libnames:
-            init += "from ctypes import cdll\n\n"
+            if self.platform.os == "osx":
+                init += "from ctypes import CDLL, RTLD_GLOBAL\n\n"
+            else:
+                init += "from ctypes import cdll\n\n"
 
             for libname in libnames:
                 init += "try:\n"
-                init += (
-                    f'    _lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
-                )
+                if self.platform.os == "osx":
+                    init += f'    _lib = CDLL(join(_root, "lib", "{libname}"), mode=RTLD_GLOBAL)\n'
+                else:
+                    init += f'    _lib = cdll.LoadLibrary(join(_root, "lib", "{libname}"))\n'
+
                 init += "except FileNotFoundError:\n"
                 init += f'    if not exists(join(_root, "lib", "{libname}")):\n'
                 init += f'        raise FileNotFoundError("{libname} was not found on your system. Is this package correctly installed?")\n'
