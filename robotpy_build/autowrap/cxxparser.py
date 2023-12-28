@@ -1987,19 +1987,29 @@ def parse_header(
         if doc_add:
             doc_add = f"\n{doc_add}"
 
-        hctx.template_instances.append(
-            TemplateInstanceContext(
-                scope_var=visitor._get_module_var(tmpl_data),
-                var_name=f"tmplCls{i}",
-                py_name=k,
-                full_cpp_name_identifier=qualname,
-                binder_typename=f"bind_{qualname}_{i}",
-                params=tmpl_data.params,
-                header_name=f"{qualname}.hpp",
-                doc_set=visitor._quote_doc(tmpl_data.doc),
-                doc_add=visitor._quote_doc(doc_add),
-            )
+        tctx = TemplateInstanceContext(
+            scope_var=visitor._get_module_var(tmpl_data),
+            var_name=f"tmplCls{i}",
+            py_name=k,
+            full_cpp_name_identifier=qualname,
+            binder_typename=f"bind_{qualname}_{i}",
+            params=tmpl_data.params,
+            header_name=f"{qualname}.hpp",
+            doc_set=visitor._quote_doc(tmpl_data.doc),
+            doc_add=visitor._quote_doc(doc_add),
         )
+        hctx.template_instances.append(tctx)
+
+        # Ensure that template instances are created in class order if the
+        # template class is in this header file
+        # - not matching here is not an error
+        qualname_match = tmpl_data.qualname.lstrip(":")
+        for cctx in hctx.classes:
+            if cctx.dep_cpp_name.lstrip(":") == qualname_match:
+                assert cctx.template
+                tctx.matched = True
+                cctx.template.instances.append(tctx)
+                break
 
         for param in tmpl_data.params:
             visitor._add_user_type_caster(param)

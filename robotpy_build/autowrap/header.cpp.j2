@@ -64,13 +64,19 @@ struct rpybuild_{{ hname }}_initializer {
 {% endfor %}
 
 {# template decls #}
-{% for tmpl_data in template_instances %}
+{% for tmpl_data in template_instances if not tmpl_data.matched %}
   rpygen::{{ tmpl_data.binder_typename }} {{ tmpl_data.var_name }};
 {% endfor %}
 
 {# class decls #}
-{%- for cls in classes if not cls.template %}
-  {{ pybind11.cls_decl(cls) }}
+{%- for cls in classes %}
+  {% if not cls.template -%}
+    {{ pybind11.cls_decl(cls) }}
+  {%- else -%}
+    {%- for tmpl_data in cls.template.instances %}
+      rpygen::{{ tmpl_data.binder_typename }} {{ tmpl_data.var_name }};
+    {% endfor -%}
+  {%- endif -%}
 {% endfor %}
 
   py::module &m;
@@ -86,12 +92,18 @@ struct rpybuild_{{ hname }}_initializer {
     enum{{ loop.index }}{{ pybind11.enum_init(enum.scope_var, enum) }},
   {% endfor %}
 
-  {% for tmpl_data in template_instances %}
+  {% for tmpl_data in template_instances if not tmpl_data.matched %}
     {{ tmpl_data.var_name }}({{ tmpl_data.scope_var }}, "{{ tmpl_data.py_name }}"),
   {% endfor %}
 
-  {% for cls in classes if not cls.template %}
-    {{ pybind11.cls_init(cls, '"' + cls.py_name + '"') }}
+  {% for cls in classes %}
+    {% if not cls.template -%}
+      {{ pybind11.cls_init(cls, '"' + cls.py_name + '"') }}
+    {%- else -%}
+      {%- for tmpl_data in cls.template.instances %}
+        {{ tmpl_data.var_name }}({{ tmpl_data.scope_var }}, "{{ tmpl_data.py_name }}"),
+      {% endfor -%}
+    {%- endif %}
   {% endfor %}
 
     m(m)

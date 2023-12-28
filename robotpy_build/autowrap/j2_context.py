@@ -353,6 +353,9 @@ class ClassTemplateData:
     #: the specified C++ code is inserted into the template definition
     inline_code: str
 
+    #: Instances of this class
+    instances: typing.List["TemplateInstanceContext"] = field(default_factory=list)
+
 
 @dataclass
 class ClassContext:
@@ -492,6 +495,9 @@ class TemplateInstanceContext:
 
     doc_set: Documentation
     doc_add: Documentation
+
+    #: If true, instantiated in class order
+    matched: bool = False
 
 
 @dataclass

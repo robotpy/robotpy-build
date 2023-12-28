@@ -1,0 +1,11 @@
+classes:
+  TDBase:
+  TDChild:
+    template_params:
+    - T
+
+templates:
+  TDChild:
+    qualname: TDChild
+    params:
+    - int
