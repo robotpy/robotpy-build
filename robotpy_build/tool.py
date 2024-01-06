@@ -8,6 +8,7 @@ import posixpath
 import pprint
 import subprocess
 import sys
+import types
 import re
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -233,6 +234,9 @@ class ImportCreator:
         # TODO: could probably generate this from parsed code, but seems hard
         ctx = {}
         exec(f"from {compiled} import *", {}, ctx)
+        for k in list(ctx.keys()):
+            if isinstance(ctx[k], types.ModuleType):
+                del ctx[k]
 
         relimport = self._rel(args.base, compiled)
 
