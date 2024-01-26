@@ -25,7 +25,6 @@
 
 """
 
-
 from delocate.delocating import filter_system_libs
 from delocate.tools import get_install_names, set_install_name as _set_install_name
 
