@@ -9,5 +9,4 @@ write_to = "robotpy_build/version.py"
 target-version = ['py38']
 extend-exclude = '''
 ^/robotpy_build/pybind11
-^/robotpy_build/version.py
 '''
