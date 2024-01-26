@@ -816,7 +816,7 @@ class AutowrapVisitor:
         cls_name: str,
         class_decl: ClassDecl,
         class_data: ClassData,
-    ) -> typing.Tuple[typing.List[BaseClassData], typing.Set[str],]:
+    ) -> typing.Tuple[typing.List[BaseClassData], typing.Set[str]]:
         bases: typing.List[BaseClassData] = []
         pybase_params: typing.Set[str] = set()
         ignored_bases = {ib: True for ib in class_data.ignored_bases}
