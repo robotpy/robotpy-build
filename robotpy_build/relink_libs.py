@@ -164,3 +164,14 @@ def relink_extension(
     }
     _fix_libs(to_fix, libs)
     return libs
+
+
+def resolve_libs(
+    install_root: str,
+    pkg: PkgCfg,
+    pkgcfg: PkgCfgProvider,
+):
+    libs: LibsDict = {}
+    _resolve_dependencies(install_root, pkg, pkgcfg, libs)
+    _resolve_libs_in_self(pkg, install_root, libs)
+    return libs
