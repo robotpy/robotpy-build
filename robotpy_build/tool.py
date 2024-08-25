@@ -29,11 +29,6 @@ from . import platforms
 def get_setup() -> Setup:
     s = Setup()
     s.prepare()
-
-    temp_path = join(get_build_temp_path(), "dlstatic")
-    for static_lib in s.static_libs:
-        static_lib.set_root(temp_path)
-
     return s
 
 
@@ -544,8 +539,8 @@ def main():
     else:
         retval = 0
 
-    exit(retval)
+    return retval
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())

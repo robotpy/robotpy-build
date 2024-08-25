@@ -40,3 +40,15 @@ python package.
 .. code-block:: sh
 
     $ python -m robotpy_build create-imports rpydemo rpydemo._rpydemo
+
+Use the ``--write`` argument to write the file.
+
+To write a list of ``__init__.py`` files, you can specify them in the ``pyproject.toml``
+file like so:
+
+.. code-block:: toml
+
+    [tool.robotpy-build]
+    update_init = ["rpydemo rpydemo._rpydemo"]
+
+To actually update the files, run ``python setup.py update_init``.
