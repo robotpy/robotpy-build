@@ -15,7 +15,20 @@ your python package.
 
 This will scan all of your defined includes directories (including those of
 downloaded artifacts) and output something you can paste into the ``generate``
-key of ``pyproject.toml``.
+key of ``pyproject.toml``. By default it will only show files that are not
+present in ``pyproject.toml`` -- to show all files use the ``--all`` argument.
+
+Often there are files that you don't want to wrap. You can add them to the
+``pyproject.toml`` file and they will be ignored. The list accepts glob patterns
+supported by the fnmatch module.
+
+.. code-block:: toml
+
+    [tool.robotpy-build]
+    scan_headers_ignore = [
+        "ignored_header.h",
+        "ignore_dir/*",
+    ]
 
 .. _create_gen:
 

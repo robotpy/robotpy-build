@@ -1,4 +1,5 @@
 import argparse
+import fnmatch
 import glob
 import inspect
 from itertools import chain
@@ -132,14 +133,22 @@ class HeaderScanner:
             help="Generate a list of headers in TOML form",
             parents=[parent_parser],
         )
-        parser.add_argument("--only-missing", default=False, action="store_true")
+        parser.add_argument("--all", default=False, action="store_true")
         return parser
 
     def run(self, args):
         s = get_setup()
 
+        to_ignore = s.project.scan_headers_ignore
+
+        def _should_ignore(f):
+            for pat in to_ignore:
+                if fnmatch.fnmatch(f, pat):
+                    return True
+            return False
+
         already_present = {}
-        if args.only_missing:
+        if not args.all:
             for i, wrapper in enumerate(s.project.wrappers.values()):
                 files = set()
                 if wrapper.autogen_headers:
@@ -156,9 +165,7 @@ class HeaderScanner:
                             ifiles.add(f)
 
         for wrapper in s.wrappers:
-            print(
-                f'[tool.robotpy-build.wrappers."{wrapper.package_name}".autogen_headers]'
-            )
+            printed = False
 
             # This uses the direct include directories instead of the generation
             # search path as we only want to output a file once
@@ -172,15 +179,22 @@ class HeaderScanner:
                             glob.glob(join(incdir, "**", "*.h"), recursive=True),
                             glob.glob(join(incdir, "**", "*.hpp"), recursive=True),
                         )
-                        if "rpygen" not in f
+                        if "rpygen" not in f and not _should_ignore(relpath(f, incdir))
                     )
                 )
 
+                files = [f for f in files if f not in wpresent]
+                if not files:
+                    continue
+
+                if not printed:
+                    print(
+                        f'[tool.robotpy-build.wrappers."{wrapper.package_name}".autogen_headers]'
+                    )
+                    printed = True
+
                 lastdir = None
                 for f in files:
-                    if f in wpresent:
-                        continue
-
                     thisdir = f.parent
                     if lastdir is None:
                         if thisdir:
