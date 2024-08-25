@@ -89,7 +89,7 @@ jobs:
     strategy:
       max-parallel: ${{ fromJSON(needs.setup_concurrency.outputs.max-parallel).v }}
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-20.04]
+        os: ["ubuntu-22.04", "macos-12", "windows-2022"]
         python_version:
         - '3.8'
         - '3.9'
@@ -98,9 +98,9 @@ jobs:
         - '3.12'
         architecture: [x86, x64]
         exclude:
-        - os: macos-latest
+        - os: macos-12
           architecture: x86
-        - os: ubuntu-20.04
+        - os: ubuntu-22.04
           architecture: x86
 
     steps:
@@ -119,21 +119,11 @@ jobs:
         name: dist
         path: dist
 
-    - name: Set ccache variant
-      shell: bash
-      id: ccache
-      run: |
-        if [[ "${{ matrix.os }}" == windows-* ]]; then
-          echo "VARIANT=sccache" >> $GITHUB_OUTPUT
-        else
-          echo "VARIANT=ccache" >> $GITHUB_OUTPUT
-        fi
-
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: robotpy/ccache-action@fork
       with:
           key: ${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.python_version }}
-          variant: ${{ steps.ccache.outputs.variant }}
+          variant: ccache
 
     - name: Install
       shell: bash
@@ -150,7 +140,7 @@ jobs:
       env:
         RPYBUILD_PARALLEL: 1
         RPYBUILD_STRIP_LIBPYTHON: 1
-        RPYBUILD_CC_LAUNCHER: ${{ steps.ccache.outputs.variant }}
+        RPYBUILD_CC_LAUNCHER: ccache
       working-directory: tests
       run: |
         python run_tests.py
@@ -176,7 +166,7 @@ jobs:
 
     - run: apt-get update
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: robotpy/ccache-action@fork
       with:
           key: ${{ matrix.container }}
 
