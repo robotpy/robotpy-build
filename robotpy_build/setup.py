@@ -23,6 +23,7 @@ from .command.build_gen import BuildGen
 from .command.build_ext import BuildExt
 from .command.build_pyi import BuildPyi
 from .command.develop import Develop
+from .command.update_init import UpdateInit
 
 try:
     from .command.editable_wheel import EditableWheel
@@ -155,6 +156,7 @@ class Setup:
             "build_ext": BuildExt,
             "build_pyi": BuildPyi,
             "develop": Develop,
+            "update_init": UpdateInit,
         }
         if EditableWheel:
             self.setup_kwargs["cmdclass"]["editable_wheel"] = EditableWheel
@@ -165,6 +167,7 @@ class Setup:
             cls.static_libs = self.static_libs
             cls.rpybuild_pkgcfg = self.pkgcfg
         BuildPyi.base_package = self.base_package
+        UpdateInit.update_list = self.project.update_init
 
         # We already know some of our packages, so collect those in addition
         # to using find_packages()

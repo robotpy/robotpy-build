@@ -416,6 +416,14 @@ class RobotpyBuildConfig(Model):
     #: Python package to store version information and robotpy-build metadata in
     base_package: str
 
+    #: List of headers for the scan-headers tool to ignore
+    scan_headers_ignore: List[str] = []
+
+    #: List of python packages with __init__.py to update when ``python setup.py update_init``
+    #: is called -- this is an argument to the ``robotpy-build create-imports`` command, and
+    #: may contain a space and the second argument to create-imports.
+    update_init: List[str] = []
+
     #:
     #: .. seealso:: :class:`.SupportedPlatform`
     #:

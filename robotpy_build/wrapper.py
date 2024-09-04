@@ -288,7 +288,9 @@ class Wrapper:
     def _all_includes(self, include_rpyb):
         includes = self.get_include_dirs()
         for dep in self.all_deps():
-            includes.extend(dep.get_include_dirs())
+            dep_inc = dep.get_include_dirs()
+            if dep_inc:
+                includes.extend(dep_inc)
         if include_rpyb:
             includes.extend(self.pkgcfg.get_pkg("robotpy-build").get_include_dirs())
         return includes

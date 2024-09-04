@@ -158,6 +158,27 @@ class BuildExt(build_ext):
                 # Used in build_pyi
                 ext.rpybuild_libs = libs
 
+    def resolve_libs(self):
+        # used in _built_env
+        platform = get_platform()
+        if platform.os == "osx":
+            for wrapper in self.wrappers:
+                wrapper.finalize_extension()
+
+            from ..relink_libs import resolve_libs
+
+            install_root = get_install_root(self)
+
+            for ext in self.extensions:
+                libs = resolve_libs(
+                    install_root,
+                    ext.rpybuild_wrapper,
+                    self.rpybuild_pkgcfg,
+                )
+
+                # Used in build_pyi
+                ext.rpybuild_libs = libs
+
     def run(self):
         # files need to be generated before building can occur
         self.run_command("build_gen")

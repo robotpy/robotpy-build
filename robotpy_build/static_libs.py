@@ -33,6 +33,9 @@ class StaticLib:
         self.incdir = join(self.root, self.name, "include")
 
     def get_include_dirs(self) -> Optional[List[str]]:
+        if self.incdir is None:
+            return
+
         includes = [self.incdir]
         if self.cfg.download:
             for dl in self.cfg.download:
@@ -41,7 +44,8 @@ class StaticLib:
         return includes
 
     def get_library_dirs(self) -> Optional[List[str]]:
-        return [self.libdir]
+        if self.libdir:
+            return [self.libdir]
 
     def get_library_dirs_rel(self) -> Optional[List[str]]:
         pass
@@ -60,7 +64,8 @@ class StaticLib:
         if self.platform.os == "windows":
             return
 
-        return [join(self.libdir, lib) for lib in self._get_libnames()]
+        if self.libdir:
+            return [join(self.libdir, lib) for lib in self._get_libnames()]
 
     def get_type_casters_cfg(self, casters: Dict[str, Dict[str, Any]]) -> None:
         pass
