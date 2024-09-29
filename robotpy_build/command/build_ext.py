@@ -116,6 +116,9 @@ class BuildExt(build_ext):
             # Enable standards-compliant preprocessor
             if has_flag(self.compiler, "/Zc:preprocessor"):
                 opts.append("/Zc:preprocessor")
+            # Enable utf-8 source files.. this probably shouldn't be set globally
+            if has_flag(self.compiler, "/utf-8"):
+                opts.append("/utf-8")
             if cc_launcher:
                 # yes, this is terrible. There's really no other way with distutils
                 def _spawn(cmd):
