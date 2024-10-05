@@ -114,7 +114,7 @@ jobs:
         architecture: ${{ matrix.architecture }}
     
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.7
       with:
         name: dist
         path: dist
@@ -171,7 +171,7 @@ jobs:
           key: ${{ matrix.container }}
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.7
       with:
         name: dist
         path: dist
@@ -213,7 +213,7 @@ jobs:
 
     steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.7
       with:
         name: dist
         path: dist
