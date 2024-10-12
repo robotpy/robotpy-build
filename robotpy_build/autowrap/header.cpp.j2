@@ -42,10 +42,6 @@
   using namespace {{ ns }};
 {% endfor %}
 
-{% for cls in classes if cls.nodelete %}
-PYBIND11_TYPE_CASTER_BASE_HOLDER(typename {{ cls.full_cpp_name }}, std::unique_ptr<typename {{ cls.full_cpp_name }}, py::nodelete>);
-{% endfor %}
-
 
 struct rpybuild_{{ hname }}_initializer {
 
