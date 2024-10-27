@@ -1,43 +1,18 @@
 import json
 import os
 from os.path import join
-import pathlib
 import pprint
 import typing
 
-import jinja2
-
-from .j2_context import HeaderContext
-
-templates_path = pathlib.Path(__file__).parent.absolute()
+from .context import HeaderContext
+from .render_wrapped import render_wrapped_cpp
+from .render_cls_rpy_include import render_cls_rpy_include_hpp
+from .render_tmpl_inst import render_template_inst_cpp, render_template_inst_hpp
 
 _emit_j2_debug = os.getenv("RPYBUILD_J2_DEBUG") == "1"
 
 
 class WrapperWriter:
-    def __init__(self) -> None:
-        #
-        # Load all the templates first
-        #
-
-        self.env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(searchpath=templates_path),
-            undefined=jinja2.StrictUndefined,
-            autoescape=False,
-            auto_reload=False,
-            # trim_blocks=True,
-            # lstrip_blocks=True,
-        )
-
-        # c++ file generated per-header
-        self.header_cpp_j2 = self.env.get_template("header.cpp.j2")
-
-        # class templates
-        self.cls_tmpl_inst_cpp_j2 = self.env.get_template("cls_tmpl_inst.cpp.j2")
-        self.cls_tmpl_inst_hpp_j2 = self.env.get_template("cls_tmpl_inst.hpp.j2")
-
-        # rpy-include trampoline file
-        self.rpy_include_hpp_j2 = self.env.get_template("cls_rpy_include.hpp.j2")
 
     def write_files(
         self,
@@ -62,9 +37,9 @@ class WrapperWriter:
         fname = join(cxx_gen_dir, f"{name}.cpp")
         generated_sources.append(fname)
         with open(fname, "w", encoding="utf-8") as fp:
-            fp.write(self.header_cpp_j2.render(data))
+            fp.write(render_wrapped_cpp(hctx))
 
-        # Then the json, no need for jinja here
+        # Then the json
         with open(classdeps_json_fname, "w", encoding="utf-8") as fp:
             json.dump(hctx.class_hierarchy, fp)
 
@@ -74,12 +49,11 @@ class WrapperWriter:
             if not cls.template and not cls.trampoline:
                 continue
 
-            data["cls"] = cls
             fname = join(
                 hppoutdir, f"{cls.namespace.replace(':', '_')}__{cls.cpp_name}.hpp"
             )
             with open(fname, "w", encoding="utf-8") as fp:
-                fp.write(self.rpy_include_hpp_j2.render(data))
+                fp.write(render_cls_rpy_include_hpp(hctx, cls))
 
         # Each class template is instantiated in a separate cpp file to lessen
         # compiler memory requirements when compiling obnoxious templates
@@ -87,7 +61,7 @@ class WrapperWriter:
             # Single header output that holds all the struct outlines
             fname = join(cxx_gen_dir, f"{name}_tmpl.hpp")
             with open(fname, "w", encoding="utf-8") as fp:
-                fp.write(self.cls_tmpl_inst_hpp_j2.render(data))
+                fp.write(render_template_inst_hpp(hctx))
 
             # Each cpp file has a single class template instance
             for i, tmpl_data in enumerate(hctx.template_instances):
@@ -95,12 +69,6 @@ class WrapperWriter:
                 fname = join(hppoutdir, f"{name}_tmpl{i+1}.cpp")
                 generated_sources.append(fname)
                 with open(fname, "w", encoding="utf-8") as fp:
-                    fp.write(self.cls_tmpl_inst_cpp_j2.render(data))
+                    fp.write(render_template_inst_cpp(hctx, tmpl_data))
 
         return generated_sources
-
-    def _render_template(self, tmpl_src: str, dst: str, data: dict):
-        jtmpl = self.env.get_template(tmpl_src)
-        content = jtmpl.render(data)
-        with open(dst, "w", encoding="utf-8") as fp:
-            fp.write(content)

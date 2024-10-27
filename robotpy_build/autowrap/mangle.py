@@ -1,6 +1,6 @@
 import typing
 
-from .j2_context import FunctionContext
+from .context import FunctionContext
 from cxxheaderparser.types import (
     Array,
     DecoratedType,
