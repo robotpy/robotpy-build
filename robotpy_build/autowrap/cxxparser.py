@@ -113,13 +113,13 @@ _int32_types = frozenset(_gen_int_types())
 
 
 _rvp_map = {
-    ReturnValuePolicy.TAKE_OWNERSHIP: ", py::return_value_policy::take_ownership",
-    ReturnValuePolicy.COPY: ", py::return_value_policy::copy",
-    ReturnValuePolicy.MOVE: ", py::return_value_policy::move",
-    ReturnValuePolicy.REFERENCE: ", py::return_value_policy::reference",
-    ReturnValuePolicy.REFERENCE_INTERNAL: ", py::return_value_policy::reference_internal",
+    ReturnValuePolicy.TAKE_OWNERSHIP: "py::return_value_policy::take_ownership",
+    ReturnValuePolicy.COPY: "py::return_value_policy::copy",
+    ReturnValuePolicy.MOVE: "py::return_value_policy::move",
+    ReturnValuePolicy.REFERENCE: "py::return_value_policy::reference",
+    ReturnValuePolicy.REFERENCE_INTERNAL: "py::return_value_policy::reference_internal",
     ReturnValuePolicy.AUTOMATIC: "",
-    ReturnValuePolicy.AUTOMATIC_REFERENCE: ", py::return_value_policy::automatic_reference",
+    ReturnValuePolicy.AUTOMATIC_REFERENCE: "py::return_value_policy::automatic_reference",
 }
 
 # fmt: off

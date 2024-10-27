@@ -14,9 +14,14 @@ struct OuterNested {
     // bug where InnerNested needs to be in binding scope
     OuterNested(std::vector<InnerNested> i) {}
 
+    InnerNested &getInner() {
+        return in;
+    }
+
 private:
 
     // lol bug
     struct InnerPrivate {};
-
+    
+    InnerNested in;
 };
