@@ -26,6 +26,9 @@ struct DocClass
     /** An awesome variable, use it for something */
     int sweet_var;
 
+    /** this is a bitfield */
+    int bitfield: 1;
+
   /**
    * Construct a Ramsete unicycle controller.
    *

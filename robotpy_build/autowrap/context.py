@@ -1,8 +1,9 @@
 #
-# These dataclasses hold data to be rendered by the *.j2 files in templates
+# These dataclasses hold data to be rendered
 #
-# To simplify the templates, where possible we try to do logic in the code
-# that produces this data instead of in the templates.
+# To make the rendering functions easier to understand, where possible we try
+# to do logic in the code that produces this data instead of in the rendering
+# functions.
 #
 # We also prefer to copy over data from the autowrap YAML file instead of using
 # those data structures directly. While there's some slight overhead added,
@@ -118,11 +119,11 @@ class ParamContext:
     #: Name to pass to function when generating a virtual function
     virtual_call_name: str
 
-    #: Not used in jinja template, but is used to determine variable
+    #: Not used in renderer, but is used to determine variable
     #: name when used as an out parameter
     cpp_retname: str
 
-    #: Not used in jinja template, used for filtering
+    #: Not used in renderer, used for filtering
     category: ParamCategory
 
     # type + name, rarely used
@@ -361,8 +362,6 @@ class ClassTemplateData:
 class ClassContext:
     """
     Render data for each class encountered in a header
-
-    Available in class .j2 files as `cls`
     """
 
     parent: typing.Optional["ClassContext"]
@@ -428,7 +427,7 @@ class ClassContext:
     # Everything else
     #
 
-    # Not used in jinja_template
+    # Not used in rendering functions but used elsewhere
     has_constructor: bool = False
     is_polymorphic: bool = False
 
@@ -503,7 +502,7 @@ class TemplateInstanceContext:
 @dataclass
 class HeaderContext:
     """
-    Globals in all .j2 files
+    Data derived from parsing a single header
     """
 
     # Name in toml
@@ -512,9 +511,6 @@ class HeaderContext:
     extra_includes_first: typing.List[str]
     extra_includes: typing.List[str]
     inline_code: typing.Optional[str]
-
-    trampoline_signature: typing.Callable[[FunctionContext], str]
-    using_signature: typing.Callable[[ClassContext, FunctionContext], str]
 
     #: Path to the parsed header relative to some root
     rel_fname: str

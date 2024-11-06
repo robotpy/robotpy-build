@@ -65,6 +65,9 @@ if __name__ == "__main__":
         if len(sys.argv) == 2 and sys.argv[1] == "wheel":
             cmd_args = [sys.executable, "-m", "build", "--wheel", "--no-isolation"]
             cwd = root
+        elif len(sys.argv) == 2 and sys.argv[1] == "develop":
+            cmd_args = [sys.executable, "setup.py", "develop", "-N"]
+            cwd = root
         else:
             # run pip install
             cmd_args = [

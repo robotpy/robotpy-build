@@ -7,7 +7,7 @@ from ..config.autowrap_yml import (
     PropData,
     FunctionData,
 )
-from .j2_context import OverloadTracker
+from .context import OverloadTracker
 
 from cxxheaderparser.types import Function
 

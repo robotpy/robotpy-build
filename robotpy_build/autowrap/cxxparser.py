@@ -68,7 +68,7 @@ from ..config.autowrap_yml import (
     ReturnValuePolicy,
 )
 from .generator_data import GeneratorData, OverloadTracker
-from .j2_context import (
+from .context import (
     BaseClassData,
     ClassContext,
     ClassTemplateData,
@@ -84,7 +84,6 @@ from .j2_context import (
     TemplateInstanceContext,
     TrampolineData,
 )
-from .mangle import trampoline_signature
 
 
 class HasSubpackage(Protocol):
@@ -114,13 +113,13 @@ _int32_types = frozenset(_gen_int_types())
 
 
 _rvp_map = {
-    ReturnValuePolicy.TAKE_OWNERSHIP: ", py::return_value_policy::take_ownership",
-    ReturnValuePolicy.COPY: ", py::return_value_policy::copy",
-    ReturnValuePolicy.MOVE: ", py::return_value_policy::move",
-    ReturnValuePolicy.REFERENCE: ", py::return_value_policy::reference",
-    ReturnValuePolicy.REFERENCE_INTERNAL: ", py::return_value_policy::reference_internal",
+    ReturnValuePolicy.TAKE_OWNERSHIP: "py::return_value_policy::take_ownership",
+    ReturnValuePolicy.COPY: "py::return_value_policy::copy",
+    ReturnValuePolicy.MOVE: "py::return_value_policy::move",
+    ReturnValuePolicy.REFERENCE: "py::return_value_policy::reference",
+    ReturnValuePolicy.REFERENCE_INTERNAL: "py::return_value_policy::reference_internal",
     ReturnValuePolicy.AUTOMATIC: "",
-    ReturnValuePolicy.AUTOMATIC_REFERENCE: ", py::return_value_policy::automatic_reference",
+    ReturnValuePolicy.AUTOMATIC_REFERENCE: "py::return_value_policy::automatic_reference",
 }
 
 # fmt: off
@@ -137,7 +136,6 @@ _type_caster_seps = re.compile(r"[<>\(\)]")
 _qualname_bad = ":<>="
 _qualname_trans = str.maketrans(_qualname_bad, "_" * len(_qualname_bad))
 
-_lambda_predent = "          "
 
 _default_param_data = ParamData()
 _default_enum_value = EnumValue()
@@ -266,10 +264,6 @@ class _ReturnParamContext:
 
     #: If this is an out parameter, the name of the parameter
     cpp_retname: str
-
-
-def _using_signature(cls: ClassContext, fn: FunctionContext) -> str:
-    return f"{cls.full_cpp_name_identifier}_{fn.cpp_name}"
 
 
 #
@@ -1595,7 +1589,7 @@ class AutowrapVisitor:
         # Return values (original return value + any out parameters)
         fn_retval = fctx.cpp_return_type
         if fn_retval and fn_retval != "void":
-            call_start = "auto __ret ="
+            call_start = "auto __ret = "
             ret_params = [_ReturnParamContext(cpp_retname="__ret", cpp_type=fn_retval)]
             ret_params.extend(out_params)
         else:
@@ -1618,7 +1612,7 @@ class AutowrapVisitor:
                 else:
                     lambda_pre.insert(0, f"{out.cpp_type} {out.arg_name} = {odef}")
 
-        pre = _lambda_predent + f";\n{_lambda_predent}".join(lambda_pre) + ";"
+        pre = f";\n".join(lambda_pre) + ";"
 
         fctx.genlambda = GeneratedLambda(
             pre=pre,
@@ -1964,8 +1958,6 @@ def parse_header(
         extra_includes_first=user_cfg.extra_includes_first,
         extra_includes=user_cfg.extra_includes,
         inline_code=user_cfg.inline_code,
-        trampoline_signature=trampoline_signature,
-        using_signature=_using_signature,
         rel_fname=str(header_path.relative_to(header_root)),
     )
 
