@@ -326,11 +326,13 @@ class GeneratorData:
                 signature = f"{signature} [const]"
             else:
                 signature = "[const]"
-        elif fn.constexpr:
-            if signature:
-                signature = f"{signature} [constexpr]"
-            else:
-                signature = "[constexpr]"
+
+        # constexpr and non-constexpr cannot be overloaded, so don't include it
+        # elif fn.constexpr:
+        #     if signature:
+        #         signature = f"{signature} [constexpr]"
+        #     else:
+        #         signature = "[constexpr]"
 
         return signature
 
