@@ -292,7 +292,16 @@ def cls_consts(r: RenderBuffer, cls: ClassContext):
 def cls_decl(r: RenderBuffer, cls: ClassContext):
     if cls.trampoline:
         tctx = cls.trampoline
-        r.writeln(f"using {tctx.var} = {tctx.full_cpp_name};")
+        # py::trampoline_self_life_support
+        r.write_trim(
+            f"""
+            struct {tctx.var} : {tctx.full_cpp_name}, py::trampoline_self_life_support {{
+                using RpyBase = {tctx.full_cpp_name};
+                using RpyBase::RpyBase;
+            }};
+
+        """
+        )
         r.writeln(
             f'static_assert(std::is_abstract<{tctx.var}>::value == false, "{cls.full_cpp_name} " RPYBUILD_BAD_TRAMPOLINE);'
         )

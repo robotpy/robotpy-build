@@ -194,7 +194,7 @@ def _render_cls_trampoline(
         r.write_trim(
             f"""
             template <typename PyTrampolineBase{ precomma(template_parameter_list) }, typename PyTrampolineCfg>
-            struct PyTrampoline_{ cls.full_cpp_name_identifier } : PyTrampolineBase, virtual py::trampoline_self_life_support {{
+            struct PyTrampoline_{ cls.full_cpp_name_identifier } : PyTrampolineBase {{
               using PyTrampolineBase::PyTrampolineBase;
         """
         )
