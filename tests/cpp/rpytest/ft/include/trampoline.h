@@ -38,3 +38,19 @@ protected:
     // bug: ensure this doesn't get forwarded
     ClassWithTrampoline(const int &name) {}
 };
+
+
+struct ConstexprTrampoline {
+    constexpr ConstexprTrampoline() = default;
+    constexpr virtual ~ConstexprTrampoline() = default;
+    constexpr virtual int fn() const = 0;
+};
+
+struct ChildConstexprTrampoline : ConstexprTrampoline {
+    constexpr ChildConstexprTrampoline(int i) : something(i) {}
+    constexpr int fn() const override {
+        return 1;
+    }
+
+    int something;
+};
