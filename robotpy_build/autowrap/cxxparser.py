@@ -23,6 +23,7 @@ from cxxheaderparser.parserstate import (
     ClassBlockState,
     ExternBlockState,
     NamespaceBlockState,
+    NonClassBlockState,
 )
 from cxxheaderparser.tokfmt import tokfmt
 from cxxheaderparser.types import (
@@ -31,6 +32,7 @@ from cxxheaderparser.types import (
     ClassDecl,
     Concept,
     DecoratedType,
+    DeductionGuide,
     EnumDecl,
     Field,
     ForwardDecl,
@@ -1271,6 +1273,11 @@ class AutowrapVisitor:
 
         for m in cdata.defer_private_nonvirtual_methods:
             self._on_class_method_process_overload_only(state, m)
+
+    def on_deduction_guide(
+        self, state: NonClassBlockState, guide: DeductionGuide
+    ) -> None:
+        pass
 
     #
     # Function/method processing
