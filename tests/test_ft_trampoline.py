@@ -1,4 +1,4 @@
-from rpytest.ft import ClassWithTrampoline
+from rpytest.ft import ClassWithTrampoline, ConstexprTrampoline
 
 
 def test_class_with_trampoline():
@@ -25,3 +25,7 @@ def test_trampoline_without_mv():
 
     c = PyClassWithTrampoline()
     assert ClassWithTrampoline.check_moveonly(c) == 8
+
+
+def test_constexpr_trampoline():
+    ConstexprTrampoline()
