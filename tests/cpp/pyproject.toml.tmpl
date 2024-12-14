@@ -41,75 +41,76 @@ sources = [
 ]
 
 generation_data = "gen/ft"
-generate = [
-    { abstract = "abstract.h" },
-    { base_qualname = "base_qualname.h" },
-    { base_qualname_hidden = "base_qualname_hidden.h" },
-    { buffers = "buffers.h" },
-    { custom_type_caster = "custom_type_caster.h" },
-    { defaults = "defaults.h" },
-    { docstrings = "docstrings.h" },
-    { docstrings_append = "docstrings_append.h" },
-    { enums = "enums.h" },
-    { factory = "factory.h" },
-    { fields = "fields.h" },
-    { gilsafe_container = "gilsafe_container.h" },
-    { keepalive = "keepalive.h" },
-    { ignore = "ignore.h" },
-    { ignored_by_default = "ignored_by_default.h" },
-    { inline_code = "inline_code.h" },
-    { lifetime = "lifetime.h" },
-    { nested = "nested.h" },
-    { ns_class = "ns_class.h" },
-    { ns_hidden = "ns_hidden.h" },
-    { operators = "operators.h" },
-    { overloads = "overloads.h" },
-    { parameters = "parameters.h" },
-    { refqual = "refqual.h" },
-    { rename = "rename.h" },
-    { retval = "retval.h" },
-    { subpkg = "subpkg.h" },
-    { static_only = "static_only.h" },
-    { trampoline = "trampoline.h" },
-    { type_caster = "type_caster.h" },
-    { type_caster_nested = "type_caster_nested.h" },
-    { using = "using.h" },
-    { using2 = "using2.h" },
-    { virtual_comma = "virtual_comma.h" },
-    { virtual_xform = "virtual_xform.h" },
 
-    # Inheritance
-    { IBase = "inheritance/ibase.h" },
-    { IChild = "inheritance/ichild.h" },
-    { IMChild = "inheritance/imchild.h" },
-    { IGChild = "inheritance/igchild.h" },
-    { Overloaded = "inheritance/overloaded.h" },
-    { mvi = "inheritance/mvi.h" },
-    { usingparent = "inheritance/usingparent.h" },
+[tool.robotpy-build.wrappers."rpytest.ft".autogen_headers]
+abstract = "abstract.h"
+base_qualname = "base_qualname.h"
+base_qualname_hidden = "base_qualname_hidden.h"
+buffers = "buffers.h"
+custom_type_caster = "custom_type_caster.h"
+defaults = "defaults.h"
+docstrings = "docstrings.h"
+docstrings_append = "docstrings_append.h"
+enums = "enums.h"
+factory = "factory.h"
+fields = "fields.h"
+gilsafe_container = "gilsafe_container.h"
+keepalive = "keepalive.h"
+ignore = "ignore.h"
+ignored_by_default = "ignored_by_default.h"
+inline_code = "inline_code.h"
+lifetime = "lifetime.h"
+nested = "nested.h"
+ns_class = "ns_class.h"
+ns_hidden = "ns_hidden.h"
+operators = "operators.h"
+overloads = "overloads.h"
+parameters = "parameters.h"
+refqual = "refqual.h"
+rename = "rename.h"
+retval = "retval.h"
+subpkg = "subpkg.h"
+static_only = "static_only.h"
+trampoline = "trampoline.h"
+type_caster = "type_caster.h"
+type_caster_nested = "type_caster_nested.h"
+using = "using.h"
+using2 = "using2.h"
+virtual_comma = "virtual_comma.h"
+virtual_xform = "virtual_xform.h"
 
-    # Protection
-    { PBase = "protection/pbase.h" },
-    { PChild = "protection/pchild.h" },
-    { PGChild = "protection/pgchild.h" },
+# Inheritance
+IBase = "inheritance/ibase.h"
+IChild = "inheritance/ichild.h"
+IMChild = "inheritance/imchild.h"
+IGChild = "inheritance/igchild.h"
+Overloaded = "inheritance/overloaded.h"
+mvi = "inheritance/mvi.h"
+usingparent = "inheritance/usingparent.h"
 
-    # Templates
-    {tbase = "templates/tbase.h"},
-    {tcrtp = "templates/tcrtp.h"},
-    {tcrtpfwd = "templates/tcrtpfwd.h"},
-    {tconcrete = "templates/tconcrete.h"},
+# Protection
+PBase = "protection/pbase.h"
+PChild = "protection/pchild.h"
+PGChild = "protection/pgchild.h"
 
-    {tvbase = "templates/tvbase.h"},
-    {tvchild = "templates/tvchild.h"},
+# Templates
+tbase = "templates/tbase.h"
+tcrtp = "templates/tcrtp.h"
+tcrtpfwd = "templates/tcrtpfwd.h"
+tconcrete = "templates/tconcrete.h"
 
-    {tbasic = "templates/basic.h"},
-    {tdependent_base = "templates/dependent_base.h"},
-    {tdependent_param = "templates/dependent_param.h"},
-    {tdependent_using = "templates/dependent_using.h"},
-    {tdependent_using2 = "templates/dependent_using2.h"},
-    {tfn = "templates/fn.h" },
-    {tnumeric = "templates/numeric.h"},
-    {tnested = "templates/nested.h"},
-]
+tvbase = "templates/tvbase.h"
+tvchild = "templates/tvchild.h"
+
+tbasic = "templates/basic.h"
+tdependent_base = "templates/dependent_base.h"
+tdependent_param = "templates/dependent_param.h"
+tdependent_using = "templates/dependent_using.h"
+tdependent_using2 = "templates/dependent_using2.h"
+tfn = "templates/fn.h"
+tnumeric = "templates/numeric.h"
+tnested = "templates/nested.h"
+
 
 [tool.robotpy-build.wrappers."rpytest.srconly"]
 name = "rpytest_srconly"

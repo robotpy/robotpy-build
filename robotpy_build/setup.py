@@ -79,24 +79,6 @@ class Setup:
                 f"robotpy-build configuration in pyproject.toml is incorrect"
             ) from e
 
-        # Remove deprecated 'generate' data and migrate
-        for wname, wrapper in self.project.wrappers.items():
-            if wrapper.generate:
-                if wrapper.autogen_headers:
-                    raise ValueError(
-                        "must not specify 'generate' and 'autogen_headers'"
-                    )
-                autogen_headers = {}
-                for l in wrapper.generate:
-                    for name, header in l.items():
-                        if name in autogen_headers:
-                            raise ValueError(
-                                f"{wname}.generate: duplicate key '{name}'"
-                            )
-                        autogen_headers[name] = header
-                wrapper.autogen_headers = autogen_headers
-                wrapper.generate = None
-
         # Shared wrapper writer instance
         self.wwriter = WrapperWriter()
 
