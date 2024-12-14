@@ -1,8 +1,8 @@
 classes:
-  THiddenBase1:
+  bq::THiddenBase1:
     template_params:
     - T
-  THiddenBase2:
+  bq::THiddenBase2:
     template_params:
     - T
 

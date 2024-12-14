@@ -1,6 +1,6 @@
 ---
 classes:
-  TDependentParam:
+  whatever::TDependentParam:
     template_params:
     - T
     typealias:

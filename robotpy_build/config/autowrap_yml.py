@@ -532,7 +532,7 @@ class AutowrapConfigYaml(Model):
     #:
     attributes: Dict[str, PropData] = {}
 
-    #: Key is the class name
+    #: Key is the namespace + class name
     #:
     #: .. code-block:: yaml
     #:
