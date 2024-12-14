@@ -1,11 +1,11 @@
 classes:
-  BaseQualname:
+  bq::detail::BaseQualname:
     base_qualnames:
       Hidden: bq::Hidden
     methods:
       BaseQualname:
   
-  THBaseQualname:
+  bq::detail::THBaseQualname:
     base_qualnames:
       THiddenBase1: bq::THiddenBase1<bq::THiddenBase2<int>>
       # parse with _parse_template_decl ... or split it out
@@ -13,10 +13,10 @@ classes:
     methods:
       BaseQualname:
 
-  TVisibleBase1:
+  bq::detail::TVisibleBase1:
     template_params:
     - T
-  TVisibleBase2:
+  bq::detail::TVisibleBase2:
     template_params:
     - T
 

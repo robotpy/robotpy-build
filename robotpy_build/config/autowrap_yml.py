@@ -510,7 +510,7 @@ class AutowrapConfigYaml:
     #:
     attributes: Dict[str, PropData] = dataclasses.field(default_factory=dict)
 
-    #: Key is the class name
+    #: Key is the namespace + class name
     #:
     #: .. code-block:: yaml
     #:

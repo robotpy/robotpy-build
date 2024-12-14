@@ -84,7 +84,7 @@ class GeneratorData:
 
     def get_class_data(self, name: str) -> ClassData:
         """
-        The 'name' is [parent_class::]class_name
+        The 'name' is namespace::[parent_class::]class_name
         """
         data = self.data.classes.get(name)
         missing = data is None

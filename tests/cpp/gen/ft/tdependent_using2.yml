@@ -1,6 +1,6 @@
 ---
 classes:
-  TDependentUsing2:
+  whatever::TDependentUsing2:
     template_params:
     - T
   

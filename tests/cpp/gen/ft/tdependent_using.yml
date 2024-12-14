@@ -1,6 +1,6 @@
 ---
 classes:
-  TDependentUsing:
+  whatever::TDependentUsing:
     template_params:
     - T
     typealias:

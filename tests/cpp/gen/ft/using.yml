@@ -3,6 +3,6 @@ typealias:
 - cr::AlsoCantResolve
 
 classes:
-  ProtectedUsing:
+  cr::inner::ProtectedUsing:
     typealias:
     - cr::CantResolve
