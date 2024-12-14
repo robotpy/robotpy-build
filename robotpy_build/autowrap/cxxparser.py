@@ -792,10 +792,14 @@ class AutowrapVisitor:
 
         if not isinstance(parent, ClassBlockState):
             # easy case -- namespace is the next user_data up
-            cls_key = cls_name
             cls_namespace = typing.cast(str, parent.user_data)
             if extra_segments:
                 cls_namespace = f"{cls_namespace}::{extra_segments}"
+
+            if cls_namespace:
+                cls_key = f"{cls_namespace}::{cls_name}"
+            else:
+                cls_key = cls_name
         else:
             # Use things the parent already computed
             cdata = typing.cast(ClassStateData, parent.user_data)
