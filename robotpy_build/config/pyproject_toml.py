@@ -298,9 +298,6 @@ class WrapperConfig:
     #:
     autogen_headers: Optional[Dict[str, str]] = None
 
-    #: DEPRECATED: Same as autogen_headers, but more complicated
-    generate: Optional[List[Dict[str, str]]] = None
-
     #: Path to a single data.yml to use during code generation, or a directory
     #: of yaml files. If a directory, generation data will be looked up
     #: using the key in the generate dictionary.
