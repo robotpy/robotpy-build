@@ -89,7 +89,7 @@ jobs:
     strategy:
       max-parallel: ${{ fromJSON(needs.setup_concurrency.outputs.max-parallel).v }}
       matrix:
-        os: ["ubuntu-22.04", "macos-12", "windows-2022"]
+        os: ["ubuntu-22.04", "macos-13", "windows-2022"]
         python_version:
         - '3.8'
         - '3.9'
@@ -99,7 +99,7 @@ jobs:
         - '3.13'
         architecture: [x86, x64]
         exclude:
-        - os: macos-12
+        - os: macos-13
           architecture: x86
         - os: ubuntu-22.04
           architecture: x86
