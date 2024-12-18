@@ -124,12 +124,12 @@ def _render_cls_trampoline(
     )
 
     if cls.bases:
-        r.writeln(f"struct PyTrampolineCfg_{cls.full_cpp_name_identifier} :")
+        r.writeln(f"struct PyTrampolineCfg_{cls.cpp_name} :")
 
         with r.indent():
             for base in cls.bases:
                 r.writeln(
-                    f"{base.namespace_}PyTrampolineCfg_{base.full_cpp_name_identifier}<{postcomma(base.template_params)}"
+                    f"{base.namespace_}PyTrampolineCfg_{base.cls_name}<{postcomma(base.template_params)}"
                 )
 
             r.writeln("CfgBase")
@@ -137,7 +137,7 @@ def _render_cls_trampoline(
             for base in cls.bases:
                 r.writeln(">")
     else:
-        r.writeln(f"struct PyTrampolineCfg_{cls.full_cpp_name_identifier} : CfgBase")
+        r.writeln(f"struct PyTrampolineCfg_{cls.cpp_name} : CfgBase")
 
     r.writeln("{")
 
@@ -162,11 +162,11 @@ def _render_cls_trampoline(
         r.writeln(
             f"template <typename PyTrampolineBase{precomma(template_parameter_list)}, typename PyTrampolineCfg>"
         )
-        r.writeln(f"using PyTrampolineBase_{cls.full_cpp_name_identifier} =")
+        r.writeln(f"using PyTrampolineBase_{cls.cpp_name} =")
 
         for base in cls.bases:
             r.rel_indent(2)
-            r.writeln(f"{base.namespace_}PyTrampoline_{base.full_cpp_name_identifier}<")
+            r.writeln(f"{base.namespace_}PyTrampoline_{base.cls_name}<")
 
         with r.indent():
             r.writeln("PyTrampolineBase")
@@ -182,8 +182,8 @@ def _render_cls_trampoline(
             ;
 
             template <typename PyTrampolineBase{ precomma(template_parameter_list) }, typename PyTrampolineCfg>
-            struct PyTrampoline_{ cls.full_cpp_name_identifier } : PyTrampolineBase_{ cls.full_cpp_name_identifier }<PyTrampolineBase{ precomma(template_argument_list) }, PyTrampolineCfg> {{
-              using PyTrampolineBase_{ cls.full_cpp_name_identifier }<PyTrampolineBase{ precomma(template_argument_list) }, PyTrampolineCfg>::PyTrampolineBase_{ cls.full_cpp_name_identifier };
+            struct PyTrampoline_{ cls.cpp_name } : PyTrampolineBase_{ cls.cpp_name }<PyTrampolineBase{ precomma(template_argument_list) }, PyTrampolineCfg> {{
+              using PyTrampolineBase_{ cls.cpp_name }<PyTrampolineBase{ precomma(template_argument_list) }, PyTrampolineCfg>::PyTrampolineBase_{ cls.cpp_name };
         """
         )
 
@@ -192,7 +192,7 @@ def _render_cls_trampoline(
         r.write_trim(
             f"""
             template <typename PyTrampolineBase{ precomma(template_parameter_list) }, typename PyTrampolineCfg>
-            struct PyTrampoline_{ cls.full_cpp_name_identifier } : PyTrampolineBase {{
+            struct PyTrampoline_{ cls.cpp_name } : PyTrampolineBase {{
               using PyTrampolineBase::PyTrampolineBase;
         """
         )
@@ -232,11 +232,11 @@ def _render_cls_trampoline(
             with r.indent():
                 all_decls = ", ".join(p.decl for p in fn.all_params)
                 all_names = ", ".join(p.arg_name for p in fn.all_params)
-                r.writeln(f"PyTrampoline_{cls.full_cpp_name_identifier}({all_decls}) :")
+                r.writeln(f"PyTrampoline_{cls.cpp_name}({all_decls}) :")
 
                 if cls.bases:
                     r.writeln(
-                        f"  PyTrampolineBase_{cls.full_cpp_name_identifier}<PyTrampolineBase{precomma(trampoline.tmpl_args)}, PyTrampolineCfg>({all_names})"
+                        f"  PyTrampolineBase_{cls.cpp_name}<PyTrampolineBase{precomma(trampoline.tmpl_args)}, PyTrampolineCfg>({all_names})"
                     )
                 else:
                     r.writeln(f"  PyTrampolineBase({all_names})")

@@ -287,6 +287,12 @@ class BaseClassData:
     Render data for each base that a class inherits
     """
 
+    #: Just the class name
+    cls_name: str
+
+    #: This ends with ::
+    namespace_: str
+
     #: C++ name, including all known components
     full_cpp_name: str  # was x_qualname
 
@@ -295,9 +301,6 @@ class BaseClassData:
     #: Translated C++ name suitable for use as an identifier. :<>= are
     #: turned into underscores.
     full_cpp_name_identifier: str  # was x_qualname_
-
-    #: This ends with ::
-    namespace_: str
 
     #: C++ name + components, no template parameters
     dep_cpp_name: str
