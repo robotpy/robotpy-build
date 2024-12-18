@@ -191,7 +191,9 @@ def _count_and_unwrap(
             assert False
 
 
-def _fmt_base_name(typename: PQName) -> typing.Tuple[str, str, str, typing.List[str]]:
+def _fmt_base_name(
+    typename: PQName,
+) -> typing.Tuple[str, str, str, str, typing.List[str]]:
     all_parts = []
     nameonly_parts = []
 
@@ -209,10 +211,12 @@ def _fmt_base_name(typename: PQName) -> typing.Tuple[str, str, str, typing.List[
 
     if last_segment.specialization:
         most_parts = all_parts[:-1]
+        ns_parts = all_parts[:-1]
         all_parts.append(last_segment.format())
         most_parts.append(last_segment.name)
         tparam_list = [arg.format() for arg in last_segment.specialization.args]
     else:
+        ns_parts = all_parts[:]
         all_parts.append(last_segment.name)
         most_parts = all_parts
         tparam_list = []
@@ -221,6 +225,7 @@ def _fmt_base_name(typename: PQName) -> typing.Tuple[str, str, str, typing.List[
         "::".join(most_parts),
         "::".join(all_parts),
         "::".join(nameonly_parts),
+        "::".join(ns_parts),
         tparam_list,
     )
 
@@ -824,8 +829,8 @@ class AutowrapVisitor:
             if base.access == "private":
                 continue
 
-            cpp_name, cpp_name_w_templates, dep_cpp_name, tparam_list = _fmt_base_name(
-                base.typename
+            cpp_name, cpp_name_w_templates, dep_cpp_name, base_ns, tparam_list = (
+                _fmt_base_name(base.typename)
             )
             if ignored_bases.pop(cpp_name_w_templates, None):
                 continue
@@ -846,6 +851,11 @@ class AutowrapVisitor:
                     cpp_name = user_bqual[:tp]
                     template_params = user_bqual[tp + 1 : -1]
                 dep_cpp_name = cpp_name
+                ns_idx = cpp_name.rfind("::")
+                if ns_idx == -1:
+                    base_ns = ""
+                else:
+                    base_ns = cpp_name[:ns_idx]
             else:
                 # TODO: we don't handle nested child classes with templates here
                 #       ... but that has to be rather obscure?
@@ -858,17 +868,22 @@ class AutowrapVisitor:
                 # If no explicit namespace specified, we assume base classes
                 # live in the same namespace as the class
                 if len(base.typename.segments) == 1:
+                    base_ns = cls_namespace
                     cpp_name = f"{cls_namespace}::{cpp_name}"
                     cpp_name_w_templates = f"{cls_namespace}::{cpp_name_w_templates}"
                     dep_cpp_name = f"{cls_namespace}::{dep_cpp_name}"
 
             base_identifier = cpp_name.translate(_qualname_trans)
 
+            if base_ns:
+                base_ns = f"{base_ns}::"
+
             bases.append(
                 BaseClassData(
                     full_cpp_name=cpp_name,
                     full_cpp_name_w_templates=cpp_name_w_templates,
                     full_cpp_name_identifier=base_identifier,
+                    namespace_=base_ns,
                     dep_cpp_name=dep_cpp_name,
                     template_params=template_params,
                 )
@@ -1242,8 +1257,8 @@ class AutowrapVisitor:
             if cdata.template_argument_list:
                 tmpl = f", {cdata.template_argument_list}"
 
-            trampoline_cfg = f"rpygen::PyTrampolineCfg_{cdata.cls_cpp_identifier}<{cdata.template_argument_list}>"
-            tname = f"rpygen::PyTrampoline_{cdata.cls_cpp_identifier}<typename {ctx.full_cpp_name}{tmpl}, typename {trampoline_cfg}>"
+            trampoline_cfg = f"{cdata.ctx.namespace}::PyTrampolineCfg_{cdata.cls_cpp_identifier}<{cdata.template_argument_list}>"
+            tname = f"{cdata.ctx.namespace}::PyTrampoline_{cdata.cls_cpp_identifier}<typename {ctx.full_cpp_name}{tmpl}, typename {trampoline_cfg}>"
             tvar = f"{ctx.cpp_name}_Trampoline"
 
             ctx.trampoline = TrampolineData(

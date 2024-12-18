@@ -296,6 +296,9 @@ class BaseClassData:
     #: turned into underscores.
     full_cpp_name_identifier: str  # was x_qualname_
 
+    #: This ends with ::
+    namespace_: str
+
     #: C++ name + components, no template parameters
     dep_cpp_name: str
 

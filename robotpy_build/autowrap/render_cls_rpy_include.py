@@ -101,10 +101,8 @@ def _render_cls_trampoline(
         for base in cls.bases:
             r.writeln(f"#include <rpygen/{ base.full_cpp_name_identifier }.hpp>")
 
-    r.writeln("\nnamespace rpygen {")
-
     if cls.namespace:
-        r.writeln(f"\nusing namespace {cls.namespace};")
+        r.writeln(f"\nnamespace {cls.namespace.strip('::')} {{")
 
     if hctx.using_declarations:
         r.writeln()
@@ -122,7 +120,7 @@ def _render_cls_trampoline(
     #
 
     r.writeln(
-        f"\ntemplate <{postcomma(template_parameter_list)}typename CfgBase = EmptyTrampolineCfg>"
+        f"\ntemplate <{postcomma(template_parameter_list)}typename CfgBase = rpygen::EmptyTrampolineCfg>"
     )
 
     if cls.bases:
@@ -131,7 +129,7 @@ def _render_cls_trampoline(
         with r.indent():
             for base in cls.bases:
                 r.writeln(
-                    f"PyTrampolineCfg_{base.full_cpp_name_identifier}<{postcomma(base.template_params)}"
+                    f"{base.namespace_}PyTrampolineCfg_{base.full_cpp_name_identifier}<{postcomma(base.template_params)}"
                 )
 
             r.writeln("CfgBase")
@@ -168,7 +166,7 @@ def _render_cls_trampoline(
 
         for base in cls.bases:
             r.rel_indent(2)
-            r.writeln(f"PyTrampoline_{base.full_cpp_name_identifier}<")
+            r.writeln(f"{base.namespace_}PyTrampoline_{base.full_cpp_name_identifier}<")
 
         with r.indent():
             r.writeln("PyTrampolineBase")
@@ -284,7 +282,10 @@ def _render_cls_trampoline(
             r.writeln()
             r.write_trim(trampoline.inline_code)
 
-    r.writeln("};\n\n}; // namespace rpygen")
+    r.writeln("};\n\n")
+
+    if cls.namespace:
+        r.writeln(f"}}; // namespace {cls.namespace}")
 
 
 def _render_cls_trampoline_virtual_method(
