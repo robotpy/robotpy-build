@@ -287,6 +287,12 @@ class BaseClassData:
     Render data for each base that a class inherits
     """
 
+    #: Just the class name
+    cls_name: str
+
+    #: This ends with ::
+    namespace_: str
+
     #: C++ name, including all known components
     full_cpp_name: str  # was x_qualname
 
