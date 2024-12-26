@@ -1,0 +1,10 @@
+---
+
+classes:
+  Abstract:
+    methods:
+      mustOverrideMe:
+  PrivateAbstract:
+    methods:
+      PrivateAbstract:
+      getPrivateOverride:

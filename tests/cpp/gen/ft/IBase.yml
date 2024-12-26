@@ -1,0 +1,18 @@
+---
+
+classes:
+  inheritance::IBase:
+    methods:
+      IBase:
+      baseOnly:
+      baseAndGrandchild:
+      baseAndChild:
+      baseAndPyChild:
+      baseAndChildFinal:
+      getBaseOnly:
+      getBaseAndGrandchild:
+      getBaseAndChild:
+      getBaseAndPyChild:
+      getBaseAndChildFinal:
+      protectedMethod:
+      protectedOutMethod:

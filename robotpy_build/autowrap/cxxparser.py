@@ -587,11 +587,14 @@ class AutowrapVisitor:
             return False
 
         cls_key, cls_name, cls_namespace, parent_ctx = cls_name_result
-        class_data = self.gendata.get_class_data(cls_key)
+        class_data, missing = self.gendata.get_class_data(cls_key)
 
-        # Ignore explicitly ignored classes
+        # Ignore explicitly ignored classes (including default-ignore)
         if class_data.ignore:
             return False
+
+        if missing and not self.report_only:
+            raise ValueError(f"'{cls_key}' must be in {self.gendata.data_fname}")
 
         for typename in class_data.force_type_casters:
             self._add_user_type_caster(typename)
