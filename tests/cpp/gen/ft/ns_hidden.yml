@@ -1,0 +1,15 @@
+---
+
+enums:
+  E:
+classes:
+  o::O:
+    methods:
+      O:
+  n::h::C:
+    methods:
+      fn:
+  ::o::AnotherC:
+    methods:
+      AnotherC:
+      fn:

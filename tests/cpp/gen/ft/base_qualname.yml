@@ -20,6 +20,8 @@ classes:
     template_params:
     - T
 
+  bq::detail::TVBaseQualname:
+
 templates:
   TVisibleBase:
     qualname: bq::detail::TVisibleBase1

@@ -1,0 +1,10 @@
+---
+
+classes:
+  UPBase:
+    methods:
+      get5:
+  UPChild:
+    methods:
+      get5:
+      get6:

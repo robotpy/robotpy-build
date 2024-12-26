@@ -1,0 +1,26 @@
+---
+
+functions:
+  OBinitOB:
+  OCinitOB:
+  OCinitOC:
+  OGinitOC:
+classes:
+  overloaded_inheritance::OBInitializer:
+    methods:
+      doInit:
+  overloaded_inheritance::OB:
+    methods:
+      Init:
+  overloaded_inheritance::OCInitializer:
+    methods:
+      doInit:
+  overloaded_inheritance::OC:
+    methods:
+      Init:
+        overloads:
+          OBInitializer&:
+          OCInitializer&:
+  overloaded_inheritance::OG:
+    methods:
+      Init:

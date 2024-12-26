@@ -694,7 +694,7 @@ class Wrapper:
                 )
             )
 
-            gendata = GeneratorData(data)
+            gendata = GeneratorData(data, data_fname)
 
             try:
                 hctx = parse_header(

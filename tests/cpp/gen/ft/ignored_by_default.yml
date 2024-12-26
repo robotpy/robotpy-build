@@ -9,6 +9,7 @@ functions:
   id_fnEnable:
     ignore: false
 classes:
+  # id_IgnoreClass doesn't need to be specified because of default-ignore
   id_EnabledClass:
     ignore: false
     enums:

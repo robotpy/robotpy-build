@@ -6,6 +6,8 @@ classes:
     template_params:
     - T
 
+  bq::Hidden:
+
 templates:
   THiddenBase:
     qualname: bq::THiddenBase1

@@ -1,5 +1,6 @@
 ---
 classes:
+  MoveOnlyParam:
   ClassWithTrampoline:
     trampoline_inline_code: | 
       int get42() { return 42; }
@@ -17,8 +18,8 @@ classes:
           [&](py::function fn) -> int {
             return py::cast<int>(fn(param.i));
           }
-
-
+  ConstexprTrampoline:
+  ChildConstexprTrampoline:
 
 inline_code: |
   cls_ClassWithTrampoline

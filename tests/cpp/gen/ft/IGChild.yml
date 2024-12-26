@@ -1,0 +1,6 @@
+---
+
+classes:
+  inheritance::IGrandChild:
+    methods:
+      baseAndGrandchild:
