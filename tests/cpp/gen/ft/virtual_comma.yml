@@ -1,0 +1,11 @@
+---
+
+classes:
+  VirtualComma:
+    methods:
+      getTwoTwo:
+      getRval:
+        overloads:
+          "":
+          int:
+  VirtualComma::RVal:

@@ -48,8 +48,9 @@ class GeneratorData:
 
     data: AutowrapConfigYaml
 
-    def __init__(self, data: AutowrapConfigYaml):
+    def __init__(self, data: AutowrapConfigYaml, data_fname: str):
         self.data = data
+        self.data_fname = data_fname
 
         default_ignore = self.data.defaults.ignore
         self._default_enum_data = EnumData(ignore=default_ignore)
@@ -64,7 +65,7 @@ class GeneratorData:
         self.enums: EnumMissingData = {}
         self.attributes: AttrMissingData = {}
 
-    def get_class_data(self, name: str) -> ClassData:
+    def get_class_data(self, name: str) -> Tuple[ClassData, bool]:
         """
         The 'name' is namespace::[parent_class::]class_name
         """
@@ -74,7 +75,7 @@ class GeneratorData:
             data = self._default_class_data
 
         self.classes[name] = ClsReportData(missing=missing)
-        return data
+        return data, missing
 
     def get_cls_enum_data(
         self, name: str, cls_key: str, cls_data: ClassData

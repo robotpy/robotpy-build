@@ -1,0 +1,27 @@
+---
+
+functions:
+  fnOverload:
+    overloads:
+      int, int:
+      int:
+classes:
+  OverloadedObject:
+    methods:
+      overloaded:
+        overloads:
+          int:
+          const char*:
+          int, int:
+          "":
+      overloaded_constexpr:
+        overloads:
+          int, int:
+          int, int, int:
+      overloaded_static:
+        overloads:
+          int:
+          const char*:
+      overloaded_private:
+        overloads:
+          int:

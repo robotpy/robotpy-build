@@ -1,0 +1,12 @@
+---
+
+classes:
+  inheritance::IChild:
+    attributes:
+      i:
+    methods:
+      IChild:
+      baseAndChild:
+      baseAndChildFinal:
+      getI:
+  inheritance::IFinal:

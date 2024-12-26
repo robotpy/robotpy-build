@@ -1,0 +1,10 @@
+---
+
+classes:
+  PBase:
+    methods:
+      getChannel:
+      privateFinalTestC:
+      privateFinalTestGC:
+      privateOverrideTestC:
+      setChannel:

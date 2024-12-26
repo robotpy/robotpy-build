@@ -1,0 +1,12 @@
+---
+
+classes:
+  PatientRef:
+    attributes:
+      dead:
+  Nurse:
+    attributes:
+      m_p:
+    methods:
+      Nurse:
+      patientDead:

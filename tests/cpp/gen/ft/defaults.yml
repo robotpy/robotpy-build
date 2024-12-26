@@ -1,0 +1,13 @@
+---
+
+functions:
+  fnSimpleDefaultParam:
+  fnEmptyDefaultParam:
+classes:
+  NotImportant:
+  HasDefaults:
+    attributes:
+      kDefVal:
+    methods:
+      getVal:
+      objectDefault:
