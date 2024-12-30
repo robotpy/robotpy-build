@@ -1108,7 +1108,7 @@ class AutowrapVisitor:
 
         # automatically retain references passed to constructors if the
         # user didn't specify their own keepalive
-        if is_constructor and not method_data.keepalive:
+        if is_constructor and method_data.keepalive is None:
             for i, pctx in enumerate(fctx.filtered_params):
                 if pctx.full_cpp_type.endswith("&"):
                     fctx.keepalives.append((1, i + 2))
