@@ -1072,6 +1072,9 @@ class AutowrapVisitor:
 
         # Update class-specific method attributes
         fctx.is_constructor = is_constructor
+        if is_constructor and method_data.rename and not method_data.cpp_code:
+            fctx.cpp_return_type = cctx.full_cpp_name
+            self._on_fn_make_lambda(method_data, fctx)
         if operator:
             fctx.operator = operator
             self.hctx.need_operators_h = True
@@ -1581,6 +1584,7 @@ class AutowrapVisitor:
 
         * When an 'out' parameter is detected (a pointer receiving a value)
         * When a buffer + size parameter exists (either in or out)
+        * When "renaming" a constructor overload to a static method
         """
 
         # Statements to insert before calling the function

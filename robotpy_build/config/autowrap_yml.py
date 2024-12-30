@@ -145,6 +145,8 @@ class FunctionData(Model):
     internal: bool = False
 
     #: Use this to set the name of the function as exposed to python
+    #:
+    #: When applied to a constructor, creates a static method for the overload instead.
     rename: Optional[str] = None
 
     #: Mechanism to override individual parameters
@@ -212,7 +214,7 @@ class FunctionData(Model):
     def validate_virtual_xform(cls, v, values):
         if v and values.get("trampoline_cpp_code"):
             raise ValueError(
-                f"cannot specify trampoline_cpp_code and virtual_xform for the same method"
+                "cannot specify trampoline_cpp_code and virtual_xform for the same method"
             )
         return v
 
@@ -222,6 +224,8 @@ if not _generating_documentation:
 
 
 class PropAccess(enum.Enum):
+    """Whether a property is writable."""
+
     #: Determine read/read-write automatically:
     #:
     #: * If a struct/union, default to readwrite

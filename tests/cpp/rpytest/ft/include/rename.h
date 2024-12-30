@@ -12,6 +12,9 @@ int fnRenamedParam(int x) { return x; }
 
 // class
 struct OriginalClass {
+    // constructor
+    OriginalClass() = default;
+    explicit OriginalClass(int prop) : originalProp(prop) {};
 
     // class function
     int fnOriginal() { return 0x2; }
