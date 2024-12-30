@@ -30,6 +30,10 @@ def test_rename_cls():
     assert not hasattr(c.ClassRenamedEnum, "Param1")
     assert c.ClassRenamedEnum.P1 == 1
 
+    n = ft.RenamedClass.new(1)
+    assert isinstance(n, ft.RenamedClass)
+    assert n.renamedProp == 1
+
 
 def test_rename_enums():
     assert not hasattr(ft._rpytest_ft, "OriginalEnum")

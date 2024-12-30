@@ -26,6 +26,11 @@ classes:
           Param1:
             rename: P1
     methods:
+      OriginalClass:
+        overloads:
+          '':
+          int:
+            rename: new
       fnOriginal:
         rename: fnRenamed
       fnRenamedParam:

@@ -7,6 +7,7 @@ from .context import (
     Documentation,
     EnumContext,
     FunctionContext,
+    GeneratedLambda,
     PropContext,
 )
 
@@ -67,6 +68,22 @@ def _genmethod(
     elif fn.is_constructor:
         if fn.cpp_code:
             r.writeln(f".def(py::init({fn.cpp_code})")
+        elif fn.genlambda:
+            genlambda = fn.genlambda
+            arg_params = genlambda.in_params
+            lam_params = [param.decl for param in arg_params]
+            # TODO: trampoline
+            assert cls_qualname is not None
+            call_qual = cls_qualname
+            _gen_method_lambda(
+                r,
+                fn,
+                genlambda,
+                call_qual,
+                tmpl,
+                f'.def_static("{fn.py_name}"',
+                lam_params,
+            )
         elif trampoline_qualname:
             r.writeln(
                 f".def(py::init_alias<{', '.join(param.full_cpp_type for param in arg_params)}>()"
@@ -93,29 +110,14 @@ def _genmethod(
             if cls_qualname:
                 lam_params = [f"{cls_qualname} &self"] + lam_params
 
-            r.writeln(f"{fn_def}, []({', '.join(lam_params)}) {{")
+            if trampoline_qualname:
+                call_qual = f"(({trampoline_qualname}*)&self)->{fn.cpp_name}"
+            elif cls_qualname:
+                call_qual = f"(({cls_qualname}*)&self)->{fn.cpp_name}"
+            else:
+                call_qual = f"{fn.namespace}::{fn.cpp_name}"
 
-            with r.indent():
-                if genlambda.pre:
-                    r.writeln(genlambda.pre)
-
-                if trampoline_qualname:
-                    call_qual = f"(({trampoline_qualname}*)&self)->"
-                elif cls_qualname:
-                    call_qual = f"(({cls_qualname}*)&self)->"
-                else:
-                    call_qual = f"{fn.namespace}::"
-
-                call_params = ", ".join(p.call_name for p in fn.all_params)
-
-                r.writeln(
-                    f"{genlambda.call_start}{call_qual}{fn.cpp_name}{tmpl}({call_params});"
-                )
-
-                if genlambda.ret:
-                    r.writeln(genlambda.ret)
-
-            r.writeln("}")
+            _gen_method_lambda(r, fn, genlambda, call_qual, tmpl, fn_def, lam_params)
 
         else:
             if trampoline_qualname:
@@ -170,6 +172,31 @@ def _genmethod(
     if fn.ifndef:
         r.rel_indent(-2)
         r.writeln(f"#endif // {fn.ifndef}\n")
+
+
+def _gen_method_lambda(
+    r: RenderBuffer,
+    fn: FunctionContext,
+    genlambda: GeneratedLambda,
+    call_qual: str,
+    tmpl: str,
+    fn_def: str,
+    lam_params: T.List[str],
+):
+    r.writeln(f"{fn_def}, []({', '.join(lam_params)}) {{")
+
+    with r.indent():
+        if genlambda.pre:
+            r.writeln(genlambda.pre)
+
+        call_params = ", ".join(p.call_name for p in fn.all_params)
+
+        r.writeln(f"{genlambda.call_start}{call_qual}{tmpl}({call_params});")
+
+        if genlambda.ret:
+            r.writeln(genlambda.ret)
+
+    r.writeln("}")
 
 
 def genmethod(
