@@ -1,12 +1,79 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2,<8"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.26.2", "hatch-vcs"]
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
-write_to = "robotpy_build/version.py"
+[project]
+name = "robotpy-build"
+dynamic = ["version"]
+description = "Build tool for RobotPy projects"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt", "robotpy_build/pybind11/LICENSE"]
+authors = [
+    {name = "Dustin Spicuzza", email = "robotpy@googlegroups.com"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "setuptools >= 45",
+    "setuptools_scm >= 6.2, < 8",
+    "sphinxify >= 0.7.3",
+    "pydantic >= 1.7.0, < 2",
+    "cxxheaderparser[pcpp] ~= 1.4.1",
+    "tomli",
+    "tomli_w",
+    "toposort",
+    "typing-extensions",
+    "pyyaml >= 5.1",
+    "patch == 1.*",
+    "pybind11-stubgen ~= 2.5.1",
+    "delocate; platform_system == 'Darwin'",
+    "distro; platform_system == 'Linux'",
+]
+
+[project.entry-points.robotpybuild]
+robotpy-build = "robotpy_build.pkgcfg"
+
+[project.scripts]
+robotpy-build = "robotpy_build.tool:main"
+
+[project.urls]
+"Source code" = "https://github.com/robotpy/robotpy-build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "robotpy_build/version.py"
+
+[tool.hatch.build.targets.sdist]
+packages = ["robotpy_build"]
+exclude = [
+    "/robotpy_build/pybind11"
+]
+[tool.hatch.build.targets.sdist.force-include]
+"./robotpy_build/pybind11/include" = "./robotpy_build/pybind11/include"
+
+[tool.hatch.build.targets.wheel]
+packages = ["robotpy_build"]
+include = [
+    "/robotpy_build/pybind11/include",
+    "/robotpy_build/include",
+]
+
 
 [tool.black]
-target-version = ['py38']
+target-version = ["py38"]
 extend-exclude = '''
 ^/robotpy_build/pybind11
 '''
