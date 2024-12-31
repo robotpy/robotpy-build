@@ -107,6 +107,11 @@ class BuildExt(build_ext):
             if cc_launcher:
                 self.compiler.compiler.insert(0, cc_launcher)
                 self.compiler.compiler_so.insert(0, cc_launcher)
+                try:
+                    # setuptools v72.2.0 added C++ support
+                    self.compiler.compiler_so_cxx.insert(0, cc_launcher)
+                except AttributeError:
+                    pass
                 # compiler_cxx is only used for linking, so we don't mess with it
                 # .. distutils is so weird
                 # self.compiler.compiler_cxx.insert(0, cc_launcher)
