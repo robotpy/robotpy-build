@@ -28,7 +28,7 @@ dependencies = [
     "setuptools >= 45",
     "setuptools_scm >= 6.2, < 8",
     "sphinxify >= 0.7.3",
-    "pydantic >= 1.7.0, < 2",
+    "pydantic >= 1.7.0, < 2, != 1.10.20",
     "cxxheaderparser[pcpp] ~= 1.4.1",
     "tomli",
     "tomli_w",
