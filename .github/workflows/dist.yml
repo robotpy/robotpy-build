@@ -103,6 +103,13 @@ jobs:
           architecture: x86
         - os: ubuntu-22.04
           architecture: x86
+        include:
+        - os: macos-14
+          python_version: 3.9
+          architecture: arm64
+        - os: ubuntu-22.04-arm
+          python_version: 3.11
+          architecture: arm64
 
     steps:
     - uses: actions/checkout@v3
