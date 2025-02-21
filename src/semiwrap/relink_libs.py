@@ -1,27 +1,27 @@
 """
-    On OSX, the loader does not look at the current process to load
-    dylibs -- it insists on finding them itself, so we have to fixup
-    our binaries such that they resolve correctly.
-    
-    Two cases we need to deal with
-    - Local development/installation
-    - Building a wheel for pypi
-    
-    In development, we assume things are installed exactly where they will be
-    at runtime.
-      -> @loader_path/{relpath(final_location, dep_path)}
-    
-    For pypi wheels, we assume that installation is in site-packages, and
-    so are the libraries that this lib depends on.
-      -> @loader_path/{relpath(final_siterel, dep_siterel)}
-    
-    Notice these are the same IF you only build wheels in a virtualenv
-    that only has its dependencies installed in site-packages
-    
+On OSX, the loader does not look at the current process to load
+dylibs -- it insists on finding them itself, so we have to fixup
+our binaries such that they resolve correctly.
 
-    .. warning:: This will only work for the environment it's compiled in!
-                 This basically means don't compile wheels in your development 
-                 environment, use a clean environment instead
+Two cases we need to deal with
+- Local development/installation
+- Building a wheel for pypi
+
+In development, we assume things are installed exactly where they will be
+at runtime.
+  -> @loader_path/{relpath(final_location, dep_path)}
+
+For pypi wheels, we assume that installation is in site-packages, and
+so are the libraries that this lib depends on.
+  -> @loader_path/{relpath(final_siterel, dep_siterel)}
+
+Notice these are the same IF you only build wheels in a virtualenv
+that only has its dependencies installed in site-packages
+
+
+.. warning:: This will only work for the environment it's compiled in!
+             This basically means don't compile wheels in your development
+             environment, use a clean environment instead
 
 """
 

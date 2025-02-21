@@ -26,8 +26,6 @@ using py::raise_from;
     "overrides for that method. It is likely the following compiler error " \
     "messages will tell you which one it is."
 
-// Use this to define your module instead of PYBIND11_MODULE
-#define RPYBUILD_PYBIND11_MODULE(variable) PYBIND11_MODULE(RPYBUILD_MODULE_NAME, variable)
 
 // only for use by RPYBUILD_OVERRIDE_PURE_POST_IMPL
 template <class T> py::handle __get_handle(const T *this_ptr) {

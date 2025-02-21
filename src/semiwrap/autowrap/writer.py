@@ -1,6 +1,6 @@
 import json
 import os
-from os.path import join
+import pathlib
 import pprint
 import typing
 
@@ -18,25 +18,25 @@ class WrapperWriter:
         self,
         hctx: HeaderContext,
         name: str,
-        cxx_gen_dir: str,
-        hppoutdir: str,
-        classdeps_json_fname: str,
-    ) -> typing.List[str]:
+        dst_cpp: pathlib.Path,
+        hppoutdir: pathlib.Path,
+        classdeps_json_fname: pathlib.Path,
+    ) -> typing.List[pathlib.Path]:
         """Generates all files needed for a single processed header"""
 
-        generated_sources: typing.List[str] = []
+        generated_sources: typing.List[pathlib.Path] = []
 
         # Jinja requires input as a dictionary
         data = hctx.__dict__
 
         if _emit_j2_debug:
-            with open(join(cxx_gen_dir, f"{name}.txt"), "w") as fp:
+            with open(dst_cpp.parent / f"{name}.txt", "w") as fp:
                 fp.write(pprint.pformat(hctx))
 
         # Write the cpp file first
-        fname = join(cxx_gen_dir, f"{name}.cpp")
-        generated_sources.append(fname)
-        with open(fname, "w", encoding="utf-8") as fp:
+
+        generated_sources.append(dst_cpp)
+        with open(dst_cpp, "w", encoding="utf-8") as fp:
             fp.write(render_wrapped_cpp(hctx))
 
         # Then the json
@@ -49,9 +49,8 @@ class WrapperWriter:
             if not cls.template and not cls.trampoline:
                 continue
 
-            fname = join(
-                hppoutdir, f"{cls.namespace.replace(':', '_')}__{cls.cpp_name}.hpp"
-            )
+            fname = hppoutdir / f"{cls.namespace.replace(':', '_')}__{cls.cpp_name}.hpp"
+
             with open(fname, "w", encoding="utf-8") as fp:
                 fp.write(render_cls_rpy_include_hpp(hctx, cls))
 
@@ -59,14 +58,14 @@ class WrapperWriter:
         # compiler memory requirements when compiling obnoxious templates
         if hctx.template_instances:
             # Single header output that holds all the struct outlines
-            fname = join(cxx_gen_dir, f"{name}_tmpl.hpp")
+            fname = dst_cpp / f"{name}_tmpl.hpp"
             with open(fname, "w", encoding="utf-8") as fp:
                 fp.write(render_template_inst_hpp(hctx))
 
             # Each cpp file has a single class template instance
             for i, tmpl_data in enumerate(hctx.template_instances):
                 data["tmpl_data"] = tmpl_data
-                fname = join(hppoutdir, f"{name}_tmpl{i+1}.cpp")
+                fname = hppoutdir / f"{name}_tmpl{i+1}.cpp"
                 generated_sources.append(fname)
                 with open(fname, "w", encoding="utf-8") as fp:
                     fp.write(render_template_inst_cpp(hctx, tmpl_data))

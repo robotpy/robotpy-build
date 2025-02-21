@@ -31,7 +31,7 @@ from cxxheaderparser import preprocessor
 
 
 from .download import download_and_extract_zip
-from .config.pyproject_toml import PatchInfo, WrapperConfig, Download
+from .config.pyproject_toml import PatchInfo, ModuleConfig, Download
 
 from .autowrap.cxxparser import parse_header
 from .autowrap.generator_data import GeneratorData, MissingReporter
@@ -39,7 +39,7 @@ from .autowrap.writer import WrapperWriter
 
 from .config.autowrap_yml import AutowrapConfigYaml
 from .config.dev_yml import get_dev_config
-from .config.pyproject_toml import WrapperConfig, Download
+from .config.pyproject_toml import ModuleConfig, Download
 
 # TODO: eventually provide native preprocessor by default and allow it
 #       to be enabled/disabled per-file just in case
@@ -61,7 +61,7 @@ class Wrapper:
     # -> should we change this based on what flags the compiler supports?
     _cpp_version = "__cplusplus 201703L"
 
-    def __init__(self, package_name, cfg: WrapperConfig, setup, wwriter: WrapperWriter):
+    def __init__(self, package_name, cfg: ModuleConfig, setup, wwriter: WrapperWriter):
         self.package_name = package_name
         self.cfg = cfg
         self.wwriter = wwriter
@@ -635,15 +635,9 @@ class Wrapper:
             os.makedirs(cxx_gen_dir, exist_ok=True)
             os.makedirs(hppoutdir, exist_ok=True)
 
-        per_header = False
-        data_fname = self.cfg.generation_data
+        datapath = None
         if self.cfg.generation_data:
             datapath = join(self.setup_root, normpath(self.cfg.generation_data))
-            per_header = isdir(datapath)
-            if not per_header:
-                data = AutowrapConfigYaml.from_file(datapath)
-        else:
-            data = AutowrapConfigYaml()
 
         pp_defines = [self._cpp_version] + self.platform.defines + self.cfg.pp_defines
         casters = self._all_casters()
@@ -675,13 +669,19 @@ class Wrapper:
                 classdeps_dst = join(cxx_gen_dir, f"{name}.json")
                 classdeps[name] = classdeps_dst
 
-            if per_header:
+            if datapath:
                 data_fname = join(datapath, name + ".yml")
+            else:
+                data_fname = None
+
+            if data_fname:
                 if not exists(data_fname):
                     print("WARNING: could not find", data_fname)
                     data = AutowrapConfigYaml()
                 else:
                     data = AutowrapConfigYaml.from_file(data_fname)
+            else:
+                data = AutowrapConfigYaml()
 
             if only_generate is not None and not only_generate.pop(name, False):
                 continue

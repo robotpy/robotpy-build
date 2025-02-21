@@ -5,6 +5,8 @@ int add2(int x) {
     return x + 2;
 }
 
+namespace demo {
+
 void DemoClass::setX(int x) {
     m_x = x;
 }
@@ -12,3 +14,5 @@ void DemoClass::setX(int x) {
 int DemoClass::getX() const {
     return m_x;
 }
+
+} // namespace demo

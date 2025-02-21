@@ -57,6 +57,11 @@ def render_cls_rpy_include_hpp(ctx: HeaderContext, cls: ClassContext) -> str:
     if cls.template is not None:
         _render_cls_template_impl(r, ctx, cls, cls.template)
 
+    if not cls.template and not cls.trampoline:
+        # TODO: maybe replace this with something that triggers an error
+        #       if the trampoline is used? and a better error message
+        r.writeln(f'#error "{cls.full_cpp_name} does not have a trampoline"')
+
     return r.getvalue()
 
 

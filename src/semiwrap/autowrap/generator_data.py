@@ -12,6 +12,7 @@ from .context import OverloadTracker
 from cxxheaderparser.types import Function
 
 import dataclasses
+import pathlib
 from typing import Dict, List, Optional, Tuple
 
 
@@ -48,7 +49,7 @@ class GeneratorData:
 
     data: AutowrapConfigYaml
 
-    def __init__(self, data: AutowrapConfigYaml, data_fname: str):
+    def __init__(self, data: AutowrapConfigYaml, data_fname: pathlib.Path):
         self.data = data
         self.data_fname = data_fname
 
@@ -188,7 +189,7 @@ class GeneratorData:
 
         return data
 
-    def report_missing(self, name: str, reporter: "MissingReporter"):
+    def report_missing(self, name: pathlib.Path, reporter: "MissingReporter"):
         """
         Generate a structure that can be copy/pasted into the generation
         data yaml and print it out if there's missing data
@@ -341,6 +342,9 @@ class GeneratorData:
 class MissingReporter:
     def __init__(self):
         self.reports = {}
+
+    def __bool__(self) -> bool:
+        return len(self.reports) > 0
 
     def _merge(self, src, dst):
         for k, v in src.items():

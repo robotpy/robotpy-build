@@ -18,15 +18,9 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Topic :: Software Development",
 ]
 dependencies = [
-    "setuptools >= 45",
-    "setuptools_scm >= 6.2, < 8",
     "sphinxify >= 0.7.3",
     "validobj ~= 1.2",
     "cxxheaderparser[pcpp] ~= 1.4.1",
@@ -34,12 +28,19 @@ dependencies = [
     "tomli_w",
     "toposort",
     "typing-extensions",
+    "validobj",
     "pyyaml >= 5.1",
     "patch == 1.*",
     "pybind11-stubgen ~= 2.5.1",
     "delocate; platform_system == 'Darwin'",
     "distro; platform_system == 'Linux'",
 ]
+
+[project.entry-points.hatch]
+semiwrap = "robotpy_build.hooks"
+
+[project.entry-points.pkg_config]
+robotpy-build = "robotpy_build"
 
 [project.scripts]
 semiwrap = "semiwrap.tool:main"

@@ -31,7 +31,7 @@ except ImportError:
     EditableWheel = None  # type: ignore
 
 from .config.util import parse_input
-from .config.pyproject_toml import RobotpyBuildConfig
+from .config.pyproject_toml import SemiwrapToolConfig
 
 from .maven import convert_maven_to_downloads
 from .overrides import apply_overrides
@@ -72,7 +72,7 @@ class Setup:
 
         try:
             self.project = parse_input(
-                self.project_dict, RobotpyBuildConfig, project_fname
+                self.project_dict, SemiwrapToolConfig, project_fname
             )
         except Exception as e:
             raise ValueError(
