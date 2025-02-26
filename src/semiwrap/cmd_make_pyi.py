@@ -4,7 +4,9 @@ Creates an output .pyi file from a given python module
 
 import importlib.util
 import inspect
+import pathlib
 import sys
+import tempfile
 
 import pybind11_stubgen
 
@@ -26,38 +28,40 @@ class _PackageFinder:
 
 
 def _write_pyi(package_name: str, output_pyi: str):
-    # Need to:
-    # - add the original source directory to python path
-    # - add the built extensions to the mapping
-    # - other related nonsense
-    # ... maybe this could be a meson dist script?
 
-    # Configure custom loader
-    # _PackageFinder.mapping = cfg["mapping"]
-    # sys.meta_path.insert(0, _PackageFinder)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Call pybind11-stubgen
+        sys.argv = [
+            "<dummy>",
+            "--exit-code",
+            "--ignore-invalid-expressions=<.*>",
+            "--root-suffix=",
+            "-o",
+            tmpdir,
+            package_name,
+        ]
 
-    # # Call pybind11-stubgen
-    # sys.argv = [
-    #     "<dummy>",
-    #     "--exit-code",
-    #     "--ignore-invalid-expressions=<.*>",
-    #     "--root-suffix=",
-    #     "-o",
-    #     output_pyi,
-    #     package_name,
-    # ]
+        pybind11_stubgen.main()
 
-    # pybind11_stubgen.main()
-    with open(output_pyi, "w") as fp:
-        fp.write("# TODO\n")
+        # stubgen doesn't take a direct output filename, so move the file
+        # to our desired location
+        elems = package_name.split(".")
+        elems[-1] = f"{elems[-1]}.pyi"
+        pathlib.Path(tmpdir, *elems).rename(output_pyi)
 
 
 def main():
     try:
-        _, package_name, output_pyi = sys.argv
+        _, package_name, output_pyi = sys.argv[:3]
     except ValueError:
         print(inspect.cleandoc(__doc__ or ""), file=sys.stderr)
         sys.exit(1)
+
+    # Arguments are used to set up the package map
+    for i in range(3, len(sys.argv), 2):
+        _PackageFinder.mapping[sys.argv[i]] = sys.argv[i + 1]
+
+    sys.meta_path.insert(0, _PackageFinder)
 
     _write_pyi(package_name, output_pyi)
 

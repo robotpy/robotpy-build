@@ -55,12 +55,12 @@ class BuildTarget:
     install_path: T.Optional[pathlib.Path]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Module:
     name: str
 
-    sources: T.List[BuildTarget]
-    depends: T.List[str]
+    sources: T.Tuple[BuildTarget]
+    depends: T.Tuple[str, ...]
 
     # Install path is always relative to py.get_install_dir(pure: false)
     install_path: pathlib.Path
@@ -93,11 +93,24 @@ def makeplan(project_root: pathlib.Path, missing_yaml_ok: bool = False):
 
     pyproject_input = InputFile(project_root / "pyproject.toml")
 
+    pyi_targets: T.List[BuildTarget] = []
+    pyi_args = []
+
     for package_name, module in projectcfg.modules.items():
         if module.ignore:
             continue
 
         package_path = pathlib.Path(*package_name.split("."))
+
+        package_init_py = project_root / package_path / "__init__.py"
+        if not package_init_py.exists():
+            package_init_py = project_root / "src" / package_path / "__init__.py"
+
+        if package_init_py.exists():
+            pyi_args += (package_name, str(package_init_py))
+        else:
+            # For now, we only support either src layout or flat layout
+            raise FileNotFoundError(f"cannot find {package_name} module")
 
         if module.libinit:
             libinit_py = module.libinit
@@ -106,12 +119,14 @@ def makeplan(project_root: pathlib.Path, missing_yaml_ok: bool = False):
 
         # This is only needed if the module has shared library dependencies
         # that must be loaded
+        libinit_target = None
         if module.depends or module.wraps:
-            yield BuildTarget(
+            libinit_target = BuildTarget(
                 command="gen-libinit-py",
                 args=(pyproject_input, package_name, OutputFile(libinit_py)),
                 install_path=package_path,
             )
+            yield libinit_target
 
         # TODO: probably should generate this via build system? how would we add the
         #       pc var there then? .. or maybe this tells hatch-mkpkgconf to do it
@@ -279,12 +294,37 @@ def makeplan(project_root: pathlib.Path, missing_yaml_ok: bool = False):
         module_sources.append(modinit)
         yield modinit
 
-        yield Module(
+        modobj = Module(
             name=module.name,
-            sources=module_sources,
-            depends=depends,
+            sources=tuple(module_sources),
+            depends=tuple(depends),
             install_path=package_path,
             package_name=package_name,
+        )
+        yield modobj
+
+        if libinit_target is not None:
+            pyi_args += [libinit_py, libinit_target]
+
+        full_module_name = f"{package_name}._{modobj.name}"
+        pyi_args += [full_module_name, modobj]
+
+        pyi_targets.append(
+            BuildTarget(
+                command="make-pyi",
+                args=(full_module_name, OutputFile(f"_{module.name}.pyi")),
+                install_path=package_path,
+            )
+        )
+
+    # Make a pyi for every module
+    # - they depend on every module because it needs a working environment
+    #   and the user might import something
+    for pyi_target in pyi_targets:
+        yield BuildTarget(
+            command="make-pyi",
+            args=pyi_target.args + tuple(pyi_args),
+            install_path=pyi_target.install_path,
         )
 
 
