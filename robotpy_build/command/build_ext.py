@@ -134,7 +134,6 @@ class BuildExt(build_ext):
                 self.compiler._rpy_spawn = self.compiler.spawn
                 self.compiler.spawn = _spawn
         for ext in self.extensions:
-            ext.define_macros.append(("PYBIND11_USE_SMART_HOLDER_AS_DEFAULT", "1"))
             if debug:
                 ext.define_macros.append(
                     ("PYBIND11_ASSERT_GIL_HELD_INCREF_DECREF", "1")
