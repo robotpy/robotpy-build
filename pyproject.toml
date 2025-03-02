@@ -37,10 +37,10 @@ dependencies = [
 ]
 
 [project.entry-points.hatch]
-semiwrap = "robotpy_build.hooks"
+semiwrap = "semiwrap.hooks"
 
 [project.entry-points.pkg_config]
-robotpy-build = "robotpy_build"
+semiwrap = "semiwrap"
 
 [project.scripts]
 semiwrap = "semiwrap.tool:main"
@@ -63,10 +63,10 @@ exclude = [
 "./src/semiwrap/pybind11/include" = "./semiwrap/pybind11/include"
 
 [tool.hatch.build.targets.wheel]
-packages = ["semiwrap"]
+packages = ["src/semiwrap"]
 include = [
-    "/semiwrap/pybind11/include",
-    "/semiwrap/include",
+    "/src/semiwrap/pybind11/include",
+    "/src/semiwrap/include",
 ]
 
 
