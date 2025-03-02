@@ -206,15 +206,15 @@ def gen_meson(project_root: pathlib.Path) -> T.Tuple[str, str, T.List[Entrypoint
         sw_py = import('python').find_installation()
         
         # internal commands for the autowrap machinery
-        _sw_cmd_gen_libinit_py = [sw_py, '-m', 'robotpy_build.cmd_gen_libinit']
-        #_sw_cmd_make_pc = [sw_py, '-m', 'robotpy_build.cmd_make_pc']
-        _sw_cmd_resolve_casters = [sw_py, '-m', 'robotpy_build.cmd_resolve_casters']
-        _sw_cmd_header2dat = [sw_py, '-m', 'robotpy_build.cmd_header2dat']
-        _sw_cmd_dat2cpp = [sw_py, '-m', 'robotpy_build.cmd_dat2cpp']
-        _sw_cmd_dat2trampoline = [sw_py, '-m', 'robotpy_build.cmd_dat2trampoline']
-        _sw_cmd_dat2tmplcpp = [sw_py, '-m', 'robotpy_build.cmd_dat2tmplcpp']
-        _sw_cmd_gen_modinit_hpp = [sw_py, '-m', 'robotpy_build.cmd_gen_modinit_hpp']
-        _sw_cmd_make_pyi = [sw_py, '-m', 'robotpy_build.cmd_make_pyi']
+        _sw_cmd_gen_libinit_py = [sw_py, '-m', 'semiwrap.cmd_gen_libinit']
+        #_sw_cmd_make_pc = [sw_py, '-m', 'semiwrap.cmd_make_pc']
+        _sw_cmd_resolve_casters = [sw_py, '-m', 'semiwrap.cmd_resolve_casters']
+        _sw_cmd_header2dat = [sw_py, '-m', 'semiwrap.cmd_header2dat']
+        _sw_cmd_dat2cpp = [sw_py, '-m', 'semiwrap.cmd_dat2cpp']
+        _sw_cmd_dat2trampoline = [sw_py, '-m', 'semiwrap.cmd_dat2trampoline']
+        _sw_cmd_dat2tmplcpp = [sw_py, '-m', 'semiwrap.cmd_dat2tmplcpp']
+        _sw_cmd_gen_modinit_hpp = [sw_py, '-m', 'semiwrap.cmd_gen_modinit_hpp']
+        _sw_cmd_make_pyi = [sw_py, '-m', 'semiwrap.cmd_make_pyi']
 
         #
         # internal custom targets for generating wrappers

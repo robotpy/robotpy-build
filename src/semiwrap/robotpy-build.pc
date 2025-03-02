@@ -1,9 +1,0 @@
-prefix=${pcfiledir}
-includedir=${prefix}/include
-
-Name: robotpy-build
-Description: robotpy-build dependency
-Version: 2025
-Requires: robotpy-pybind11
-Cflags: -I${includedir}
-Libs:

@@ -163,7 +163,7 @@ def makeplan(project_root: pathlib.Path, missing_yaml_ok: bool = False):
             )
 
         depends = pyproject.get_module_deps(module)
-        depends.append("robotpy-build")
+        depends.append("semiwrap")
 
         search_path: T.List[pathlib.Path] = []
         include_directories_uniq = {}
