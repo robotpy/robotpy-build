@@ -29,6 +29,11 @@ struct OverloadedObject
         return o;
     }
 
+    // checking that param override works
+    int overloaded(int a, int b, int c) {
+        return a + b + c;
+    }
+
     // This shows rtnType is inconsistent in CppHeaderParser
     const OverloadedObject& overloaded() {
         return *this;

@@ -10,7 +10,7 @@ def render_template_inst_cpp(
     r = RenderBuffer()
     render_class_prologue(r, hctx)
 
-    tmpl_params = ", ".join(tmpl_data.params)
+    tmpl_params = ", ".join(str(p) for p in tmpl_data.params)
 
     r.write_trim(
         f"""

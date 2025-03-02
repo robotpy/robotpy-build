@@ -115,13 +115,13 @@ _int32_types = frozenset(_gen_int_types())
 
 
 _rvp_map = {
-    ReturnValuePolicy.TAKE_OWNERSHIP: "py::return_value_policy::take_ownership",
-    ReturnValuePolicy.COPY: "py::return_value_policy::copy",
-    ReturnValuePolicy.MOVE: "py::return_value_policy::move",
-    ReturnValuePolicy.REFERENCE: "py::return_value_policy::reference",
-    ReturnValuePolicy.REFERENCE_INTERNAL: "py::return_value_policy::reference_internal",
-    ReturnValuePolicy.AUTOMATIC: "",
-    ReturnValuePolicy.AUTOMATIC_REFERENCE: "py::return_value_policy::automatic_reference",
+    ReturnValuePolicy.take_ownership: "py::return_value_policy::take_ownership",
+    ReturnValuePolicy.copy: "py::return_value_policy::copy",
+    ReturnValuePolicy.move: "py::return_value_policy::move",
+    ReturnValuePolicy.reference: "py::return_value_policy::reference",
+    ReturnValuePolicy.reference_internal: "py::return_value_policy::reference_internal",
+    ReturnValuePolicy.automatic: "",
+    ReturnValuePolicy.automatic_reference: "py::return_value_policy::automatic_reference",
 }
 
 # fmt: off
@@ -938,7 +938,7 @@ class AutowrapVisitor:
         else:
             py_name = prop_name
 
-        if propdata.access == PropAccess.AUTOMATIC:
+        if propdata.access == PropAccess.auto:
             # const variables can't be written
             if f.constexpr or getattr(f.type, "const", False):
                 prop_readonly = True
@@ -949,7 +949,7 @@ class AutowrapVisitor:
             else:
                 prop_readonly = _is_prop_readonly(f.type)
         else:
-            prop_readonly = propdata.access == PropAccess.READONLY
+            prop_readonly = propdata.access == PropAccess.readonly
 
         doc = self._process_doc(f.doxygen, propdata)
 
@@ -2038,7 +2038,8 @@ def parse_header(
                 break
 
         for param in tmpl_data.params:
-            visitor._add_user_type_caster(param)
+            if isinstance(param, str):
+                visitor._add_user_type_caster(param)
 
     # User typealias additions
     visitor._extract_typealias(user_cfg.typealias, hctx.user_typealias, set())

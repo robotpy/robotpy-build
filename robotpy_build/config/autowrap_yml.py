@@ -3,15 +3,17 @@
 # to modify the generated files
 #
 
+import dataclasses
 import enum
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 
-from pydantic import validator, Field
-from .util import Model, _generating_documentation
 import yaml
 
+from .util import fix_yaml_dict, parse_input
 
-class ParamData(Model):
+
+@dataclasses.dataclass(frozen=True)
+class ParamData:
     """Various ways to modify parameters"""
 
     #: Set parameter name to this
@@ -58,7 +60,8 @@ class BufferType(str, enum.Enum):
     INOUT = "inout"
 
 
-class BufferData(Model):
+@dataclasses.dataclass(frozen=True)
+class BufferData:
     #: Indicates what type of python buffer is required
     type: BufferType
 
@@ -80,34 +83,19 @@ class ReturnValuePolicy(enum.Enum):
     for what each of these values mean.
     """
 
-    TAKE_OWNERSHIP = "take_ownership"
-    COPY = "copy"
-    MOVE = "move"
-    REFERENCE = "reference"
-    REFERENCE_INTERNAL = "reference_internal"
-    AUTOMATIC = "automatic"
-    AUTOMATIC_REFERENCE = "automatic_reference"
+    take_ownership = "take_ownership"
+    copy = "copy"
+    move = "move"
+    reference = "reference"
+    reference_internal = "reference_internal"
+    automatic = "automatic"
+    automatic_reference = "automatic_reference"
 
 
-class FunctionData(Model):
+@dataclasses.dataclass(frozen=True)
+class OverloadData:
     """
-    Customize the way the autogenerator binds a function.
-
-    .. code-block:: yaml
-
-       functions:
-         # for non-overloaded functions, just specify the name + customizations
-         name_of_non_overloaded_fn:
-           # add customizations for function here
-
-         # For overloaded functions, specify the name, but each overload
-         # separately
-         my_overloaded_fn:
-           overloads:
-             int, int:
-               # customizations for `my_overloaded_fn(int, int)`
-             int, int, int:
-               # customizations for `my_overloaded_fn(int, int, int)`
+    .. seealso:: :class:`.FunctionData`
     """
 
     #: If True, don't wrap this
@@ -150,7 +138,7 @@ class FunctionData(Model):
     rename: Optional[str] = None
 
     #: Mechanism to override individual parameters
-    param_override: Dict[str, ParamData] = {}
+    param_override: Dict[str, ParamData] = dataclasses.field(default_factory=dict)
 
     #: If specified, put the function in a sub.pack.age
     subpackage: Optional[str] = None
@@ -159,9 +147,7 @@ class FunctionData(Model):
     #: function is called.
     no_release_gil: Optional[bool] = None
 
-    buffers: List[BufferData] = []
-
-    overloads: Dict[str, "FunctionData"] = {}
+    buffers: List[BufferData] = dataclasses.field(default_factory=list)
 
     #: Adds py::keep_alive<x,y> to the function. Overrides automatic
     #: keepalive support, which retains references passed to constructors.
@@ -169,7 +155,7 @@ class FunctionData(Model):
     keepalive: Optional[List[Tuple[int, int]]] = None
 
     #: https://pybind11.readthedocs.io/en/stable/advanced/functions.html#return-value-policies
-    return_value_policy: ReturnValuePolicy = ReturnValuePolicy.AUTOMATIC
+    return_value_policy: ReturnValuePolicy = ReturnValuePolicy.automatic
 
     #: If this is a function template, this is a list of instantiations
     #: that you wish to provide. This is a list of lists, where the inner
@@ -203,24 +189,30 @@ class FunctionData(Model):
     #:
     virtual_xform: Optional[str] = None
 
-    @validator("overloads", pre=True)
-    def validate_overloads(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = FunctionData()
-        return value
 
-    @validator("virtual_xform")
-    def validate_virtual_xform(cls, v, values):
-        if v and values.get("trampoline_cpp_code"):
-            raise ValueError(
-                "cannot specify trampoline_cpp_code and virtual_xform for the same method"
-            )
-        return v
+@dataclasses.dataclass(frozen=True)
+class FunctionData(OverloadData):
+    """
+    Customize the way the autogenerator binds a function.
 
+    .. code-block:: yaml
 
-if not _generating_documentation:
-    FunctionData.update_forward_refs()
+       functions:
+         # for non-overloaded functions, just specify the name + customizations
+         name_of_non_overloaded_fn:
+           # add customizations for function here
+
+         # For overloaded functions, specify the name, but each overload
+         # separately
+         my_overloaded_fn:
+           overloads:
+             int, int:
+               # customizations for `my_overloaded_fn(int, int)`
+             int, int, int:
+               # customizations for `my_overloaded_fn(int, int, int)`
+    """
+
+    overloads: Dict[str, OverloadData] = dataclasses.field(default_factory=dict)
 
 
 class PropAccess(enum.Enum):
@@ -231,18 +223,19 @@ class PropAccess(enum.Enum):
     #: * If a struct/union, default to readwrite
     #: * If a class, default to readwrite if a basic type that isn't a
     #:   reference, otherwise default to readonly
-    AUTOMATIC = "auto"
+    auto = "auto"
 
     #: Allow python users access to the value, but ensure it can't
     #: change. This is useful for properties that are defined directly
     #: in the class
-    READONLY = "readonly"
+    readonly = "readonly"
 
     #: Allows python users to read/write the value
-    READWRITE = "readwrite"
+    readwrite = "readwrite"
 
 
-class PropData(Model):
+@dataclasses.dataclass(frozen=True)
+class PropData:
     #: If set to True, this property is not made available to python
     ignore: bool = False
 
@@ -250,7 +243,7 @@ class PropData(Model):
     rename: Optional[str] = None
 
     #: Python code access to this property
-    access: PropAccess = PropAccess.AUTOMATIC
+    access: PropAccess = PropAccess.auto
 
     #: Docstring for the property (only available on class properties)
     doc: Optional[str] = None
@@ -259,7 +252,8 @@ class PropData(Model):
     doc_append: Optional[str] = None
 
 
-class EnumValue(Model):
+@dataclasses.dataclass(frozen=True)
+class EnumValue:
     #: If set to True, this property is not made available to python
     ignore: bool = False
 
@@ -273,7 +267,8 @@ class EnumValue(Model):
     doc_append: Optional[str] = None
 
 
-class EnumData(Model):
+@dataclasses.dataclass(frozen=True)
+class EnumData:
     #: Set your own docstring for the enum
     doc: Optional[str] = None
 
@@ -293,7 +288,7 @@ class EnumData(Model):
     #: enums that are part of classes)
     subpackage: Optional[str] = None
 
-    values: Dict[str, EnumValue] = {}
+    values: Dict[str, EnumValue] = dataclasses.field(default_factory=dict)
 
     #: This will insert code right before the semicolon ending the enum py
     #: definition. You can use this to easily insert additional custom values
@@ -306,7 +301,8 @@ class EnumData(Model):
     arithmetic: bool = False
 
 
-class ClassData(Model):
+@dataclasses.dataclass(frozen=True)
+class ClassData:
     #: Docstring for the class
     doc: Optional[str] = None
 
@@ -316,16 +312,16 @@ class ClassData(Model):
     ignore: bool = False
 
     #: List of bases to ignore. Name must include any template specializations.
-    ignored_bases: List[str] = []
+    ignored_bases: List[str] = dataclasses.field(default_factory=list)
 
     #: Specify fully qualified names for the bases. If the base has a template
     #: parameter, you must include it. Only needed if it can't be automatically
     #: detected directly from the text.
-    base_qualnames: Dict[str, str] = {}
+    base_qualnames: Dict[str, str] = dataclasses.field(default_factory=dict)
 
-    attributes: Dict[str, PropData] = {}
-    enums: Dict[str, EnumData] = {}
-    methods: Dict[str, FunctionData] = {}
+    attributes: Dict[str, PropData] = dataclasses.field(default_factory=dict)
+    enums: Dict[str, EnumData] = dataclasses.field(default_factory=dict)
+    methods: Dict[str, FunctionData] = dataclasses.field(default_factory=dict)
 
     is_polymorphic: Optional[bool] = None
     force_no_trampoline: bool = False
@@ -340,13 +336,13 @@ class ClassData(Model):
 
     #: If there are circular dependencies, this will help you resolve them
     #: manually. TODO: make it so we don't need this
-    force_depends: List[str] = []
+    force_depends: List[str] = dataclasses.field(default_factory=list)
 
     #: Use this to bring in type casters for a particular type that may have
     #: been hidden (for example, with a typedef or definition in another file),
     #: instead of explicitly including the header. This should be the full
     #: namespace of the type.
-    force_type_casters: List[str] = []
+    force_type_casters: List[str] = dataclasses.field(default_factory=list)
 
     #: If the object shouldn't be deleted by pybind11, use this. Disables
     #: implicit constructors.
@@ -366,11 +362,11 @@ class ClassData(Model):
 
     #: Extra 'using' directives to insert into the trampoline and the
     #: wrapping scope
-    typealias: List[str] = []
+    typealias: List[str] = dataclasses.field(default_factory=list)
 
     #: Fully-qualified pre-existing constant that will be inserted into the
     #: trampoline and wrapping scopes as a constexpr
-    constants: List[str] = []
+    constants: List[str] = dataclasses.field(default_factory=list)
 
     #: If this is a template class, a list of the parameters if it can't
     #: be autodetected (currently can't autodetect). If there is no space
@@ -400,29 +396,9 @@ class ClassData(Model):
     #:
     inline_code: Optional[str] = None
 
-    @validator("attributes", pre=True)
-    def validate_attributes(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = PropData()
-        return value
 
-    @validator("enums", pre=True)
-    def validate_enums(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = EnumData()
-        return value
-
-    @validator("methods", pre=True)
-    def validate_methods(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = FunctionData()
-        return value
-
-
-class TemplateData(Model):
+@dataclasses.dataclass(frozen=True)
+class TemplateData:
     """
     Instantiates a template as a python type. To customize the class,
     add it to the ``classes`` key and specify the template type.
@@ -455,7 +431,7 @@ class TemplateData(Model):
     qualname: str
 
     #: Template parameters to use
-    params: List[str]
+    params: List[Union[str, int]]
 
     #: If specified, put the template instantiation in a sub.pack.age
     subpackage: Optional[str] = None
@@ -467,7 +443,8 @@ class TemplateData(Model):
     doc_append: Optional[str] = None
 
 
-class Defaults(Model):
+@dataclasses.dataclass(frozen=True)
+class Defaults:
     """
     Defaults to apply to everything
     """
@@ -480,24 +457,25 @@ class Defaults(Model):
     report_ignored_missing: bool = True
 
 
-class AutowrapConfigYaml(Model):
+@dataclasses.dataclass(frozen=True)
+class AutowrapConfigYaml:
     """
     Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
     generation_data
     """
 
-    defaults: Defaults = Field(default_factory=Defaults)
+    defaults: Defaults = dataclasses.field(default_factory=Defaults)
 
-    strip_prefixes: List[str] = []
+    strip_prefixes: List[str] = dataclasses.field(default_factory=list)
 
     #: Adds ``#include <FILENAME>`` directives to the top of the autogenerated
     #: C++ file, after autodetected include dependencies are inserted.
-    extra_includes: List[str] = []
+    extra_includes: List[str] = dataclasses.field(default_factory=list)
 
     #: Adds ``#include <FILENAME>`` directives after robotpy_build.h is
     #: included, but before any autodetected include dependencies. Only use
     #: this when dealing with broken headers.
-    extra_includes_first: List[str] = []
+    extra_includes_first: List[str] = dataclasses.field(default_factory=list)
 
     #: Specify raw C++ code that will be inserted at the end of the
     #: autogenerated file, inside a function. This is useful for extending
@@ -530,7 +508,7 @@ class AutowrapConfigYaml(Model):
     #:      my_variable:
     #:        # customizations here, see PropData
     #:
-    attributes: Dict[str, PropData] = {}
+    attributes: Dict[str, PropData] = dataclasses.field(default_factory=dict)
 
     #: Key is the class name
     #:
@@ -540,7 +518,7 @@ class AutowrapConfigYaml(Model):
     #:      CLASSNAME:
     #:        # customizations here, see ClassData
     #:
-    classes: Dict[str, ClassData] = {}
+    classes: Dict[str, ClassData] = dataclasses.field(default_factory=dict)
 
     #: Key is the function name
     #:
@@ -550,7 +528,7 @@ class AutowrapConfigYaml(Model):
     #:      fn_name:
     #:        # customizations here, see FunctionData
     #:
-    functions: Dict[str, FunctionData] = {}
+    functions: Dict[str, FunctionData] = dataclasses.field(default_factory=dict)
 
     #: Key is the enum name, for enums at global scope
     #:
@@ -560,7 +538,7 @@ class AutowrapConfigYaml(Model):
     #:      MyEnum:
     #:        # customizations here, see EnumData
     #:
-    enums: Dict[str, EnumData] = {}
+    enums: Dict[str, EnumData] = dataclasses.field(default_factory=dict)
 
     #: Instantiates a template. Key is the name to give to the Python type.
     #:
@@ -570,42 +548,14 @@ class AutowrapConfigYaml(Model):
     #:      ClassName:
     #:        # customizations here, see TemplateData
     #:
-    templates: Dict[str, TemplateData] = {}
+    templates: Dict[str, TemplateData] = dataclasses.field(default_factory=dict)
 
     #: Extra 'using' directives to insert into the trampoline and the
     #: wrapping scope
-    typealias: List[str] = []
+    typealias: List[str] = dataclasses.field(default_factory=list)
 
     #: Encoding to use when opening this header file
     encoding: str = "utf-8-sig"
-
-    @validator("attributes", pre=True)
-    def validate_attributes(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = PropData()
-        return value
-
-    @validator("classes", pre=True)
-    def validate_classes(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = ClassData()
-        return value
-
-    @validator("enums", pre=True)
-    def validate_enums(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = EnumData()
-        return value
-
-    @validator("functions", pre=True)
-    def validate_functions(cls, value):
-        for k, v in value.items():
-            if v is None:
-                value[k] = FunctionData()
-        return value
 
     @classmethod
     def from_file(cls, fname) -> "AutowrapConfigYaml":
@@ -615,4 +565,6 @@ class AutowrapConfigYaml(Model):
         if data is None:
             data = {}
 
-        return cls(**data)
+        data = fix_yaml_dict(data)
+
+        return parse_input(data, cls, fname)

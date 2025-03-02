@@ -30,6 +30,7 @@ try:
 except ImportError:
     EditableWheel = None  # type: ignore
 
+from .config.util import parse_input
 from .config.pyproject_toml import RobotpyBuildConfig
 
 from .maven import convert_maven_to_downloads
@@ -63,14 +64,16 @@ class Setup:
 
         self.project_dict = self.pyproject.get("tool", {}).get("robotpy-build", {})
 
-        # Overrides are applied before pydantic does processing, so that
-        # we can easily override anything without needing to make the
-        # pydantic schemas messy with needless details
+        # Overrides are applied before processing, so that we can easily
+        # override anything without needing to make the dataclasses messy
+        # with needless details
         override_keys = get_platform_override_keys(self.platform)
         apply_overrides(self.project_dict, override_keys)
 
         try:
-            self.project = RobotpyBuildConfig(**self.project_dict)
+            self.project = parse_input(
+                self.project_dict, RobotpyBuildConfig, project_fname
+            )
         except Exception as e:
             raise ValueError(
                 f"robotpy-build configuration in pyproject.toml is incorrect"
