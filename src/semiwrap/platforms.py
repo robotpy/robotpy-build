@@ -99,7 +99,7 @@ def get_platform(name: typing.Optional[str] = None) -> WPILibMavenPlatform:
     try:
         return _platforms[name]
     except KeyError:
-        raise KeyError(f"platform {name} is not supported by robotpy-build!")
+        raise KeyError(f"platform {name} is not supported by semiwrap!")
 
 
 def get_platform_override_keys(platform: WPILibMavenPlatform):

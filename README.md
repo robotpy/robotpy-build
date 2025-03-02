@@ -1,5 +1,5 @@
-robotpy-build
-=============
+semiwrap
+========
 
 This is a build tool intended to be generally useful for any python project
 that has binary dependencies. It is especially designed to meet the needs
@@ -14,13 +14,15 @@ Requires Python 3.8+
 Documentation
 -------------
 
-Documentation can be found at https://robotpy-build.readthedocs.io/
+Documentation can be found at https://semiwrap.readthedocs.io/
 
 Author
 ------
 
-Dustin Spicuzza is the primary author of robotpy-build, but it is the
+Dustin Spicuzza is the primary author of semiwrap.
+
+Semiwrap is a direct decendant of the robotpy-build project, and is
 culmination of many years of experimentation with automated wrapper
 generation by members of the RobotPy community.
 
-robotpy-build is available under the BSD 3-clause license.
+semiwrap is available under the BSD 3-clause license.

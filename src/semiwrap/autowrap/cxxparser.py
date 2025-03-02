@@ -395,7 +395,7 @@ class AutowrapVisitor:
         pass
 
     def on_variable(self, state: AWState, v: Variable) -> None:
-        # TODO: robotpy-build doesn't wrap global variables at this time
+        # TODO: semiwrap doesn't wrap global variables at this time
         pass
 
     def on_function(self, state: AWNonClassBlockState, fn: Function) -> None:

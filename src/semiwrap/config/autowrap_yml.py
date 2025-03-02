@@ -143,7 +143,7 @@ class OverloadData:
     #: If specified, put the function in a sub.pack.age
     subpackage: Optional[str] = None
 
-    #: By default, robotpy-build will release the GIL whenever a wrapped
+    #: By default, semiwrap will release the GIL whenever a wrapped
     #: function is called.
     no_release_gil: Optional[bool] = None
 

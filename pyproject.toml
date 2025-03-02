@@ -3,13 +3,13 @@ requires = ["hatchling>=1.26.2", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "robotpy-build"
+name = "semiwrap"
 dynamic = ["version"]
-description = "Build tool for RobotPy projects"
+description = "Semi-automated tool to wrap C++ code for use by python"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "BSD-3-Clause"
-license-files = ["LICENSE.txt", "robotpy_build/pybind11/LICENSE"]
+license-files = ["LICENSE.txt", "src/semiwrap/pybind11/LICENSE"]
 authors = [
     {name = "Dustin Spicuzza", email = "robotpy@googlegroups.com"},
 ]
@@ -41,39 +41,36 @@ dependencies = [
     "distro; platform_system == 'Linux'",
 ]
 
-[project.entry-points.robotpybuild]
-robotpy-build = "robotpy_build.pkgcfg"
-
 [project.scripts]
-robotpy-build = "robotpy_build.tool.__main__:main"
+semiwrap = "semiwrap.tool.__main__:main"
 
 [project.urls]
-"Source code" = "https://github.com/robotpy/robotpy-build"
+"Source code" = "https://github.com/robotpy/semiwrap"
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "robotpy_build/version.py"
+version-file = "src/semiwrap/version.py"
 
 [tool.hatch.build.targets.sdist]
-packages = ["robotpy_build"]
+packages = ["src/semiwrap"]
 exclude = [
-    "/robotpy_build/pybind11"
+    "/src/semiwrap/pybind11"
 ]
 [tool.hatch.build.targets.sdist.force-include]
-"./robotpy_build/pybind11/include" = "./robotpy_build/pybind11/include"
+"./src/semiwrap/pybind11/include" = "./semiwrap/pybind11/include"
 
 [tool.hatch.build.targets.wheel]
-packages = ["robotpy_build"]
+packages = ["semiwrap"]
 include = [
-    "/robotpy_build/pybind11/include",
-    "/robotpy_build/include",
+    "/semiwrap/pybind11/include",
+    "/semiwrap/include",
 ]
 
 
 [tool.black]
 target-version = ["py38"]
 extend-exclude = '''
-^/robotpy_build/pybind11
+^/src/semiwrap/pybind11
 '''
