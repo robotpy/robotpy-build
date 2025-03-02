@@ -1,11 +1,11 @@
+import dataclasses
 import os
 from typing import Optional, List
 import yaml
 
-from .util import Model
 
-
-class DevConfig(Model):
+@dataclasses.dataclass
+class DevConfig:
     """
     Configuration options useful for developing robotpy-build wrappers.
     To use these, set the environment variable RPYBUILD_GEN_FILTER=filename.yml

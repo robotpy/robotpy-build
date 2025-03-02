@@ -6,6 +6,7 @@ from ..config.autowrap_yml import (
     AutowrapConfigYaml,
     PropData,
     FunctionData,
+    OverloadData,
 )
 from .context import OverloadTracker
 
@@ -38,6 +39,23 @@ class ClsReportData:
     attributes: AttrMissingData = dataclasses.field(default_factory=dict)
     enums: EnumMissingData = dataclasses.field(default_factory=dict)
     functions: FnMissingData = dataclasses.field(default_factory=dict)
+
+
+def _merge_overload(data: FunctionData, overload: OverloadData) -> FunctionData:
+    # merge overload information
+    # - create a dictionary that contains things that haven't changed
+    changes = {"overloads": {}}
+    for f in dataclasses.fields(OverloadData):
+        v = getattr(overload, f.name)
+        if f.default_factory is not dataclasses.MISSING:
+            default = f.default_factory()
+        else:
+            default = f.default
+
+        if v != default:
+            changes[f.name] = v
+
+    return dataclasses.replace(data, **changes)
 
 
 class GeneratorData:
@@ -141,11 +159,7 @@ class GeneratorData:
             overload = data.overloads.get(signature)
             missing = overload is None
             if not missing and overload:
-                # merge overload information
-                data = data.dict(exclude_unset=True)
-                del data["overloads"]
-                data.update(overload.dict(exclude_unset=True))
-                data = FunctionData(**data)
+                data = _merge_overload(data, overload)
             report_data.overloads[signature] = is_private or not missing
 
         report_data.tracker.add_overload()
