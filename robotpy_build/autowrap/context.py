@@ -494,7 +494,7 @@ class TemplateInstanceContext:
     full_cpp_name_identifier: str
     binder_typename: str
 
-    params: typing.List[str]
+    params: typing.List[typing.Union[int, str]]
 
     header_name: str
 
