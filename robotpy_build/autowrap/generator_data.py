@@ -142,9 +142,9 @@ class GeneratorData:
             missing = overload is None
             if not missing and overload:
                 # merge overload information
-                data = data.dict(exclude_unset=True)
+                data = dataclasses.asdict(data)
                 del data["overloads"]
-                data.update(overload.dict(exclude_unset=True))
+                data.update(dataclasses.asdict(overload))
                 data = FunctionData(**data)
             report_data.overloads[signature] = is_private or not missing
 
