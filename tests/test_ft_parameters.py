@@ -22,6 +22,10 @@ def test_fund_const_ref():
     assert ft.fnParamFundConstRef(1, 2) == 3
 
 
+def test_param_out_not_set():
+    assert ft.fnParamOutNotSet() == (1, 0)
+
+
 def test_fn_disable_none():
     with pytest.raises(TypeError):
         ft.fnParamDisableNone(None)

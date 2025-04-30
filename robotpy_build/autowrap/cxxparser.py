@@ -1637,7 +1637,7 @@ class AutowrapVisitor:
             for out in reversed(tmp_params):
                 odef = out.default
                 if not odef:
-                    lambda_pre.insert(0, f"{out.cpp_type} {out.arg_name}")
+                    lambda_pre.insert(0, f"{out.cpp_type} {out.arg_name}{{}}")
                 elif odef.startswith("{"):
                     lambda_pre.insert(0, f"{out.cpp_type} {out.arg_name}{odef}")
                 else:

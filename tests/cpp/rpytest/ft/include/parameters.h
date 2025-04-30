@@ -28,6 +28,11 @@ int fnParamFundPtr(int x, int * y)
     return x - 1;
 }
 
+// parameters that are not set should be zero initialized
+int fnParamOutNotSet(int *z) {
+    return 1;
+}
+
 // do a namespace thing because we messed that up once
 namespace ohno {
     // parameters that are pointers and fundamental types are out by default
