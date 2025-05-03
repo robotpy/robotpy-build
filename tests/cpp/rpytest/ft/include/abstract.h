@@ -8,6 +8,7 @@ struct Abstract
 struct PrivateAbstract
 {
     PrivateAbstract() {}
+    virtual ~PrivateAbstract() = default;
 
     static int getPrivateOverride(PrivateAbstract *p) {
         return p->mustOverrideMe();

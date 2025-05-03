@@ -6,6 +6,8 @@
 class Buffers {
 public:
 
+    virtual ~Buffers() = default;
+
     // in
     void set_buffer(const uint8_t *data, size_t len) {
         m_buf.resize(len);

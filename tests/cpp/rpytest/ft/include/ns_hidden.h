@@ -12,7 +12,7 @@ namespace o {
         virtual ~O() = default;
     };
 
-    class AnotherC;
+    struct AnotherC;
 };
 
 namespace n::h {
