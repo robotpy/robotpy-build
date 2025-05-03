@@ -40,14 +40,15 @@ def render_cls_rpy_include_hpp(ctx: HeaderContext, cls: ClassContext) -> str:
     )
 
     if ctx.extra_includes_first:
-        r.writeln()
+        r.writeln("\n// from extra_includes_first")
         for inc in ctx.extra_includes_first:
             r.writeln(f"#include <{inc}>")
 
+    r.writeln("\n// wrapped header")
     r.writeln(f"\n#include <{ctx.rel_fname}>")
 
     if ctx.extra_includes:
-        r.writeln()
+        r.writeln("\n// from extra_includes")
         for inc in ctx.extra_includes:
             r.writeln(f"#include <{inc}>")
 
