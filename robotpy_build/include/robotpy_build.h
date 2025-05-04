@@ -14,11 +14,6 @@ namespace rpygen {
 struct EmptyTrampolineCfg {};
 };
 
-// robotpy-build specific extensions waiting for inclusion into pybind11
-namespace rpybuild_ext {
-using py::raise_from;
-} // namespace rpybuild_ext
-
 #define RPYBUILD_BAD_TRAMPOLINE \
     "has an abstract trampoline -- and they must never be abstract! One of " \
     "the generated override methods doesn't match the original class or its " \
