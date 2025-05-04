@@ -7,7 +7,7 @@ classes:
       t:
     template_inline_code: |
       cls_TBasic
-        .def("__repr__", [=](const TBasic<T> &self){
+        .def("__repr__", [this](const TBasic<T> &self){
           // checking to see if clsName is available
           return "<" + clsName + ">";
         });

@@ -3,6 +3,8 @@
 #include <memory>
 
 struct LTWithVirtual {
+    virtual ~LTWithVirtual() = default;
+
     virtual bool get_bool() {
         return false;
     }

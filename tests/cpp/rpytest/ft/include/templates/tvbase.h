@@ -10,6 +10,8 @@ struct TVParam {
 template <typename T>
 struct TVBase {
 
+    virtual ~TVBase() = default;
+
     virtual std::string get(T t) const {
         return "TVBase " + std::to_string(t.get());
     }
