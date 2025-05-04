@@ -162,7 +162,6 @@ jobs:
         container:
         - wpilib/roborio-cross-ubuntu:2024-22.04-py312
         - wpilib/raspbian-cross-ubuntu:bullseye-22.04-py312
-        - wpilib/aarch64-cross-ubuntu:bullseye-22.04-py312
 
     container:
       image: "${{ matrix.container }}"
