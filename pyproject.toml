@@ -45,7 +45,7 @@ dependencies = [
 robotpy-build = "robotpy_build.pkgcfg"
 
 [project.scripts]
-robotpy-build = "robotpy_build.tool:main"
+robotpy-build = "robotpy_build.tool.__main__:main"
 
 [project.urls]
 "Source code" = "https://github.com/robotpy/robotpy-build"
