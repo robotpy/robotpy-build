@@ -1,5 +1,5 @@
 import inspect
-from rpytest import ft
+from swtest import ft
 
 
 def test_docstrings_enum():
@@ -29,7 +29,7 @@ def test_docstrings_cls():
 def test_docstrings_meth():
     assert inspect.getdoc(ft.DocClass.fn) == inspect.cleandoc(
         """
-        fn(self: rpytest.ft._rpytest_ft.DocClass) -> None
+        fn(self: swtest.ft._ft.DocClass) -> None
         
         Function with docstring for good measure
         """
@@ -39,7 +39,7 @@ def test_docstrings_meth():
 def test_docstrings_meth_kwd():
     assert inspect.getdoc(ft.DocClass.fn2) == inspect.cleandoc(
         """
-        fn2(self: rpytest.ft._rpytest_ft.DocClass, from_: typing.SupportsInt) -> None
+        fn2(self: swtest.ft._ft.DocClass, from_: typing.SupportsInt) -> None
         
         Function with parameter that's a python keyword
 
@@ -51,7 +51,7 @@ def test_docstrings_meth_kwd():
 def test_docstrings_meth_rename():
     assert inspect.getdoc(ft.DocClass.fn3) == inspect.cleandoc(
         """
-        fn3(self: rpytest.ft._rpytest_ft.DocClass, ohai: typing.SupportsInt) -> None
+        fn3(self: swtest.ft._ft.DocClass, ohai: typing.SupportsInt) -> None
         
         Function with renamed parameter
 
@@ -104,7 +104,7 @@ def test_docstrings_append():
     )
     assert inspect.getdoc(ft.DocAppendClass.fn) == inspect.cleandoc(
         """
-        fn(self: rpytest.ft._rpytest_ft.DocAppendClass) -> None
+        fn(self: swtest.ft._ft.DocAppendClass) -> None
         
         Function with docstring for good measure
         Useful extra information about this fn

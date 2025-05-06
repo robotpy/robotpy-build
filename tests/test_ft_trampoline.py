@@ -1,4 +1,5 @@
-from rpytest.ft import ClassWithTrampoline, ConstexprTrampoline
+from swtest_base._module import abaseclass
+from swtest.ft._ft import ClassWithTrampoline, ConstexprTrampoline, RemoteTrampoline
 
 
 def test_class_with_trampoline():
@@ -29,3 +30,13 @@ def test_trampoline_without_mv():
 
 def test_constexpr_trampoline():
     ConstexprTrampoline()
+
+
+def test_remote_trampoline():
+    a = abaseclass()
+    assert a.fn() == "abaseclass"
+
+    r = RemoteTrampoline()
+    assert r.fn() == "RemoteTrampoline"
+
+    assert isinstance(r, abaseclass)

@@ -1,14 +1,14 @@
-from rpytest import ft
+from swtest import ft
 
 
 def test_rename_fn():
-    assert not hasattr(ft._rpytest_ft, "fnOriginal")
+    assert not hasattr(ft._ft, "fnOriginal")
     assert ft.fnRenamed() == 0x1
     assert ft.fnRenamedParam(y=4) == 4
 
 
 def test_rename_cls():
-    assert not hasattr(ft._rpytest_ft, "OriginalClass")
+    assert not hasattr(ft._ft, "OriginalClass")
 
     c = ft.RenamedClass()
 
@@ -36,7 +36,7 @@ def test_rename_cls():
 
 
 def test_rename_enums():
-    assert not hasattr(ft._rpytest_ft, "OriginalEnum")
+    assert not hasattr(ft._ft, "OriginalEnum")
 
     assert not hasattr(ft.RenamedEnum, "Original1")
     assert ft.RenamedEnum.Renamed1 == 1
