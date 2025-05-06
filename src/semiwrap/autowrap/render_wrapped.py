@@ -52,7 +52,7 @@ def render_wrapped_cpp(hctx: HeaderContext) -> str:
         for ns in hctx.namespaces:
             r.writeln(f"using namespace {ns};")
 
-    r.writeln(f"\nstruct rpybuild_{hctx.hname}_initializer {{\n")
+    r.writeln(f"\nstruct semiwrap_{hctx.hname}_initializer {{\n")
 
     with r.indent():
         for cls in hctx.classes:
@@ -72,7 +72,7 @@ def render_wrapped_cpp(hctx: HeaderContext) -> str:
         # template decls
         for tmpl_data in hctx.template_instances:
             if not tmpl_data.matched:
-                r.writeln(f"rpygen::{tmpl_data.binder_typename} {tmpl_data.var_name};")
+                r.writeln(f"swgen::{tmpl_data.binder_typename} {tmpl_data.var_name};")
 
         # class decls
         for cls in hctx.classes:
@@ -83,11 +83,11 @@ def render_wrapped_cpp(hctx: HeaderContext) -> str:
                 r.writeln()
                 for tmpl_data in cls.template.instances:
                     r.writeln(
-                        f"rpygen::{tmpl_data.binder_typename} {tmpl_data.var_name};"
+                        f"swgen::{tmpl_data.binder_typename} {tmpl_data.var_name};"
                     )
 
         r.writeln("\npy::module &m;\n")
-        r.writeln(f"rpybuild_{hctx.hname}_initializer(py::module &m) :")
+        r.writeln(f"semiwrap_{hctx.hname}_initializer(py::module &m) :")
 
         with r.indent():
             for pkg, vname in hctx.subpackages.items():
@@ -179,12 +179,12 @@ def render_wrapped_cpp(hctx: HeaderContext) -> str:
         r.writeln("}")
 
     r.writeln(
-        f"}}; // struct rpybuild_{hctx.hname}_initializer\n"
+        f"}}; // struct semiwrap_{hctx.hname}_initializer\n"
         "\n"
-        f"static std::unique_ptr<rpybuild_{hctx.hname}_initializer> cls;\n"
+        f"static std::unique_ptr<semiwrap_{hctx.hname}_initializer> cls;\n"
         "\n"
         f"void begin_init_{hctx.hname}(py::module &m) {{\n"
-        f"  cls = std::make_unique<rpybuild_{hctx.hname}_initializer>(m);\n"
+        f"  cls = std::make_unique<semiwrap_{hctx.hname}_initializer>(m);\n"
         "}\n"
         "\n"
         f"void finish_init_{hctx.hname}() {{\n"

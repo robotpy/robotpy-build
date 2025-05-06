@@ -10,7 +10,7 @@ namespace py = pybind11;
 #define Py_IsFinalizing _Py_IsFinalizing
 #endif
 
-namespace rpy {
+namespace semiwrap {
 
 /*
     This object holds a python object, and can be stored in C++ containers that
@@ -111,7 +111,7 @@ public:
 // convenience alias
 using gilsafe_object = gilsafe_t<py::object>;
 
-} // namespace rpy
+} // namespace semiwrap
 
 
 
@@ -119,7 +119,7 @@ PYBIND11_NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 PYBIND11_NAMESPACE_BEGIN(detail)
 
 template <typename T>
-struct type_caster<rpy::gilsafe_t<T>> {
+struct type_caster<semiwrap::gilsafe_t<T>> {
     bool load(handle src, bool convert) {
         value = src;
         return true;
@@ -129,11 +129,11 @@ struct type_caster<rpy::gilsafe_t<T>> {
         return src.inc_ref();
     }
 
-    PYBIND11_TYPE_CASTER(rpy::gilsafe_t<T>, handle_type_name<T>::name);
+    PYBIND11_TYPE_CASTER(semiwrap::gilsafe_t<T>, handle_type_name<T>::name);
 };
 
 template <typename T>
-struct handle_type_name<rpy::gilsafe_t<T>> {
+struct handle_type_name<semiwrap::gilsafe_t<T>> {
     static constexpr auto name = handle_type_name<T>::name;
 };
 

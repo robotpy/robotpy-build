@@ -460,8 +460,7 @@ class Defaults:
 @dataclasses.dataclass(frozen=True)
 class AutowrapConfigYaml:
     """
-    Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
-    generation_data
+    Format of the files specified by [tool.semiwrap.extension_modules."PACKAGENAME".headers]
     """
 
     defaults: Defaults = dataclasses.field(default_factory=Defaults)
@@ -472,7 +471,7 @@ class AutowrapConfigYaml:
     #: C++ file, after autodetected include dependencies are inserted.
     extra_includes: List[str] = dataclasses.field(default_factory=list)
 
-    #: Adds ``#include <FILENAME>`` directives after robotpy_build.h is
+    #: Adds ``#include <FILENAME>`` directives after semiwrap.h is
     #: included, but before any autodetected include dependencies. Only use
     #: this when dealing with broken headers.
     extra_includes_first: List[str] = dataclasses.field(default_factory=list)

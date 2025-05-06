@@ -58,6 +58,7 @@ from cxxheaderparser.types import (
     Variable,
 )
 
+from ..casters import CastersData
 from ..config.autowrap_yml import (
     AutowrapConfigYaml,
     BufferData,
@@ -87,18 +88,24 @@ from .context import (
     TrampolineData,
 )
 
+from ..util import relpath_walk_up
+
 
 class HasSubpackage(Protocol):
-    subpackage: typing.Optional[str]
+    @property
+    def subpackage(self) -> typing.Optional[str]: ...
 
 
 class HasDoc(Protocol):
-    doc: str
-    doc_append: str
+    @property
+    def doc(self) -> typing.Optional[str]: ...
+    @property
+    def doc_append(self) -> typing.Optional[str]: ...
 
 
 class HasNameData(Protocol):
-    rename: str
+    @property
+    def rename(self) -> typing.Optional[str]: ...
 
 
 # TODO: this isn't the best solution
@@ -329,7 +336,7 @@ class AutowrapVisitor:
         self,
         hctx: HeaderContext,
         gendata: GeneratorData,
-        casters: typing.Dict[str, typing.Dict[str, typing.Any]],
+        casters: CastersData,
         report_only: bool,
     ) -> None:
         self.hctx = hctx
@@ -591,6 +598,7 @@ class AutowrapVisitor:
 
         # Ignore explicitly ignored classes (including default-ignore)
         if class_data.ignore:
+            self.hctx.ignored_classes.append(cls_key)
             return False
 
         if missing and not self.report_only:
@@ -721,6 +729,7 @@ class AutowrapVisitor:
 
         ctx = ClassContext(
             parent=parent_ctx,
+            yml_id=cls_key,
             namespace=cls_namespace,
             cpp_name=cls_name,
             full_cpp_name=cls_qualname,
@@ -1897,8 +1906,8 @@ class AutowrapVisitor:
             typename = _fmt_nameonly(ntype.typename)
             if typename:
                 ccfg = self.casters.get(typename)
-                if ccfg and ccfg.get("darg"):
-                    found_typename = ccfg["typename"]
+                if ccfg and ccfg.default_arg_cast:
+                    found_typename = ccfg.typename
                     name = f"({found_typename}){name}"
 
         return name
@@ -1974,7 +1983,7 @@ class AutowrapVisitor:
         for typename in self.types:
             ccfg = casters.get(typename)
             if ccfg:
-                includes.add(ccfg["hdr"])
+                includes.add(ccfg.header)
 
         self.hctx.type_caster_includes = sorted(includes)
 
@@ -1985,7 +1994,7 @@ def parse_header(
     header_root: pathlib.Path,
     gendata: GeneratorData,
     parser_options: ParserOptions,
-    casters: typing.Dict[str, typing.Dict[str, typing.Any]],
+    casters: CastersData,
     report_only: bool,
 ) -> HeaderContext:
     user_cfg = gendata.data
@@ -1993,10 +2002,11 @@ def parse_header(
     # Initialize the header context with user configuration
     hctx = HeaderContext(
         hname=name,
+        orig_yaml=gendata.data_fname,
         extra_includes_first=user_cfg.extra_includes_first,
         extra_includes=user_cfg.extra_includes,
         inline_code=user_cfg.inline_code,
-        rel_fname=str(header_path.relative_to(header_root)),
+        rel_fname=relpath_walk_up(header_path, header_root).as_posix(),
     )
 
     # Parse the header using a custom visitor

@@ -1,4 +1,8 @@
-from distutils.util import get_platform as _get_platform
+try:
+    from distutils.util import get_platform as _get_platform
+except ImportError:
+    from sysconfig import get_platform as _get_platform
+
 from dataclasses import dataclass, field
 from typing import List
 import re
