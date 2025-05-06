@@ -3,7 +3,7 @@
 functions:
   add2:
 classes:
-  DemoClass:
+  demo::DemoClass:
     methods:
       setX:
       getX:
