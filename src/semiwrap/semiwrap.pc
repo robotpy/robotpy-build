@@ -1,0 +1,9 @@
+prefix=${pcfiledir}
+includedir=${prefix}/include
+
+Name: semiwrap
+Description: Semiwrap compile flags and include directories
+Version: 2025
+Requires: semiwrap-pybind11
+Cflags: -I${includedir}
+Libs:

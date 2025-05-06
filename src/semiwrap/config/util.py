@@ -10,9 +10,7 @@ class ValidationError(Exception):
     pass
 
 
-def _convert_validation_error(
-    fname: str, ve: errors.ValidationError
-) -> ValidationError:
+def _convert_validation_error(fname, ve: errors.ValidationError) -> ValidationError:
     locs = []
     msg = []
 
@@ -36,7 +34,7 @@ def _convert_validation_error(
     return ValidationError(vmsg)
 
 
-def parse_input(value: typing.Any, spec: typing.Type[T], fname: str) -> T:
+def parse_input(value: typing.Any, spec: typing.Type[T], fname) -> T:
     try:
         return validobj.validation.parse_input(value, spec)
     except errors.ValidationError as ve:

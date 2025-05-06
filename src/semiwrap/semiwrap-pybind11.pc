@@ -1,0 +1,8 @@
+prefix=${pcfiledir}
+includedir=${prefix}/pybind11/include
+
+Name: semiwrap-pybind11
+Description: Semiwrap specific version of pybind11
+Version: 3.0.0.dev1
+Cflags: -I${includedir}
+Libs:

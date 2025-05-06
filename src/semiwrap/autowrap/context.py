@@ -12,6 +12,7 @@
 
 from dataclasses import dataclass, field
 import enum
+import pathlib
 import typing
 
 from cxxheaderparser.types import Function, PQName
@@ -372,6 +373,9 @@ class ClassContext:
 
     parent: typing.Optional["ClassContext"]
 
+    #: lookup key for dat2trampoline
+    yml_id: str
+
     #: Namespace that this class lives in
     namespace: str
 
@@ -514,6 +518,9 @@ class HeaderContext:
     # Name in toml
     hname: str
 
+    # config file for this
+    orig_yaml: pathlib.Path
+
     extra_includes_first: typing.List[str]
     extra_includes: typing.List[str]
     inline_code: typing.Optional[str]
@@ -534,6 +541,9 @@ class HeaderContext:
 
     # same as classes, but only those that have trampolines
     classes_with_trampolines: typing.List[ClassContext] = field(default_factory=list)
+
+    # for diagnostic purposes
+    ignored_classes: typing.List[str] = field(default_factory=list)
 
     functions: typing.List[FunctionContext] = field(default_factory=list)
 

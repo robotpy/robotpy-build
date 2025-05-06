@@ -62,6 +62,10 @@ class BufferType(str, enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class BufferData:
+    """
+    Specify that a parameter uses the buffer protocol
+    """
+
     #: Indicates what type of python buffer is required
     type: BufferType
 
@@ -83,12 +87,25 @@ class ReturnValuePolicy(enum.Enum):
     for what each of these values mean.
     """
 
+    #: Reference an existing object (i.e. do not create a new copy) and take ownership.
     take_ownership = "take_ownership"
+
+    #: Create a new copy of the returned object, which will be owned by Python.
     copy = "copy"
+
+    #: Use std::move to move the return value contents into a new instance that will be owned by Python.
     move = "move"
+
+    #: Reference an existing object, but do not take ownership.
     reference = "reference"
+
+    #: Indicates that the lifetime of the return value is tied to the lifetime of a parent object
     reference_internal = "reference_internal"
+
+    #: pybind11 determines the policy to use
     automatic = "automatic"
+
+    #: pybind11 determines the policy to use, but falls back to a reference
     automatic_reference = "automatic_reference"
 
 
@@ -137,7 +154,16 @@ class OverloadData:
     #: When applied to a constructor, creates a static method for the overload instead.
     rename: Optional[str] = None
 
-    #: Mechanism to override individual parameters
+    #: Mechanism to override individual parameters. For example, to rename the first
+    #: parameter of ``void my_function(int param1)``:
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    functions:
+    #:        my_function:
+    #:            param_override:
+    #:                 param1:
+    #:
     param_override: Dict[str, ParamData] = dataclasses.field(default_factory=dict)
 
     #: If specified, put the function in a sub.pack.age
@@ -147,6 +173,7 @@ class OverloadData:
     #: function is called.
     no_release_gil: Optional[bool] = None
 
+    #: Configures parameters that can receive objects that implement the buffer protocol
     buffers: List[BufferData] = dataclasses.field(default_factory=list)
 
     #: Adds py::keep_alive<x,y> to the function. Overrides automatic
@@ -212,6 +239,7 @@ class FunctionData(OverloadData):
                # customizations for `my_overloaded_fn(int, int, int)`
     """
 
+    #: See above
     overloads: Dict[str, OverloadData] = dataclasses.field(default_factory=dict)
 
 
@@ -288,6 +316,7 @@ class EnumData:
     #: enums that are part of classes)
     subpackage: Optional[str] = None
 
+    #: Enum value configuration
     values: Dict[str, EnumValue] = dataclasses.field(default_factory=dict)
 
     #: This will insert code right before the semicolon ending the enum py
@@ -309,6 +338,7 @@ class ClassData:
     #: Text to append to the (autoconverted) docstring
     doc_append: Optional[str] = None
 
+    #: Ignore this class
     ignore: bool = False
 
     #: List of bases to ignore. Name must include any template specializations.
@@ -319,12 +349,43 @@ class ClassData:
     #: detected directly from the text.
     base_qualnames: Dict[str, str] = dataclasses.field(default_factory=dict)
 
+    #: Customize attributes of the class
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    classes:
+    #:      MyClass:
+    #:        attributes:
+    #:          m_attr:
     attributes: Dict[str, PropData] = dataclasses.field(default_factory=dict)
+
+    #: Customize enums
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    classes:
+    #:      MyClass:
+    #:        enums:
+    #:          MyEnum:
     enums: Dict[str, EnumData] = dataclasses.field(default_factory=dict)
+
+    #: Customize methods
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    classes:
+    #:      MyClass:
+    #:        methods:
+    #:          mymethod:
     methods: Dict[str, FunctionData] = dataclasses.field(default_factory=dict)
 
+    #: Inform the autogenerator that this class is polymorphic
     is_polymorphic: Optional[bool] = None
+
+    #: Disable generating a trampoline for this class
     force_no_trampoline: bool = False
+
+    #: Disable generating a default constructor for this class
     force_no_default_constructor: bool = False
 
     #: pybind11 will detect multiple inheritance automatically if a
@@ -350,9 +411,6 @@ class ClassData:
 
     #: Set the python name of the class to this
     rename: Optional[str] = None
-
-    #: This is deprecated and has no effect
-    shared_ptr: bool = True
 
     #: If specified, put the class in a sub.pack.age. Ignored
     #: for functions attached to a class. When template parameters
@@ -447,6 +505,13 @@ class TemplateData:
 class Defaults:
     """
     Defaults to apply to everything
+
+    .. code-block:: yaml
+
+        defaults:
+          ignore: true
+          report_ignored_missing: false
+
     """
 
     #: Set this to True to ignore functions/enums/classes at namespace scope
@@ -460,21 +525,38 @@ class Defaults:
 @dataclasses.dataclass(frozen=True)
 class AutowrapConfigYaml:
     """
-    Format of the file in [tool.robotpy-build.wrappers."PACKAGENAME"]
-    generation_data
+    Format of the files specified by ``[tool.semiwrap.extension_modules."PACKAGENAME".headers]``.
+    Each key in this data structure is a toplevel key in the YAML file.
     """
 
+    #: Provides a mechanism to specify certain default behaviors
     defaults: Defaults = dataclasses.field(default_factory=Defaults)
 
+    #: When specified,
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    strip_prefixes:
+    #:    - FOO_  # any functions that begin with FOO_ will have it stripped
     strip_prefixes: List[str] = dataclasses.field(default_factory=list)
 
     #: Adds ``#include <FILENAME>`` directives to the top of the autogenerated
     #: C++ file, after autodetected include dependencies are inserted.
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    extra_includes:
+    #:    - foo.h
     extra_includes: List[str] = dataclasses.field(default_factory=list)
 
-    #: Adds ``#include <FILENAME>`` directives after robotpy_build.h is
+    #: Adds ``#include <FILENAME>`` directives after semiwrap.h is
     #: included, but before any autodetected include dependencies. Only use
     #: this when dealing with broken headers.
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    extra_includes_first:
+    #:    - foo.h
     extra_includes_first: List[str] = dataclasses.field(default_factory=list)
 
     #: Specify raw C++ code that will be inserted at the end of the
@@ -515,7 +597,7 @@ class AutowrapConfigYaml:
     #: .. code-block:: yaml
     #:
     #:    classes:
-    #:      CLASSNAME:
+    #:      NAMESPACE::CLASSNAME:
     #:        # customizations here, see ClassData
     #:
     classes: Dict[str, ClassData] = dataclasses.field(default_factory=dict)
@@ -552,6 +634,13 @@ class AutowrapConfigYaml:
 
     #: Extra 'using' directives to insert into the trampoline and the
     #: wrapping scope
+    #:
+    #: .. code-block:: yaml
+    #:
+    #:    typealias:
+    #:    # makes SomeClass available in the wrapping scope
+    #:    - some_namespace::SomeClass
+    #:
     typealias: List[str] = dataclasses.field(default_factory=list)
 
     #: Encoding to use when opening this header file

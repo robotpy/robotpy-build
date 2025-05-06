@@ -330,7 +330,7 @@ def cls_decl(r: RenderBuffer, cls: ClassContext):
         """
         )
         r.writeln(
-            f'static_assert(std::is_abstract<{tctx.var}>::value == false, "{cls.full_cpp_name} " RPYBUILD_BAD_TRAMPOLINE);'
+            f'static_assert(std::is_abstract<{tctx.var}>::value == false, "{cls.full_cpp_name} " SEMIWRAP_BAD_TRAMPOLINE);'
         )
 
     class_params = [f"typename {cls.full_cpp_name}"]
