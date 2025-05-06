@@ -1,0 +1,115 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["semiwrap", "hatch-meson", "hatchling"]
+
+[project]
+name = "sw-test"
+description = "semiwrap test program"
+version = "0.0.1"
+
+[tool.hatch.build.hooks.semiwrap]
+
+[tool.hatch.build.hooks.meson]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/swtest"]
+
+#
+# Semiwrap configuration
+#
+
+[tool.semiwrap]
+
+[tool.semiwrap.extension_modules."swtest.ft._ft"]
+depends = ["sw-test-casters"]
+wraps = ["swtest_base__module"]
+yaml_path = "semiwrap/ft"
+includes = ["src/swtest/ft/include"]
+
+[tool.semiwrap.extension_modules."swtest.ft._ft".headers]
+abstract = "abstract.h"
+base_qualname = "base_qualname.h"
+base_qualname_hidden = "base_qualname_hidden.h"
+buffers = "buffers.h"
+custom_type_caster = "custom_type_caster.h"
+defaults = "defaults.h"
+docstrings = "docstrings.h"
+docstrings_append = "docstrings_append.h"
+enums = "enums.h"
+factory = "factory.h"
+fields = "fields.h"
+gilsafe_container = "gilsafe_container.h"
+keepalive = "keepalive.h"
+ignore = "ignore.h"
+ignored_by_default = "ignored_by_default.h"
+inline_code = "inline_code.h"
+lifetime = "lifetime.h"
+nested = "nested.h"
+ns_class = "ns_class.h"
+ns_hidden = "ns_hidden.h"
+operators = "operators.h"
+overloads = "overloads.h"
+parameters = "parameters.h"
+refqual = "refqual.h"
+remote_class = "remote_class.h"
+remote_trampoline = "remote_trampoline.h"
+rename = "rename.h"
+retval = "retval.h"
+subpkg = "subpkg.h"
+static_only = "static_only.h"
+trampoline = "trampoline.h"
+type_caster = "type_caster.h"
+type_caster_nested = "type_caster_nested.h"
+using = "using.h"
+using2 = "using2.h"
+virtual_comma = "virtual_comma.h"
+virtual_xform = "virtual_xform.h"
+
+# Inheritance
+IBase = "inheritance/ibase.h"
+IChild = "inheritance/ichild.h"
+IMChild = "inheritance/imchild.h"
+IGChild = "inheritance/igchild.h"
+Overloaded = "inheritance/overloaded.h"
+mvi = "inheritance/mvi.h"
+usingparent = "inheritance/usingparent.h"
+
+# Protection
+PBase = "protection/pbase.h"
+PChild = "protection/pchild.h"
+PGChild = "protection/pgchild.h"
+
+# Templates
+tbase = "templates/tbase.h"
+tcrtp = "templates/tcrtp.h"
+tcrtpfwd = "templates/tcrtpfwd.h"
+tconcrete = "templates/tconcrete.h"
+
+tvbase = "templates/tvbase.h"
+tvchild = "templates/tvchild.h"
+
+tbasic = "templates/basic.h"
+tdependent_base = "templates/dependent_base.h"
+tdependent_param = "templates/dependent_param.h"
+tdependent_using = "templates/dependent_using.h"
+tdependent_using2 = "templates/dependent_using2.h"
+tfn = "templates/fn.h"
+tnumeric = "templates/numeric.h"
+tnested = "templates/nested.h"
+
+
+
+[tool.semiwrap.export_type_casters.sw-test-casters]
+pypackage = "swtest.tc"
+includedir = ["src/swtest/tc/include"]
+
+[[tool.semiwrap.export_type_casters.sw-test-casters.headers]]
+header = "rpyint_type_caster.h"
+types = ["rpy::rpyint"]
+default_arg_cast = true
+
+[[tool.semiwrap.export_type_casters.sw-test-casters.headers]]
+header = "rpyint_type_caster.h"
+types = ["rpyint_plus_5"]
+
+

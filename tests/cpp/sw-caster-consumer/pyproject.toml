@@ -1,0 +1,29 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["semiwrap", "hatch-meson", "hatchling"]
+
+[project]
+description = "Test program"
+name = "sw-caster-consumer"
+version = "0.0.1"
+
+[tool.hatch.build.targets.wheel]
+packages = ['src/sw_caster_consumer']
+
+[tool.hatch.build.hooks.semiwrap]
+
+[tool.hatch.build.hooks.meson]
+
+#
+# Semiwrap configuration
+#
+
+[tool.semiwrap]
+[tool.semiwrap.extension_modules."sw_caster_consumer._module"]
+depends = ["swtest_base__module"]
+
+[tool.semiwrap.extension_modules."sw_caster_consumer._module".headers]
+more = "cpp/more.h"
+
+# checks that caster is included automatically when in a namespace
+ns_more = "cpp/ns_more.h"
