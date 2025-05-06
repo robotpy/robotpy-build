@@ -1,7 +1,6 @@
 import subprocess
 import sys
-
-from .util import get_setup
+import tomli
 
 
 class BuildDep:
@@ -21,10 +20,9 @@ class BuildDep:
         return parser
 
     def run(self, args):
-        s = get_setup()
-        requirements = s.pyproject.get("build-system", {}).get("requires", [])
-        requirements.extend(s.setup_kwargs.get("install_requires", ""))
-        requirements.append("wheel")
+        with open("pyproject.toml", "rb") as fp:
+            pyproject = tomli.load(fp)
+        requirements = pyproject.get("build-system", {}).get("requires", [])
 
         pipargs = [
             sys.executable,
