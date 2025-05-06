@@ -3,15 +3,14 @@ import sys
 
 from .build_dep import BuildDep
 from .create_gen import GenCreator
-from .create_imports import ImportCreator
-from .parse_maven import MavenParser
+from .create_imports import ImportCreator, UpdateInit
 from .platform_info import PlatformInfo
 from .show_override import ShowOverrides
 from .scan_headers import HeaderScanner
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="robotpy-build")
+    parser = argparse.ArgumentParser(prog="semiwrap")
     parent_parser = argparse.ArgumentParser(add_help=False)
     subparsers = parser.add_subparsers(dest="cmd")
     subparsers.required = True
@@ -23,7 +22,7 @@ def main():
         ImportCreator,
         PlatformInfo,
         ShowOverrides,
-        MavenParser,
+        UpdateInit,
     ):
         cls.add_subparser(parent_parser, subparsers).set_defaults(cls=cls)
 

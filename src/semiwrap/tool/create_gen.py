@@ -1,7 +1,8 @@
-from os.path import exists
+import pathlib
 
-from .util import get_setup
 from ..autowrap.generator_data import MissingReporter
+from ..cmd.header2dat import make_argparser, generate_wrapper
+from ..makeplan import InputFile, makeplan, BuildTarget
 
 
 class GenCreator:
@@ -15,35 +16,63 @@ class GenCreator:
         parser.add_argument(
             "--write", help="Write to files if they don't exist", action="store_true"
         )
-        parser.add_argument("--strip-prefixes", action="append")
 
         return parser
 
     def run(self, args):
-        pfx = ""
-        if args.strip_prefixes:
-            pfx = "strip_prefixes:\n- " + "\n- ".join(args.strip_prefixes) + "\n\n"
+        project_root = pathlib.Path.cwd()
 
-        s = get_setup()
-        for wrapper in s.wrappers:
+        plan = makeplan(project_root, missing_yaml_ok=True)
+
+        for item in plan:
+            if not isinstance(item, BuildTarget) or item.command != "header2dat":
+                continue
+
+            # convert args to string so we can parse it
+            # .. this is weird, but less annoying than other alternatives
+            #    that I can think of?
+            argv = []
+            for arg in item.args:
+                if isinstance(arg, str):
+                    argv.append(arg)
+                elif isinstance(arg, InputFile):
+                    argv.append(str(arg.path.absolute()))
+                elif isinstance(arg, pathlib.Path):
+                    argv.append(str(arg.absolute()))
+                else:
+                    # anything else shouldn't matter
+                    argv.append("ignored")
+
+            sparser = make_argparser()
+            sargs = sparser.parse_args(argv)
+
             reporter = MissingReporter()
-            wrapper.on_build_gen("", reporter)
 
-            nada = True
-            for name, report in reporter.as_yaml():
-                report = f"---\n\n{pfx}{report}"
+            generate_wrapper(
+                name=sargs.name,
+                src_yml=sargs.src_yml,
+                src_h=sargs.src_h,
+                src_h_root=sargs.src_h_root,
+                dst_dat=None,
+                dst_depfile=None,
+                include_paths=sargs.include_paths,
+                casters={},
+                pp_defines=sargs.pp_defines,
+                missing_reporter=reporter,
+                report_only=True,
+            )
 
-                nada = False
-                if args.write:
-                    if not exists(name):
-                        print("Writing", name)
-                        with open(name, "w") as fp:
-                            fp.write(report)
-                    else:
-                        print(name, "already exists!")
+            if reporter:
+                for name, report in reporter.as_yaml():
+                    report = f"---\n\n{report}"
 
-                print("===", name, "===")
-                print(report)
+                    if args.write:
+                        if not name.exists():
+                            print("Writing", name)
+                            with open(name, "w") as fp:
+                                fp.write(report)
+                        else:
+                            print(name, "already exists!")
 
-            if nada:
-                print("Nothing to do!")
+                    print("===", name, "===")
+                    print(report)
