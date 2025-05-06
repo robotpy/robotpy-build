@@ -50,7 +50,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.8
     - name: Sphinx
@@ -67,7 +67,7 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.8
 
@@ -97,12 +97,12 @@ jobs:
         - '3.11'
         - '3.12'
         - '3.13'
-        architecture: [x86, x64]
-        exclude:
-        - os: macos-13
-          architecture: x86
-        - os: ubuntu-22.04
-          architecture: x86
+        architecture: [x64]
+        # exclude:
+        # - os: macos-13
+        #   architecture: x86
+        # - os: ubuntu-22.04
+        #   architecture: x86
         include:
         - os: macos-14
           python_version: 3.9
@@ -116,7 +116,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python_version }}
         architecture: ${{ matrix.architecture }}
@@ -133,25 +133,32 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.python_version }}
           variant: ccache
 
+    - name: Setup MSVC
+      uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+      with:
+        architecture: x64
+      if: runner.os == 'Windows'
+
+    - name: Configure ccache for MSVC
+      shell: bash
+      # https://github.com/mesonbuild/meson/issues/10423
+      run: |
+        echo "CC=ccache.exe cl" >> $GITHUB_ENV
+        echo "CXX=ccache.exe cl" >> $GITHUB_ENV
+      if: runner.os == 'Windows'
+
     - name: Install
       shell: bash
       working-directory: dist
       run: python -m pip --disable-pip-version-check install *.whl
 
     - name: Install test dependencies
-      shell: bash
       working-directory: tests
       run: python -m pip --disable-pip-version-check install -r requirements.txt
 
     - name: Test wheel
-      shell: bash
-      env:
-        RPYBUILD_PARALLEL: 1
-        RPYBUILD_STRIP_LIBPYTHON: 1
-        RPYBUILD_CC_LAUNCHER: ccache
       working-directory: tests
-      run: |
-        python run_tests.py
+      run: python run_tests.py
 
   cross-build:
     runs-on: ubuntu-latest
@@ -160,8 +167,8 @@ jobs:
       max-parallel: ${{ fromJSON(needs.setup_concurrency.outputs.max-parallel).v }}
       matrix:
         container:
-        - wpilib/roborio-cross-ubuntu:2024-22.04-py312
-        - wpilib/raspbian-cross-ubuntu:bullseye-22.04-py312
+        - wpilib/roborio-cross-ubuntu:2025-22.04-py313
+        - wpilib/raspbian-cross-ubuntu:2025-bookworm-22.04-py313
 
     container:
       image: "${{ matrix.container }}"
@@ -183,33 +190,23 @@ jobs:
         name: dist
         path: dist
 
-    - name: Install setuptools
-      run: |
-        /build/venv/bin/build-pip --disable-pip-version-check install setuptools
-        /build/venv/bin/cross-pip --disable-pip-version-check install setuptools
+    - name: Setup cross environment
+      uses: robotpy/build-actions/setup-cross-meson@semiwrap
 
     - name: Install
       working-directory: dist
       run: |
-        # install to both cross and build in case things get mixed up
         /build/venv/bin/build-pip --disable-pip-version-check install *.whl
-        /build/venv/bin/cross-pip --disable-pip-version-check install *.whl
 
     - name: Install test dependencies
       shell: bash
       working-directory: tests
       run: |
-        # install to both cross and build in case things get mixed up
         /build/venv/bin/build-pip --disable-pip-version-check install -r requirements.txt
-        /build/venv/bin/cross-pip --disable-pip-version-check install -r requirements.txt
 
     - name: Build cross wheel
-      env:
-        RPYBUILD_PARALLEL: 1
-        RPYBUILD_STRIP_LIBPYTHON: 1
-        RPYBUILD_CC_LAUNCHER: ccache
       working-directory: tests/cpp
-      run: /build/venv/bin/cross-python run_install.py wheel
+      run: /build/venv/bin/cross-python run_install.py --config-settings=setup-args=--cross-file=cross.txt
 
   publish:
     runs-on: ubuntu-latest
