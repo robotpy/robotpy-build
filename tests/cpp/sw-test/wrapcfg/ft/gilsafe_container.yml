@@ -1,0 +1,7 @@
+---
+
+classes:
+  GilsafeContainer:
+    methods:
+      assign:
+      check:

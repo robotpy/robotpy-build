@@ -1,4 +1,4 @@
-from rpytest import ft
+from swtest import ft
 import pytest
 import re
 
@@ -142,7 +142,7 @@ def test_cpp_code_with_constant():
 
 
 def test_ns_class():
-    assert ft._rpytest_ft.NSClass().getN() == 4
+    assert ft._ft.NSClass().getN() == 4
 
 
 #
@@ -277,4 +277,4 @@ def test_init_raises():
 
 
 def test_subpkg():
-    from rpytest.ft.subpkg import SPClass
+    from swtest.ft.subpkg import SPClass

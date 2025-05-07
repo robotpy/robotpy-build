@@ -1,0 +1,16 @@
+---
+
+classes:
+  HasOperator:
+    methods:
+      HasOperator:
+        overloads:
+          "":
+          int:
+      operator==:
+  HasOperatorNoDefault:
+    attributes:
+      x:
+    methods:
+      HasOperatorNoDefault:
+      operator==:

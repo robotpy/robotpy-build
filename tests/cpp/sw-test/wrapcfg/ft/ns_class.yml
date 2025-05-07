@@ -1,0 +1,6 @@
+---
+
+classes:
+  ::ns::NSClass:
+    methods:
+      getN:

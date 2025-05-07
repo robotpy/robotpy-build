@@ -15,7 +15,7 @@ import pkg_resources
 
 os.environ["GENERATING_DOCUMENTATION"] = "True"
 
-__version__ = pkg_resources.get_distribution("robotpy-build").version
+__version__ = pkg_resources.get_distribution("semiwrap").version
 
 
 # -- RTD configuration ------------------------------------------------
@@ -25,7 +25,7 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # -- Project information -----------------------------------------------------
 
-project = "robotpy-build"
+project = "semiwrap"
 copyright = "2020, RobotPy Development Team"
 author = "RobotPy Development Team"
 

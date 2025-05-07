@@ -1,4 +1,4 @@
-from rpytest import ft
+from swtest import ft
 import pytest
 
 
@@ -12,8 +12,8 @@ def test_enums():
 
     # Unnamed enums are hoisted as integers to their scope
     # - not supported yet for globals
-    # assert ft._rpytest_ft.UGEX == 7
-    # assert ft._rpytest_ft.NSUGEX == 5
+    # assert ft._ft.UGEX == 7
+    # assert ft._ft.NSUGEX == 5
     assert ft.EnumContainer.UEX == 4
 
     # enum class are specific types

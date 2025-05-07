@@ -1,0 +1,6 @@
+---
+
+classes:
+  RemoteTrampoline:
+    methods:
+      fn:

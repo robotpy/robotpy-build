@@ -1,0 +1,13 @@
+---
+classes:
+  whatever::TDependentUsing:
+    template_params:
+    - T
+    typealias:
+    - VectorType = std::vector<T>
+  
+templates:
+  TDependentUsingInt:
+    qualname: whatever::TDependentUsing
+    params:
+    - int

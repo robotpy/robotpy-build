@@ -1,0 +1,7 @@
+---
+
+classes:
+  PChild:
+    methods:
+      privateFinalTestGC:
+      PChild:

@@ -1,4 +1,4 @@
-from rpytest import ft
+from swtest import ft
 
 
 def test_fn_overloads():

@@ -1,4 +1,4 @@
-import rpytest.ft._rpytest_ft as ft
+import swtest.ft._ft as ft
 
 
 def test_refquals_ref():

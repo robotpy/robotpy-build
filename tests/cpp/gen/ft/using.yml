@@ -1,8 +1,0 @@
-
-typealias:
-- cr::AlsoCantResolve
-
-classes:
-  ProtectedUsing:
-    typealias:
-    - cr::CantResolve

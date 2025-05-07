@@ -1,4 +1,4 @@
-from rpytest.ft import ClassWithFields, StructWithBitfields
+from swtest.ft import ClassWithFields, StructWithBitfields
 
 
 def test_fields():

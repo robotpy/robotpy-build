@@ -1,0 +1,9 @@
+
+typealias:
+- cr::AlsoCantResolve
+
+classes:
+  cr::inner::ProtectedUsing:
+    typealias:
+    - cr::CantResolve
+  u::FwdDecl:
