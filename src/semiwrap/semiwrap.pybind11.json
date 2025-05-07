@@ -57,6 +57,7 @@
                 "Eigen::Vector",
                 "Eigen::Vector2d",
                 "Eigen::Vector3d",
+                "Eigen::VectorXd",
                 "Eigen::VectorXf",
                 "Eigen::VectorXcf"
             ]

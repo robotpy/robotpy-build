@@ -8,15 +8,10 @@ from __future__ import annotations
 
 import inspect
 import pathlib
-import platform
 import sys
 import typing as T
 
 from ..autowrap.buffer import RenderBuffer
-
-platform_sys = platform.system()
-is_windows = platform_sys == "Windows"
-is_macos = platform_sys == "Darwin"
 
 
 def _write_libinit_py(

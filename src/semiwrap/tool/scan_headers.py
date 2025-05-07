@@ -106,9 +106,10 @@ class HeaderScanner:
 
                 files.append(Path(rf))
 
-            files = list(sorted(files))
             if not files:
                 continue
+
+            files.sort()
 
             lastdir = None
             for f in files:
