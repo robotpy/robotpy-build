@@ -1,6 +1,7 @@
 import pathlib
 import typing as T
 
+import packaging.markers
 import tomli
 
 from .config.util import parse_input
@@ -20,6 +21,19 @@ class PyProject:
         self._package_root = None
 
         self._all_deps = None
+
+        self._evaluated_markers: T.Dict[str, bool] = {}
+
+    def _enable_if(self, condition: str) -> bool:
+        """
+        Evaluates a string containing PEP 508 environment markers
+        """
+        ok = self._evaluated_markers.get(condition)
+        if ok is None:
+            ok = packaging.markers.Marker(condition).evaluate()
+            self._evaluated_markers[condition] = ok
+
+        return ok
 
     @property
     def package_root(self) -> pathlib.Path:
@@ -71,3 +85,12 @@ class PyProject:
                 deps.append(wrap)
         deps.extend(extension.depends)
         return deps
+
+    def get_extension_headers(
+        self, extension: ExtensionModuleConfig
+    ) -> T.Generator[T.Tuple[str, str], None, None]:
+        for yml, hdr in extension.headers.items():
+            if isinstance(hdr, str):
+                yield yml, hdr
+            elif self._enable_if(hdr.enable_if):
+                yield yml, hdr.header

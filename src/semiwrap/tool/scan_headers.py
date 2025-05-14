@@ -80,9 +80,15 @@ class HeaderScanner:
                             all_present.add(inc / h.header)
 
             for name, ext in project.extension_modules.items():
-                if not ext.headers:
+                files = []
+                for _, f in ext.headers.items():
+                    if isinstance(f, str):
+                        files.append(Path(f))
+                    else:
+                        files.append(Path(f.header))
+
+                if not files:
                     continue
-                files = [Path(f) for f in ext.headers.values()]
                 for incdir in search_paths[name]:
                     incdir = Path(incdir)
                     for f in files:
