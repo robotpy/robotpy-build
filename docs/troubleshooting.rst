@@ -33,7 +33,7 @@ had the following C++ code:
 
     void fnWithEnum(SomeEnum e);
 
-And ``SomeEnum`` was actually ``somens::SomeEnum`` but robotpy-build wasn't
+And ``SomeEnum`` was actually ``somens::SomeEnum`` but semiwrap wasn't
 able to automatically determine that. You could fix it like so:
 
 .. code-block:: yaml
@@ -53,11 +53,11 @@ pybind11 has a static assert that occurs when an trampoline class is specified
 for a class that is a subclass of some other class, but none of its bases have
 any virtual functions. This is to prevent 
 
-robotpy-build generates trampoline classes to allow python code to override
-virtual functions in C++ classes. robotpy-build isn't always able to detect
+semiwrap generates trampoline classes to allow python code to override
+virtual functions in C++ classes. semiwrap isn't always able to detect
 when a trampoline isn't appropriate.
 
-When this error occurs, you can force robotpy-build to turn off trampoline classes
+When this error occurs, you can force semiwrap to turn off trampoline classes
 for a specific type:
 
 .. code-block:: yaml
@@ -69,7 +69,7 @@ for a specific type:
 error: 'rpygen/__SomeClassName.hpp' file not found
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This occurs when robotpy-build has created a trampoline class for a child
+This occurs when semiwrap has created a trampoline class for a child
 class, and it is trying to include the header for the parent trampoline
 class. There are several reasons why this might happen.
 
@@ -77,7 +77,7 @@ Sometimes this error occurs because the parent lives in a different package
 that you didn't declare a dependency on in ``pyproject.toml``. Add the
 dependency and the parent trampoline class should be found.
 
-If the base class is polymorphic in a way that robotpy-build wasn't able to
+If the base class is polymorphic in a way that semiwrap wasn't able to
 detect, you can force it to be polymorphic:
 
 .. code-block:: yaml
@@ -111,8 +111,8 @@ What this means is the argument 'arg' is not currently wrapped by pybind11 -- or
 if it is, it hasn't been imported by the current python package.
 
 * If it hasn't been wrapped, wrap it
-* If it hasn't been imported, you can just add the other package to the wrapper's
-  ``depends`` list. 
+* If it hasn't been imported, import it in your ``__init__.py`` or you can just
+  add the other package to the wrapper's ``depends`` list. 
 
 
 Runtime errors
@@ -129,7 +129,7 @@ these contents:
 
 .. code-block:: c++
 
-    #include <rpygen_wrapper.hpp>
+    #include <semiwrap_init.PACKAGE.NAME.hpp>
 
     RPYBUILD_PYBIND11_MODULE(m) {
         initWrapper(m);

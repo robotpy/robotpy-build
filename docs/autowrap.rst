@@ -4,7 +4,7 @@
 Automated C++ header wrapping
 =============================
 
-robotpy-build can be told to parse C/C++ headers and automatically generate 
+semiwrap can be told to parse C/C++ headers and automatically generate 
 :std:doc:`pybind11 <pybind11:basics>` wrappers around the functions
 and objects found in that header.
 
@@ -15,9 +15,9 @@ and objects found in that header.
 C++ Features
 ------------
 
-robotpy-build uses a pure python C++ parser and macro processor to attempt to
+semiwrap uses a pure python C++ parser and macro processor to attempt to
 parse header files. As a result, a full AST of the header files is not created.
-This means particularly opaque code might confuse the parser, as robotpy-build
+This means particularly opaque code might confuse the parser, as semiwrap
 only receives the names, not the actual type information.
 
 However, most basic features typically work without needing to coerce the
@@ -34,6 +34,7 @@ generator into working correctly, including:
 * final classes/methods - cannot be overridden from Python code
 * Enumerations
 * Global variables
+* Many many more weird edge cases too
 
 Additionally, the following features are supported, but require some manual
 intervention:
@@ -46,22 +47,22 @@ to your package in ``pyproject.toml``:
 
 .. code-block:: toml
 
-    [tool.robotpy-build.wrappers."MYPACKAGE".autogen_headers]
+    [tool.semiwrap.extension_modules."PACKAGE.NAME".headers]
     demo = "demo.h"
 
 That causes ``demo.h`` to be parsed and wrapped.
 
 .. note:: If you're importing a large number of headers, the
-          ``robotpy-build scan-headers`` tool can generate this for you
+          ``semiwrap scan-headers`` tool can generate this list for you
           automatically.
 
 Documentation
 -------------
 
-robotpy-build will find doxygen documentation comments on many types of elements
-and use sphinxify to translate them into python docstrings. All elements that
-support documentation strings can have their docstrings set explicitly using 
-a ``doc`` value in the YAML file.
+semiwrap will find doxygen documentation comments on many types of elements
+and use sphinxify to translate them into python docstrings. If this is not
+sufficient, all elements that support documentation strings can have their
+docstrings set explicitly using a ``doc`` value in the YAML file.
 
 .. code-block:: yaml
 

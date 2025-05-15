@@ -12,10 +12,11 @@ types (such as STL containers) are converted indirectly and require special
 Using type casters
 ------------------
 
-When parsing a header, robotpy-build will match the types found against its
+When parsing a header, semiwrap will match the types found against its
 list of type casters. If found, it will automatically add an include directive
-for the header that contains the type caster. robotpy-build contains support
-for the STL type casters that come with pybind11 (vector, function, map, etc).
+for the header that contains the type caster. semiwrap contains support
+for the STL type casters that come with pybind11 (vector, function, map, etc)
+and usually can autodetect and include the appropriate type casters.
 
 Sometimes the autodetection will fail because a type is hidden in some way. You
 can specify the missing types on a per-class basis. For example, if ``std::vector``
@@ -36,7 +37,7 @@ won't cover that here, refer to the :std:doc:`pybind11 documentation for custom 
 instead.
 
 However, once you have a custom type caster, here's what you need to do to
-automatically include it in a robotpy-build project.
+automatically include it in a semiwrap project.
 
 1. Create a header file and put the type caster in that header file. It should
    be in one of your project's python packages.
@@ -45,12 +46,20 @@ automatically include it in a robotpy-build project.
 
    .. code-block:: toml
 
-      [[tool.robotpy-build.wrappers."package_name".type_casters]]
-      header = "header_name.h"
-      types = ["somens::SomeType"]
+      [tool.semiwrap.export_type_casters.NAME]
+      pypackage = "PACKAGE.NAME"
+      includedir = ["path/to/type_casters"]
 
-   This directive will cause robotpy-build's autogenerator to automatically
-   include ``header_name.h`` whenever it notices ``SomeType`` in a file. This
+      [[tool.semiwrap.export_type_casters.NAME.headers]]
+      header = "mytype.h"
+      types = ["MyType"]
+
+   This will publish a ``NAME`` package via ``pkgconf``, and other ``semiwrap``
+   projects (or your extension modules in your project) can consume it by
+   adding ``NAME`` to the list of dependencies.
+
+   This directive will cause semiwrap's autogenerator to automatically
+   include ``mytype.h`` whenever it notices ``MyType`` in a file. This
    allows pybind11 to use it. The type specification is a list, so if there 
    are multiple types covered in the same header, just specify all the types.
    However, most of the time it is preferred to put type casters for separate

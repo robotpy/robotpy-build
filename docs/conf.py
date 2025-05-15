@@ -26,7 +26,7 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 # -- Project information -----------------------------------------------------
 
 project = "semiwrap"
-copyright = "2020, RobotPy Development Team"
+copyright = "2025, RobotPy Development Team"
 author = "RobotPy Development Team"
 
 # The full version, including alpha/beta/rc tags
