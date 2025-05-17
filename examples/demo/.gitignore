@@ -9,6 +9,6 @@ py.typed
 /dist
 
 _init*.py
-pkgcfg.py
+*.pc
 version.py
-rpy-include
+trampolines

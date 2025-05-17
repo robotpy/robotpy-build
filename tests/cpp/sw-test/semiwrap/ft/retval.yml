@@ -1,0 +1,11 @@
+---
+
+classes:
+  RetvalClass:
+    enums:
+      Retval:
+    methods:
+      get:
+        overloads:
+          "":
+          int:

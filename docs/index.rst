@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-robotpy-build: (mostly) automated C++ wrapping for Python 
-=========================================================
+semiwrap: (mostly) automated C++ wrapping for Python 
+====================================================
 
 .. toctree::
    :maxdepth: 2
@@ -19,7 +19,6 @@ robotpy-build: (mostly) automated C++ wrapping for Python
    :caption: User's Guide
 
    autowrap
-   deps
    type_casters
    platform
    tips

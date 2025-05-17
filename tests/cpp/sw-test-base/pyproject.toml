@@ -1,0 +1,52 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["semiwrap", "hatch-meson", "hatchling"]
+
+[project]
+description = "Test program"
+name = "sw-test-base"
+version = "0.0.1"
+
+[tool.hatch.build.targets.wheel]
+packages = ['src/swtest_base']
+
+[tool.hatch.build.hooks.semiwrap]
+
+[tool.hatch.build.hooks.meson]
+
+#
+# Semiwrap configuration
+#
+
+[tool.semiwrap]
+[tool.semiwrap.extension_modules."swtest_base._module"]
+depends = ["sw-test-base-casters"]
+includes = ["src/swtest_base/cpp"]
+
+[tool.semiwrap.extension_modules."swtest_base._module".headers]
+fn = "cpp/fn.h"
+base_class = "cpp/baseclass.h"
+
+
+[tool.semiwrap.extension_modules."swtest_base._module2"]
+depends = ["swtest_base__module", "swtest_base__module3"]
+
+[tool.semiwrap.extension_modules."swtest_base._module2".headers]
+fn2 = "cpp/fn2.h"
+
+
+[tool.semiwrap.extension_modules."swtest_base._module3"]
+# empty module to test dependency on module declared after a module
+
+
+[tool.semiwrap.export_type_casters.sw-test-base-casters]
+pypackage = "swtest_base"
+includedir = ["src/swtest_base/cpp/type_casters"]
+
+[[tool.semiwrap.export_type_casters.sw-test-base-casters.headers]]
+header = "inty_cast.h"
+types = ["inty"]
+
+[[tool.semiwrap.export_type_casters.sw-test-base-casters.headers]]
+header = "ns_inty_cast.h"
+types = ["ns::inty2"]

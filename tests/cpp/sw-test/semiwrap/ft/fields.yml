@@ -1,0 +1,27 @@
+---
+
+classes:
+  ClassWithFields:
+    attributes:
+      array_of_two:
+      actual_int:
+      ref_int:
+      const_field:
+      static_int:
+      static_const:
+      static_constexpr:
+      should_be_ignored:
+    methods:
+      ClassWithFields:
+      get_array_of_two:
+  StructWithBitfields:
+    attributes:
+      enabled:
+      autonomous:
+      test:
+      eStop:
+      fmsAttached:
+      dsAttached:
+      control_reserved:
+    methods:
+      StructWithBitfields:

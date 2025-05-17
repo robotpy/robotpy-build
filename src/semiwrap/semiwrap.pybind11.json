@@ -1,0 +1,66 @@
+{
+    "headers": [
+        {
+            "header": "pybind11/stl.h",
+            "types": [
+                "std::vector",
+                "std::deque",
+                "std::list",
+                "std::array",
+                "std::valarray",
+                "std::set",
+                "std::map",
+                "std::unordered_map",
+                "std::optional",
+                "std::nullopt_t",
+                "std::variant"
+            ]
+        },
+        {
+            "header": "pybind11/functional.h",
+            "types": [
+                "std::function"
+            ]
+        },
+        {
+            "header": "pybind11/complex.h",
+            "types": [
+                "std::complex"
+            ]
+        },
+        {
+            "header": "pybind11/chrono.h",
+            "types": [
+                "std::chrono::duration",
+                "std::chrono::time_point"
+            ]
+        },
+        {
+            "header": "pybind11/eigen.h",
+            "types": [
+                "Eigen::Block",
+                "Eigen::DiagonalMatrix",
+                "Eigen::MatrixBase",
+                "Eigen::Matrix",
+                "Eigen::Matrix2d",
+                "Eigen::Matrix3d",
+                "Eigen::MatrixXcd",
+                "Eigen::MatrixXd",
+                "Eigen::MatrixXdR",
+                "Eigen::MatrixXi",
+                "Eigen::MatrixXf",
+                "Eigen::Ref",
+                "Eigen::Matrix4d",
+                "Eigen::RowVectorXf",
+                "Eigen::SparseMatrix",
+                "Eigen::SparseView",
+                "Eigen::Vector",
+                "Eigen::Vector2d",
+                "Eigen::Vector3d",
+                "Eigen::VectorXd",
+                "Eigen::VectorXf",
+                "Eigen::VectorXcf"
+            ]
+        }
+    ]
+}

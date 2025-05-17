@@ -1,4 +1,4 @@
-from rpytest.ft import LTTester, LTWithVirtual
+from swtest.ft import LTTester, LTWithVirtual
 import gc
 
 

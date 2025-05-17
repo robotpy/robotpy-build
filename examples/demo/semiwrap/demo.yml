@@ -1,0 +1,9 @@
+---
+
+functions:
+  add2:
+classes:
+  demo::DemoClass:
+    methods:
+      setX:
+      getX:

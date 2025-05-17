@@ -1,0 +1,10 @@
+---
+
+classes:
+  LTWithVirtual:
+    methods:
+      get_bool:
+  LTTester:
+    methods:
+      set_val:
+      get_bool:

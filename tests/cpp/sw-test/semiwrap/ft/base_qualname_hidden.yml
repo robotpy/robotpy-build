@@ -1,0 +1,15 @@
+classes:
+  bq::THiddenBase1:
+    template_params:
+    - T
+  bq::THiddenBase2:
+    template_params:
+    - T
+
+  bq::Hidden:
+
+templates:
+  THiddenBase:
+    qualname: bq::THiddenBase1
+    params:
+    - THiddenBase2<int>

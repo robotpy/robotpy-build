@@ -1,0 +1,6 @@
+---
+
+classes:
+  NestedTypecaster:
+    methods:
+      callWithList:

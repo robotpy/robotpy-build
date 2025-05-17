@@ -1,0 +1,22 @@
+
+extra_includes:
+- using.h
+
+classes:
+  u::fancy_list:
+    template_params:
+    - T
+  u::u2::Using1:
+  u::u2::Using2:
+  u::u2::Using3:
+    typealias:
+    - template <typename T> using fancy_list = u::fancy_list<T>
+  u::u2::Using4:
+  u::u2::Using5a:
+  u::u2::Using5b:
+  
+templates:
+  fancy_int_list:
+    qualname: u::fancy_list
+    params:
+    - int

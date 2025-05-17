@@ -1,0 +1,17 @@
+---
+
+enums:
+  StripPrefixEnum:
+    value_prefix: STRIP_
+  GEnumMath:
+    arithmetic: true
+
+classes:
+  EnumContainer:
+  EnumContainer2:
+    enums:
+      InnerMathEnum:
+        arithmetic: true
+  enum_container_ns::NSEnumContainer:
+  enum_container_ns::NSEnumContainer2:
+  enum_container_ns::NSEnumContainer2::InnerEnumContainer:
