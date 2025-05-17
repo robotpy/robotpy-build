@@ -1,3 +1,7 @@
+> [!NOTE]
+> robotpy-build is no longer being developed. It has been rewritten
+> and has been renamed to [semiwrap](https://github.com/robotpy/semiwrap).
+
 robotpy-build
 =============
 
