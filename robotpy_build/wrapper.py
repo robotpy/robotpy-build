@@ -419,7 +419,7 @@ class Wrapper:
             if dl.libs or dl.dlopenlibs:
                 add_libdir = True
                 extract_names = []
-                os.makedirs(libdir)
+                os.makedirs(libdir, exist_ok=True)
 
                 libext = dl.libexts.get(self.platform.libext, self.platform.libext)
                 linkext = dl.linkexts.get(self.platform.linkext, self.platform.linkext)
