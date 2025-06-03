@@ -310,12 +310,17 @@ class Wrapper:
         libs = list(
             set(self.get_library_names()) | set(self.get_dlopen_library_names())
         )
+        libs = []
+        [libs.append(lib) for lib in self.get_library_names() if lib not in libs]
+        [libs.append(lib) for lib in self.get_dlopen_library_names() if lib not in libs]
+        dep_libs = []
         for dep in self.cfg.depends:
             pkg = self.pkgcfg.get_pkg(dep)
             libnames = pkg.get_library_names()
             if libnames:
-                libs.extend(libnames)
-        return list(reversed(libs))
+                [dep_libs.append(lib) for lib in libnames if lib not in libs]
+        libs.extend(reversed(dep_libs))
+        return libs
 
     def _all_extra_objects(self):
         libs = []
