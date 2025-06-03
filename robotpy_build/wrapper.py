@@ -307,9 +307,6 @@ class Wrapper:
         return libs
 
     def _all_library_names(self):
-        libs = list(
-            set(self.get_library_names()) | set(self.get_dlopen_library_names())
-        )
         libs = []
         [libs.append(lib) for lib in self.get_library_names() if lib not in libs]
         [libs.append(lib) for lib in self.get_dlopen_library_names() if lib not in libs]
